@@ -1,0 +1,899 @@
+[
+  {
+    "id": "1771939920346-g63qn9",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T13:32:00.346Z"
+  },
+  {
+    "id": "1771933227093-p2w69o",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T11:40:27.093Z"
+  },
+  {
+    "id": "1771933221803-9kgxur",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T11:40:21.803Z"
+  },
+  {
+    "id": "1771923311679-esasqc",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:55:11.679Z"
+  },
+  {
+    "id": "1771923306756-8fldym",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:55:06.756Z"
+  },
+  {
+    "id": "1771923082241-z607u5",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:51:22.241Z"
+  },
+  {
+    "id": "1771923077512-vx8q0p",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:51:17.512Z"
+  },
+  {
+    "id": "1771922740354-pyn1bt",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:45:40.354Z"
+  },
+  {
+    "id": "1771922731561-4txuug",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:45:31.561Z"
+  },
+  {
+    "id": "1771921405551-tkybzf",
+    "fileName": "test.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:23:25.551Z"
+  },
+  {
+    "id": "1771921073035-gmdv3r",
+    "fileName": "1771919123804-3k2gph.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:17:53.035Z"
+  },
+  {
+    "id": "1771920874731-m29sl9",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:14:34.731Z"
+  },
+  {
+    "id": "1771920857555-04ag31",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:14:17.555Z"
+  },
+  {
+    "id": "1771920723848-iriboy",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:12:03.848Z"
+  },
+  {
+    "id": "1771920668074-hdalfx",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:11:08.074Z"
+  },
+  {
+    "id": "1771920626381-qmzip0",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:10:26.381Z"
+  },
+  {
+    "id": "1771920617990-y1zlhk",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:10:17.990Z"
+  },
+  {
+    "id": "1771920610730-wfrn4s",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:10:10.730Z"
+  },
+  {
+    "id": "1771920599441-wt0ard",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:09:59.441Z"
+  },
+  {
+    "id": "1771920326961-vx4mfs",
+    "fileName": "1771919123804-3k2gph.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:05:26.961Z"
+  },
+  {
+    "id": "1771920170393-1ef87w",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:02:50.393Z"
+  },
+  {
+    "id": "1771920164113-c7xrdz",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:02:44.113Z"
+  },
+  {
+    "id": "1771920135446-b1ogjr",
+    "fileName": "1771919123804-3k2gph.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:02:15.446Z"
+  },
+  {
+    "id": "1771920092525-rfvexi",
+    "fileName": "resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:01:32.525Z"
+  },
+  {
+    "id": "1771920086614-3tx22n",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:01:26.614Z"
+  },
+  {
+    "id": "1771920056348-xz9i1d",
+    "fileName": "1771919123804-3k2gph.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T08:00:56.348Z"
+  },
+  {
+    "id": "1771919941452-5vmw84",
+    "fileName": "1771919123804-3k2gph.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T07:59:01.452Z"
+  },
+  {
+    "id": "1771919874511-6vadz6",
+    "fileName": "resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T07:57:54.511Z"
+  },
+  {
+    "id": "1771919827836-x7qdvo",
+    "fileName": "resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T07:57:07.836Z"
+  },
+  {
+    "id": "1771919789362-8poov5",
+    "fileName": "1771919123804-3k2gph.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T07:56:29.362Z"
+  },
+  {
+    "id": "1771919748037-0i202a",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T07:55:48.037Z"
+  },
+  {
+    "id": "1771919360999-r4ppbk",
+    "fileName": "1771919123804-3k2gph.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T07:49:20.999Z"
+  },
+  {
+    "id": "1771919123814-h1lwj0",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-24T07:45:23.814Z"
+  },
+  {
+    "id": "1771878735020-0424ck",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-23T20:32:15.020Z"
+  },
+  {
+    "id": "1771878727972-wlwvf7",
+    "fileName": "default_resume.pdf",
+    "confidence": 45,
+    "confidenceLevel": "Needs Improvement",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Project section is missing or too light, so practical skills are hard to verify.",
+      "Work experience impact is unclear. Add ownership and role outcomes.",
+      "Contact details are incomplete, which can reduce interview callbacks.",
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of React in recent work.",
+      "Limited evidence of TypeScript in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-23T20:32:07.972Z"
+  },
+  {
+    "id": "1771865511548-pums73",
+    "fileName": "sample.pdf",
+    "confidence": 98,
+    "confidenceLevel": "High",
+    "llmModel": "local-llm-v1",
+    "analysisMethod": "heuristic-local-llm",
+    "weaknesses": [
+      "Limited evidence of JavaScript in recent work.",
+      "Limited evidence of TypeScript in recent work.",
+      "Limited evidence of Python in recent work."
+    ],
+    "technologyRecommendations": [
+      "TypeScript",
+      "Next.js",
+      "React Server Components",
+      "Playwright",
+      "Web Performance Profiling",
+      "Node.js API Security"
+    ],
+    "createdAt": "2026-02-23T16:51:51.548Z"
+  }
+]

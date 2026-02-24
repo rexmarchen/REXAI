@@ -1,0 +1,70 @@
+@import '../../../styles/variables.css';
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 48px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, transparent 100%);
+  backdrop-filter: blur(4px);
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px #00f5ff99);
+}
+
+.navLinks {
+  display: flex;
+  gap: 36px;
+  list-style: none;
+}
+
+.navLinks a {
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  font-size: 0.88rem;
+  letter-spacing: 0.12em;
+  transition: color 0.3s;
+}
+
+.navLinks a:hover {
+  color: var(--color-primary);
+}
+
+.loginLink {
+  border: 1px solid rgba(0,245,255,0.35);
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--color-primary) !important;
+}
+
+.loginLink:hover {
+  box-shadow: 0 0 16px rgba(0,245,255,0.35);
+  background: rgba(0,245,255,0.1);
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    padding: 16px 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .navLinks {
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+}

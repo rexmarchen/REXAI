@@ -1,0 +1,77 @@
+@import '../../../styles/variables.css';
+
+.hero {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 24px 60px;
+  text-align: center;
+}
+
+.badge {
+  font-size: 0.65rem;
+  letter-spacing: 0.35em;
+  color: var(--color-primary);
+  border: 1px solid rgba(0,245,255,0.28);
+  padding: 6px 20px;
+  border-radius: 100px;
+  margin-bottom: 28px;
+  animation: fadeUp 0.8s ease both;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 10vw, 8rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.05em;
+
+  background: linear-gradient(135deg, #fff 20%, var(--color-primary) 60%, var(--color-primary-dark));
+
+  background-clip: text;              /* standard */
+  -webkit-background-clip: text;      /* for Chrome/Safari */
+
+  color: transparent;                 /* fallback */
+  -webkit-text-fill-color: transparent;
+
+  filter: drop-shadow(0 0 40px #00f5ff55);
+  animation: fadeUp 0.9s 0.1s ease both;
+}
+
+.subtitle {
+  margin-top: 18px;
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.42);
+  letter-spacing: 0.18em;
+  animation: fadeUp 0.9s 0.2s ease both;
+}
+
+.cta {
+  margin-top: 40px;
+  display: flex;
+  gap: 20px;
+  animation: fadeUp 0.9s 0.3s ease both;
+}
+
+.button {
+  padding: 14px 32px;
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.button:hover {
+  background: var(--color-primary);
+  color: #000;
+  box-shadow: var(--glow);
+}

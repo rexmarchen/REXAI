@@ -1,0 +1,65 @@
+@import '../../../styles/variables.css';
+
+.result {
+  margin-top: 40px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--color-primary);
+  border-radius: 12px;
+}
+
+.heading {
+  font-family: var(--font-display);
+  color: var(--color-primary);
+  margin-bottom: 18px;
+}
+
+.content {
+  color: #fff;
+  line-height: 1.6;
+}
+
+.prediction {
+  margin: 0;
+  color: #ffffff;
+}
+
+.confidence {
+  margin-top: 10px;
+  color: #d6fff7;
+}
+
+.model {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.section {
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid rgba(0, 255, 204, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 255, 204, 0.05);
+}
+
+.sectionTitle {
+  margin: 0;
+  color: #9effed;
+  font-size: 0.98rem;
+}
+
+.list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.list li {
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.empty {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+}

@@ -1,0 +1,1 @@
+import{a as n,j as a}from"./index-94e20000.js";const t="_loaderWrap_1kati_1",e="_spinner_1kati_9",r="_spin_1kati_9",i="_text_1kati_18",s={loaderWrap:t,spinner:e,spin:r,text:i},p=()=>n("div",{className:s.loaderWrap,children:[a("div",{className:s.spinner}),a("p",{className:s.text,children:"Processing..."})]});export{p as L};
