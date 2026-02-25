@@ -23,6 +23,7 @@ from .service.ats_matcher import (
 )
 from .service.job_fetcher import JobFetcher
 from .service.parser import parse_upload_file
+from .service.resume_profile_extractor import extract_resume_profile
 from .service.skill_extractor import extract_skills, missing_skills
 from .utils.database import db
 
@@ -51,6 +52,32 @@ def _build_auto_job_description(career_path: str, skills: list[str]) -> str:
             "and deliver measurable engineering impact.",
         ]
     )
+
+
+def _merge_unique(values: list[str], limit: int = 30) -> list[str]:
+    ordered: dict[str, str] = {}
+    for value in values:
+        clean = str(value or "").strip()
+        if not clean:
+            continue
+        key = clean.lower()
+        if key not in ordered:
+            ordered[key] = clean
+        if len(ordered) >= limit:
+            break
+    return list(ordered.values())
+
+
+def _name_from_filename(filename: str | None) -> str:
+    raw = str(filename or "").strip()
+    if not raw:
+        return ""
+    stem = raw.rsplit(".", 1)[0]
+    stem = stem.replace("_", " ").replace("-", " ")
+    stem = " ".join(part for part in stem.split() if part)
+    if len(stem) < 4:
+        return ""
+    return stem[:80]
 
 
 @asynccontextmanager
@@ -110,7 +137,9 @@ async def predict(
     career_path = str(predictions[0])
     confidence = float(probabilities[0])
 
-    extracted = extract_skills(text)
+    profile = extract_resume_profile(text)
+    resolved_name = profile.name or _name_from_filename(file.filename)
+    extracted = _merge_unique([*extract_skills(text), *profile.skills], limit=30)
     jd_used = (
         str(job_description).strip()
         if job_description and str(job_description).strip()
@@ -127,14 +156,19 @@ async def predict(
         query=career_path,
         location=location,
         remote_jobs_only=remote_jobs_only,
-        num_pages=1,
+        num_pages=2,
     )
-    jobs_limited = jobs[:10]
+    jobs_limited = jobs[:20]
 
     prediction_id = str(uuid.uuid4())
     prediction_data = {
         "career_path": career_path,
         "confidence": confidence,
+        "name": resolved_name,
+        "education": profile.education,
+        "experience_years": profile.experience_years,
+        "certifications": profile.certifications,
+        "projects": profile.projects,
         "ats_score": ats_score,
         "predicted_category": predicted_category,
         "job_description_used": jd_used,
@@ -169,6 +203,11 @@ async def predict(
 
     return PredictionResponse(
         prediction_id=prediction_id,
+        name=resolved_name,
+        education=profile.education,
+        certifications=profile.certifications,
+        projects=profile.projects,
+        experience_years=profile.experience_years,
         career_path=career_path,
         confidence=confidence,
         ats_score=ats_score,
@@ -193,7 +232,7 @@ async def search_jobs(
         query=query,
         location=location,
         remote_jobs_only=remote,
-        num_pages=1,
+        num_pages=2,
     )
     return {"jobs": jobs[:20]}
 

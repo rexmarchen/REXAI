@@ -1,0 +1,43 @@
+Feature,Data Type,Description
+target_role,str,Target variable - job role
+student_id,str,Unique student identifier
+age,int64,Student age in years
+gender,str,Gender (Male/Female)
+city,str,Current city
+state,str,State from city
+pincode,str,Area pincode
+education_level,str,Highest education level
+institution,str,University/College name
+institution_tier,str,Institution tier (Tier-1/Tier-2)
+major,str,Major subject
+graduation_year,int64,Year of graduation
+gpa,float64,GPA out of 10
+gpa_rounded,int64,Rounded GPA
+skills,str,Comma-separated skills
+skills_count,int64,Number of skills
+has_python,int64,Has Python skill (1/0)
+has_java,int64,Has Java skill (1/0)
+has_javascript,int64,Has JavaScript skill (1/0)
+has_sql,int64,Has SQL skill (1/0)
+projects_count,int64,Number of projects
+projects,str,Project titles
+internships_count,int64,Number of internships
+internship_companies,str,Internship company names
+has_internship,int64,Has internship experience (1/0)
+premium_internship,int64,Has premium company internship (1/0)
+work_experience_years,float64,Years of work experience
+experience_level,str,Experience level category
+has_experience,int64,Has work experience (1/0)
+certifications,str,Certification names
+certifications_count,int64,Number of certifications
+has_certification,int64,Has certification (1/0)
+has_github,int64,Has GitHub profile (1/0)
+has_linkedin,int64,Has LinkedIn profile (1/0)
+online_presence_score,float64,Online presence score (0-1)
+expected_salary_lpa,float64,Expected salary in LPA
+willing_to_relocate,int64,Willing to relocate (1/0)
+preferred_locations,str,Preferred locations
+education_experience_score,float64,Education-experience composite score
+skill_certification_score,float64,Skill-certification composite score
+overall_profile_score,float64,Overall profile score (0-1)
+data_version,str,Data version hash

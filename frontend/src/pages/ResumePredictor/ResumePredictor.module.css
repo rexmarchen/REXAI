@@ -535,24 +535,28 @@
 
 .jobsSection {
   margin-top: 14px;
-  border: 1px solid #22384a;
-  border-radius: 12px;
-  background: #0d1521;
-  padding: 12px;
+  border: 1px solid #25506b;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 90% 8%, rgba(0, 180, 216, 0.12), transparent 38%),
+    radial-gradient(circle at 10% 94%, rgba(0, 229, 160, 0.1), transparent 45%),
+    #0d1521;
+  padding: 14px;
 }
 
 .jobsGrid {
   margin-top: 10px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
 .jobCard {
-  border: 1px solid #294357;
-  border-radius: 10px;
-  background: #0a111b;
-  padding: 10px;
+  border: 1px solid #2e566b;
+  border-radius: 12px;
+  background: linear-gradient(165deg, #0d1824, #0b131d);
+  padding: 12px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
 }
 
 .jobHeader {
@@ -589,6 +593,7 @@
   color: #cad9ec;
   font-family: 'DM Sans', sans-serif;
   line-height: 1.5;
+  min-height: 56px;
 }
 
 .jobActions {
@@ -606,6 +611,127 @@
   font-weight: 700;
   font-family: 'Syne', sans-serif;
   text-decoration: none;
+}
+
+.remoteJobsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.remoteJobsTitle {
+  margin: 6px 0 0;
+  color: #ebf3ff;
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+}
+
+.remoteJobsSubtitle {
+  margin: 8px 0 0;
+  color: #9eb0c5;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.remoteJobsSubtitle strong {
+  color: #d5fff2;
+}
+
+.remoteJobsCount {
+  border: 1px solid #00e5a05c;
+  border-radius: 999px;
+  color: #9ff7db;
+  background: rgba(0, 229, 160, 0.12);
+  padding: 6px 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.remoteJobsLoading {
+  margin-top: 10px;
+  border: 1px solid #2a4f64;
+  border-radius: 10px;
+  background: #0a111b;
+  padding: 12px;
+  color: #9fb0c7;
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.remoteColumns {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.remoteColumn {
+  border: 1px solid #24465c;
+  border-radius: 12px;
+  background: rgba(10, 17, 27, 0.72);
+  padding: 10px;
+}
+
+.remoteColumnHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.remoteColumnHead h4 {
+  margin: 0;
+  color: #e6effb;
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+}
+
+.remoteBadge {
+  border: 1px solid #00e5a066;
+  color: #00e5a0;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+}
+
+.remoteBadgeAlt {
+  border: 1px solid #00b4d866;
+  color: #7adfff;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+}
+
+.remotePill {
+  border: 1px solid #00e5a066;
+  color: #00e5a0;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.jobFooter {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jobSource {
+  color: #95acc6;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
 }
 
 @keyframes spin {
@@ -642,6 +768,10 @@
   .dropTitle {
     font-size: 19px;
   }
+
+  .remoteColumns {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 600px) {
@@ -671,5 +801,14 @@
   .jobTextarea,
   .jobApplyButton {
     width: 100%;
+  }
+
+  .remoteJobsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .jobFooter {
+    align-items: stretch;
   }
 }

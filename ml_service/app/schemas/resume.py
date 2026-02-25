@@ -24,6 +24,11 @@ class JobListing(BaseModel):
 class PredictionResponse(BaseModel):
     """Resume prediction response schema"""
     prediction_id: str
+    name: str = ""
+    education: str = ""
+    certifications: List[str] = Field(default_factory=list)
+    projects: List[str] = Field(default_factory=list)
+    experience_years: int = 0
     career_path: str
     confidence: float
     ats_score: float

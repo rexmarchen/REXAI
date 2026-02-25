@@ -1,0 +1,156 @@
+{
+  "trained_at_utc": "2026-02-25T14:33:10.908796+00:00",
+  "dataset_path": "C:\\Users\\anshupal\\OneDrive\\Desktop\\rexionAI\\complete_student_dataset_9000.csv",
+  "label_source": "column:target_role",
+  "dataset_rows": 9000,
+  "dropped_rows_rare_classes": 0,
+  "num_classes": 14,
+  "initial_label_distribution": {
+    "Data Scientist": 1161,
+    "Financial Analyst": 623,
+    "Mechanical Engineer": 639,
+    "Marketing Specialist": 624,
+    "UX Designer": 577,
+    "Business Analyst": 556,
+    "Electrical Engineer": 595,
+    "Research Scientist": 602,
+    "Software Engineer": 597,
+    "Civil Engineer": 591,
+    "DevOps Engineer": 611,
+    "Product Manager": 594,
+    "HR Generalist": 609,
+    "Web Developer": 621
+  },
+  "label_distribution": {
+    "Data Scientist": 1161,
+    "Financial Analyst": 623,
+    "Mechanical Engineer": 639,
+    "Marketing Specialist": 624,
+    "UX Designer": 577,
+    "Business Analyst": 556,
+    "Electrical Engineer": 595,
+    "Research Scientist": 602,
+    "Software Engineer": 597,
+    "Civil Engineer": 591,
+    "DevOps Engineer": 611,
+    "Product Manager": 594,
+    "HR Generalist": 609,
+    "Web Developer": 621
+  },
+  "split_sizes": {
+    "train": 6299,
+    "val": 1351,
+    "test": 1350,
+    "trainval": 7650
+  },
+  "selected_model": "lr_c1",
+  "validation_metrics": {
+    "macro_f1": 1.0,
+    "weighted_f1": 1.0,
+    "accuracy": 1.0
+  },
+  "test_metrics": {
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "weighted_f1": 1.0
+  },
+  "classification_report": {
+    "Business Analyst": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 83.0
+    },
+    "Civil Engineer": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 89.0
+    },
+    "Data Scientist": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 174.0
+    },
+    "DevOps Engineer": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 92.0
+    },
+    "Electrical Engineer": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 89.0
+    },
+    "Financial Analyst": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 93.0
+    },
+    "HR Generalist": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 91.0
+    },
+    "Marketing Specialist": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 94.0
+    },
+    "Mechanical Engineer": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 96.0
+    },
+    "Product Manager": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 89.0
+    },
+    "Research Scientist": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 90.0
+    },
+    "Software Engineer": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 90.0
+    },
+    "UX Designer": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 87.0
+    },
+    "Web Developer": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 93.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 1350.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 1350.0
+    }
+  }
+}

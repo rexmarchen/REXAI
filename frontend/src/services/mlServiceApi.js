@@ -1,4 +1,5 @@
 import axios from 'axios'
+import apiClient from './apiClient'
 
 const mlServiceClient = axios.create({
   baseURL: import.meta.env.VITE_ML_SERVICE_BASE_URL || 'http://127.0.0.1:8000'
@@ -64,8 +65,13 @@ export const searchJobs = async (query, options = {}) => {
   if (options.page) {
     params.append('page', options.page)
   }
-  
-  return mlServiceClient.get(`/jobs/search?${params.toString()}`)
+
+  try {
+    return await mlServiceClient.get(`/jobs/search?${params.toString()}`)
+  } catch (error) {
+    // Fallback through backend proxy if direct ML service call fails.
+    return apiClient.get(`/resume/jobs/search?${params.toString()}`)
+  }
 }
 
 export default mlServiceClient

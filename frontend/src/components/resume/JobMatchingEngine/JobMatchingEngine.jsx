@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { searchJobs } from '../../../services/mlServiceApi'
 
 const DEFAULT_RESUME = {
   name: 'Candidate',
@@ -9,6 +10,26 @@ const DEFAULT_RESUME = {
   experience_years: 0,
   role_target: 'Software Engineer'
 }
+
+const TARGET_JOB_COUNT = 20
+const MIN_LIVE_JOBS = 15
+const MIN_DISPLAY_JOBS = 15
+const INDIA_IT_HUBS = ['Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Chennai', 'Gurugram', 'Noida']
+const INDIA_LOCATION_KEYWORDS = [
+  'india',
+  'bengaluru',
+  'bangalore',
+  'hyderabad',
+  'pune',
+  'mumbai',
+  'chennai',
+  'gurugram',
+  'gurgaon',
+  'noida',
+  'delhi',
+  'ncr',
+  'new delhi'
+]
 
 const JOB_BANK = [
   {
@@ -143,6 +164,129 @@ function sanitizeResume(rawResume) {
   }
 }
 
+function inferPlatformFromUrl(url) {
+  const value = String(url || '').toLowerCase()
+  if (value.includes('linkedin')) {
+    return 'linkedin'
+  }
+  if (value.includes('glassdoor')) {
+    return 'glassdoor'
+  }
+  return 'naukri'
+}
+
+function toKeywordList(job) {
+  const skills = Array.isArray(job.required_skills) ? job.required_skills : []
+  const title = String(job.title || '')
+  const description = String(job.description || '')
+  return sanitizeList([...skills, ...title.split(/\s+/), ...description.split(/\s+/)]).slice(0, 30)
+}
+
+function normalizeLiveJobs(rawJobs, resume) {
+  if (!Array.isArray(rawJobs)) {
+    return []
+  }
+
+  return rawJobs
+    .map((job, index) => {
+      const applyLink = String(job.apply_link || '').trim()
+      const platform = inferPlatformFromUrl(applyLink)
+      const keywords = toKeywordList(job)
+      const normalized = {
+        id: String(job.id || applyLink || `${index}`),
+        title: String(job.title || 'Software Engineer').trim(),
+        company: String(job.company || 'Unknown Company').trim(),
+        location: String(job.location || 'Remote/Hybrid').trim(),
+        description: String(job.description || '').trim(),
+        salary: String(job.salary || 'Not disclosed').trim(),
+        exp: String(job.required_experience || 'Experience not specified').trim(),
+        keywords,
+        platform,
+        naukriUrl: applyLink,
+        linkedinUrl: applyLink,
+        glassdoorUrl: applyLink,
+        primaryUrl: applyLink
+      }
+
+      return {
+        ...normalized,
+        matchScore: computeMatchScore(normalized, resume)
+      }
+    })
+    .filter((job) => job.title)
+}
+
+function dedupeJobs(jobs) {
+  const seen = new Set()
+  const deduped = []
+  for (const job of jobs) {
+    const key = `${String(job.title || '').toLowerCase()}-${String(job.company || '').toLowerCase()}-${String(job.location || '').toLowerCase()}`
+    if (!key.trim() || seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+    deduped.push(job)
+  }
+  return deduped
+}
+
+function buildSearchQueries(resume) {
+  const role = String(resume.role_target || DEFAULT_RESUME.role_target).trim()
+  const firstSkills = sanitizeList(resume.skills).slice(0, 3)
+  return Array.from(
+    new Set([
+      role,
+      ...firstSkills.map((skill) => `${role} ${skill}`.trim())
+    ])
+  ).filter(Boolean)
+}
+
+function getPreferredIndiaLocations(resume) {
+  const role = String(resume.role_target || '').toLowerCase()
+  let preferred = [...INDIA_IT_HUBS]
+
+  if (role.includes('data') || role.includes('ai') || role.includes('ml')) {
+    preferred = ['Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Chennai']
+  } else if (
+    role.includes('frontend') ||
+    role.includes('web') ||
+    role.includes('full stack') ||
+    role.includes('backend')
+  ) {
+    preferred = ['Bengaluru', 'Hyderabad', 'Pune', 'Gurugram', 'Noida', 'Chennai']
+  } else if (role.includes('devops') || role.includes('cloud')) {
+    preferred = ['Bengaluru', 'Pune', 'Hyderabad', 'Chennai', 'Gurugram']
+  }
+
+  return Array.from(new Set(preferred)).slice(0, 6)
+}
+
+function isIndianLocation(value) {
+  const location = String(value || '').toLowerCase()
+  if (!location) {
+    return false
+  }
+  return INDIA_LOCATION_KEYWORDS.some((keyword) => location.includes(keyword))
+}
+
+function isRelevantToResume(job, resume) {
+  const roleTokens = String(resume.role_target || '')
+    .toLowerCase()
+    .split(/\s+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 2)
+  const skillTokens = sanitizeList(resume.skills)
+    .map((item) => item.toLowerCase())
+    .filter((item) => item.length > 2)
+    .slice(0, 12)
+
+  const corpus = `${job.title} ${job.description || ''} ${job.keywords.join(' ')}`.toLowerCase()
+  const roleHits = roleTokens.filter((token) => corpus.includes(token)).length
+  const skillHits = skillTokens.filter((token) => corpus.includes(token)).length
+
+  return roleHits > 0 || skillHits > 0
+}
+
 function computeMatchScore(job, resume) {
   const roleLower = resume.role_target.toLowerCase()
   const resumeSkills = resume.skills.map((item) => item.toLowerCase())
@@ -204,6 +348,38 @@ function buildJobsForResume(resume) {
           ? job.glassdoorUrl
           : job.naukriUrl
   })).sort((left, right) => right.matchScore - left.matchScore)
+}
+
+function expandFallbackJobs(baseJobs, targetCount) {
+  if (baseJobs.length === 0) {
+    return []
+  }
+
+  const locationPool = ['Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Chennai', 'Gurugram', 'Noida']
+  const expanded = []
+  let index = 0
+
+  while (expanded.length < targetCount) {
+    const template = baseJobs[index % baseJobs.length]
+    const loop = Math.floor(index / baseJobs.length)
+    const location =
+      loop === 0 ? template.location : locationPool[(index + loop) % locationPool.length]
+    const company =
+      loop === 0 ? template.company : `${template.company} ${loop + 1}`
+    const id = `${template.id}-v${loop}-${index}`
+
+    expanded.push({
+      ...template,
+      id,
+      company,
+      location,
+      exp: template.exp,
+      matchScore: clamp(template.matchScore - loop * 2, 20, 98)
+    })
+    index += 1
+  }
+
+  return expanded
 }
 
 function scoreBand(score) {
@@ -289,9 +465,94 @@ export default function JobMatchingEngine({ resume = DEFAULT_RESUME }) {
   const [jobs, setJobs] = useState([])
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
+  const [loadingJobs, setLoadingJobs] = useState(false)
+  const [jobLoadError, setJobLoadError] = useState('')
 
   useEffect(() => {
-    setJobs(buildJobsForResume(normalizedResume))
+    let isCancelled = false
+
+    const loadJobs = async () => {
+      setLoadingJobs(true)
+      setJobLoadError('')
+
+      try {
+        const queries = buildSearchQueries(normalizedResume)
+        const locations = getPreferredIndiaLocations(normalizedResume)
+        const requestMatrix = queries.flatMap((query) =>
+          locations.map((location) => ({ query, location }))
+        )
+
+        const responses = await Promise.all(
+          requestMatrix.map(({ query, location }) =>
+            searchJobs(query, {
+              location,
+              remote: false
+            })
+          )
+        )
+
+        const combinedLive = responses.flatMap((payload) => payload?.jobs || [])
+        const normalizedLive = normalizeLiveJobs(combinedLive, normalizedResume).sort(
+          (left, right) => right.matchScore - left.matchScore
+        )
+
+        const strictIndiaJobs = normalizedLive.filter(
+          (job) => isIndianLocation(job.location) && isRelevantToResume(job, normalizedResume)
+        )
+        const relaxedIndiaJobs = normalizedLive.filter((job) => isIndianLocation(job.location))
+        const liveJobs = dedupeJobs([...strictIndiaJobs, ...relaxedIndiaJobs]).slice(0, TARGET_JOB_COUNT)
+
+        const fallbackBase = buildJobsForResume(normalizedResume)
+        const fallbackJobs = expandFallbackJobs(fallbackBase, TARGET_JOB_COUNT)
+        const merged = [...liveJobs.slice(0, TARGET_JOB_COUNT)]
+
+        if (merged.length < MIN_LIVE_JOBS) {
+          const used = new Set(
+            merged.map(
+              (item) =>
+                `${String(item.title).toLowerCase()}-${String(item.company).toLowerCase()}-${String(item.location).toLowerCase()}`
+            )
+          )
+          for (const fallback of fallbackJobs) {
+            const key = `${String(fallback.title).toLowerCase()}-${String(fallback.company).toLowerCase()}-${String(fallback.location).toLowerCase()}`
+            if (used.has(key)) {
+              continue
+            }
+            merged.push(fallback)
+            used.add(key)
+            if (merged.length >= TARGET_JOB_COUNT) {
+              break
+            }
+          }
+        }
+
+        if (merged.length < MIN_DISPLAY_JOBS) {
+          merged.push(...fallbackJobs.slice(0, MIN_DISPLAY_JOBS - merged.length))
+        }
+
+        const finalJobs = dedupeJobs(merged).slice(0, TARGET_JOB_COUNT)
+        finalJobs.sort((left, right) => right.matchScore - left.matchScore)
+        if (!isCancelled) {
+          setJobs(finalJobs)
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setJobLoadError('Live India IT jobs could not be loaded, showing India fallback results.')
+          const fallback = expandFallbackJobs(buildJobsForResume(normalizedResume), TARGET_JOB_COUNT)
+          setJobs(fallback)
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoadingJobs(false)
+        }
+      }
+    }
+
+    loadJobs()
+
+    return () => {
+      isCancelled = true
+    }
   }, [normalizedResume])
 
   const filteredJobs = useMemo(() => {
@@ -369,6 +630,9 @@ export default function JobMatchingEngine({ resume = DEFAULT_RESUME }) {
           ))}
         </div>
       </div>
+
+      {loadingJobs && <div style={styles.infoText}>Loading live job vacancies...</div>}
+      {jobLoadError && <div style={styles.warnText}>{jobLoadError}</div>}
 
       {filteredJobs.length === 0 ? (
         <div style={styles.emptyState}>No jobs matched this filter. Try changing search or score band.</div>
@@ -592,5 +856,23 @@ const styles = {
     textAlign: 'center',
     color: '#92a2b7',
     padding: '24px'
+  },
+  infoText: {
+    marginBottom: '10px',
+    padding: '10px 12px',
+    borderRadius: '10px',
+    border: '1px solid #24506b',
+    backgroundColor: '#102130',
+    color: '#9fd3f1',
+    fontSize: '13px'
+  },
+  warnText: {
+    marginBottom: '10px',
+    padding: '10px 12px',
+    borderRadius: '10px',
+    border: '1px solid #733046',
+    backgroundColor: '#2a141d',
+    color: '#ff8aa9',
+    fontSize: '13px'
   }
 }

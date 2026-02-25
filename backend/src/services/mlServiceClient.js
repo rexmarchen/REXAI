@@ -126,8 +126,10 @@ export const searchJobsViaMlService = async (query, options = {}) => {
   if (options.location) {
     params.append('location', options.location)
   }
-  if (options.remote) {
-    params.append('remote', options.remote)
+  if (typeof options.remote === 'boolean') {
+    params.append('remote', String(options.remote))
+  } else if (typeof options.remote === 'string' && options.remote.trim()) {
+    params.append('remote', options.remote.trim())
   }
 
   try {

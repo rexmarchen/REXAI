@@ -2,7 +2,11 @@ import { readFileSync } from 'node:fs'
 import Resume from '../models/Resume.js'
 import Prediction from '../models/Prediction.js'
 import { analyzeResumeContent } from '../services/resumeAnalysisService.js'
-import { predictCareerPathViaMlService, getPredictionFromMlService } from '../services/mlServiceClient.js'
+import {
+  predictCareerPathViaMlService,
+  getPredictionFromMlService,
+  searchJobsViaMlService
+} from '../services/mlServiceClient.js'
 import { catchAsync } from '../utils/catchAsync.js'
 import AppError from '../utils/AppError.js'
 import { logger } from '../utils/logger.js'
@@ -96,6 +100,15 @@ export const predictResume = catchAsync(async (req, res, next) => {
           atsScore: mlPrediction.ats_score,
           careerPath: mlPrediction.career_path,
           confidence: mlPrediction.confidence,
+          name: mlPrediction.name || '',
+          education: mlPrediction.education || '',
+          experienceYears: mlPrediction.experience_years || 0,
+          certifications: mlPrediction.certifications || [],
+          projects: mlPrediction.projects || [],
+          predictedCategory: mlPrediction.predicted_category || '',
+          extractedSkills: mlPrediction.extracted_skills || [],
+          missingSkills: mlPrediction.missing_skills || [],
+          jobDescriptionUsed: mlPrediction.job_description_used || '',
           jobsCount: mlPrediction.jobs?.length || 0,
           mlServiceSource: true
         }
@@ -116,6 +129,15 @@ export const predictResume = catchAsync(async (req, res, next) => {
       prediction: mlPrediction.career_path,
       confidence: mlPrediction.confidence,
       ats_score: mlPrediction.ats_score,
+      name: mlPrediction.name || '',
+      education: mlPrediction.education || '',
+      experience_years: mlPrediction.experience_years || 0,
+      certifications: mlPrediction.certifications || [],
+      projects: mlPrediction.projects || [],
+      predicted_category: mlPrediction.predicted_category || '',
+      extracted_skills: mlPrediction.extracted_skills || [],
+      missing_skills: mlPrediction.missing_skills || [],
+      job_description_used: mlPrediction.job_description_used || '',
       jobs: mlPrediction.jobs,
       analysisMethod: 'ml-service',
       source: 'ml-service'
@@ -178,6 +200,35 @@ export const predictResume = catchAsync(async (req, res, next) => {
 })
 
 export const analyzeResume = predictResume
+
+export const searchJobs = catchAsync(async (req, res) => {
+  const query = String(req.query.query || '').trim()
+  if (!query || query.length < 2) {
+    throw new AppError('query is required (minimum 2 characters).', 400)
+  }
+
+  const location = String(req.query.location || '').trim()
+  const remoteRaw = String(req.query.remote || '').trim().toLowerCase()
+  const remote =
+    remoteRaw === 'true' || remoteRaw === '1' || remoteRaw === 'yes'
+      ? true
+      : remoteRaw === 'false' || remoteRaw === '0' || remoteRaw === 'no'
+        ? false
+        : undefined
+
+  const jobs = await searchJobsViaMlService(query, {
+    location: location || undefined,
+    remote
+  })
+
+  res.status(200).json({
+    success: true,
+    query,
+    location: location || null,
+    remote: remote ?? null,
+    jobs
+  })
+})
 
 export const getPrediction = catchAsync(async (req, res, next) => {
   const predictionId = req.params.id || req.params.predictionId

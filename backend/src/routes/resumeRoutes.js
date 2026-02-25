@@ -5,7 +5,8 @@ import {
   uploadResume,
   predictResume,
   analyzeResume,
-  getPrediction
+  getPrediction,
+  searchJobs
 } from '../controllers/resumeController.js'
 
 const router = express.Router()
@@ -13,6 +14,7 @@ const router = express.Router()
 router.post('/upload', protect, upload.single('resume'), uploadResume)
 router.post('/predict', optionalProtect, upload.single('resume'), predictResume)
 router.post('/analyze', optionalProtect, upload.single('resume'), analyzeResume)
+router.get('/jobs/search', optionalProtect, searchJobs)
 router.get('/result/:id', getPrediction)
 router.get('/predict/:id', protect, getPrediction)
 
