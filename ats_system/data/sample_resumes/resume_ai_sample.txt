@@ -1,0 +1,13 @@
+John Doe
+Machine Learning Engineer
+
+Skills
+Python, TensorFlow, PyTorch, NLP, Scikit-learn, AWS, Docker
+
+Experience
+Built NLP classification models and deployed APIs for model inference.
+Created end-to-end ML pipelines and model monitoring dashboards.
+
+Education
+B.Tech in Computer Science
+

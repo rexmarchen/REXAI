@@ -1,0 +1,13 @@
+Jane Smith
+Full Stack Developer
+
+Skills
+JavaScript, TypeScript, React, Node.js, Express.js, MongoDB, REST API
+
+Experience
+Developed web applications with React and Node.js.
+Implemented authentication and backend API endpoints.
+
+Education
+Bachelor of Engineering
+

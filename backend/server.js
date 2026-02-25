@@ -12,6 +12,7 @@ import {
   parseStoredAnalysis,
   serializeAnalysis
 } from './src/services/resumeAnalysisService.js'
+import { extractResumeProfile } from './src/services/resumeProfileExtractor.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -352,6 +353,36 @@ function buildResumeApiPayload(result) {
   return payload
 }
 
+function normalizeConfidenceToUnit(confidenceValue) {
+  const numeric = Number(confidenceValue)
+  if (!Number.isFinite(numeric)) {
+    return 0
+  }
+
+  return Math.max(0, Math.min(1, Number((numeric / 100).toFixed(2))))
+}
+
+function buildPipelinePredictPayload(resumeBuffer, analysis) {
+  const extracted = extractResumeProfile(resumeBuffer)
+  const safeSkills = Array.isArray(extracted.skills) ? extracted.skills.filter(Boolean) : []
+  const safeCertifications = Array.isArray(extracted.certifications)
+    ? extracted.certifications.filter(Boolean)
+    : []
+  const safeProjects = Array.isArray(extracted.projects) ? extracted.projects.filter(Boolean) : []
+  const experienceYears = Number(extracted.experience_years)
+
+  return {
+    name: String(extracted.name || '').trim(),
+    skills: safeSkills,
+    education: String(extracted.education || '').trim(),
+    certifications: safeCertifications,
+    projects: safeProjects,
+    experience_years: Number.isFinite(experienceYears) ? Math.max(0, experienceYears) : 0,
+    predicted_role: String(extracted.predicted_role || '').trim() || 'Software Engineer',
+    confidence: normalizeConfidenceToUnit(analysis?.confidence)
+  }
+}
+
 async function handleRegister(request, response, origin) {
   let payload
 
@@ -461,7 +492,7 @@ async function handleLogin(request, response, origin) {
   )
 }
 
-async function handleResumePredict(request, response, origin) {
+async function handleResumePredict(request, response, origin, options = {}) {
   const contentType = String(request.headers['content-type'] || '')
   const boundaryMatch = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType)
   const boundary = boundaryMatch?.[1] || boundaryMatch?.[2]
@@ -527,6 +558,11 @@ async function handleResumePredict(request, response, origin) {
     serializeAnalysis(analysis)
   )
   const predictionId = Number(insertResult.lastInsertRowid)
+
+  if (options.pipelineShape === true) {
+    sendJson(response, 201, buildPipelinePredictPayload(resume.data, analysis), origin)
+    return
+  }
 
   sendJson(
     response,
@@ -602,6 +638,11 @@ const server = http.createServer(async (request, response) => {
 
   if (method === 'POST' && url.pathname === '/api/resume/predict') {
     await handleResumePredict(request, response, origin)
+    return
+  }
+
+  if (method === 'POST' && url.pathname === '/api/predict') {
+    await handleResumePredict(request, response, origin, { pipelineShape: true })
     return
   }
 

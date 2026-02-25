@@ -1,0 +1,76 @@
+{
+  "AI": [
+    "Python",
+    "Machine Learning",
+    "Deep Learning",
+    "TensorFlow",
+    "PyTorch",
+    "NLP",
+    "Computer Vision",
+    "MLOps",
+    "Scikit-learn",
+    "Pandas",
+    "NumPy"
+  ],
+  "Data Science": [
+    "Python",
+    "R",
+    "SQL",
+    "Statistics",
+    "Data Analysis",
+    "Feature Engineering",
+    "A/B Testing",
+    "Tableau",
+    "Power BI",
+    "Pandas",
+    "NumPy"
+  ],
+  "Web Development": [
+    "HTML",
+    "CSS",
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "Node.js",
+    "Express.js",
+    "REST API",
+    "MongoDB",
+    "PostgreSQL"
+  ],
+  "Backend Development": [
+    "Node.js",
+    "Express.js",
+    "Java",
+    "Spring Boot",
+    "SQL",
+    "PostgreSQL",
+    "MongoDB",
+    "Redis",
+    "Microservices",
+    "REST API"
+  ],
+  "DevOps": [
+    "AWS",
+    "Azure",
+    "GCP",
+    "Docker",
+    "Kubernetes",
+    "Terraform",
+    "CI/CD",
+    "Jenkins",
+    "Linux",
+    "Monitoring"
+  ],
+  "Mobile Development": [
+    "Android",
+    "Kotlin",
+    "Java",
+    "iOS",
+    "Swift",
+    "Flutter",
+    "React Native",
+    "Mobile Testing",
+    "Firebase",
+    "REST API"
+  ]
+}

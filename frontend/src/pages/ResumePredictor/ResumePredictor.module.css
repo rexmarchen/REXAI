@@ -1,27 +1,675 @@
-@import '../../styles/variables.css';
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=DM+Sans:wght@400;500;700&display=swap');
 
 .container {
   position: relative;
-  z-index: 10;
-  max-width: 800px;
-  margin: 100px auto;
-  padding: 40px;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--color-primary);
-  border-radius: 16px;
+  min-height: 100vh;
+  padding: 112px 20px 56px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(0, 229, 160, 0.13), transparent 42%),
+    radial-gradient(circle at 88% 18%, rgba(0, 180, 216, 0.15), transparent 45%),
+    #07090f;
+}
+
+.embedded {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.content {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.header {
+  border: 1px solid #173040;
+  border-radius: 18px;
+  background: rgba(8, 13, 21, 0.86);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.36);
+  padding: 26px;
+}
+
+.kicker {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  font-size: 11px;
+  color: #00e5a0;
 }
 
 .title {
-  font-family: var(--font-display);
-  font-size: 2.5rem;
-  color: var(--color-primary);
+  margin: 9px 0 0;
+  color: #eef4ff;
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin: 12px 0 0;
+  color: #9ca7bb;
+  line-height: 1.7;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.headerActions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #173040;
+  border-radius: 14px;
+  background: rgba(9, 14, 24, 0.84);
+  padding: 14px;
+}
+
+.stepItem {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.stepIndex {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid #2f4558;
+  color: #9fb0c7;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #101927;
+  transition: all 0.25s ease;
+}
+
+.stepLabel {
+  font-family: 'DM Sans', sans-serif;
+  color: #a8b4c7;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.complete {
+  background: rgba(0, 229, 160, 0.16);
+  border-color: #00e5a0;
+  color: #00e5a0;
+}
+
+.current {
+  background: rgba(0, 229, 160, 0.2);
+  border-color: #00e5a0;
+  color: #e8fff6;
+  box-shadow: 0 0 20px rgba(0, 229, 160, 0.2);
+}
+
+.panel {
+  border: 1px solid #173040;
+  border-radius: 18px;
+  background: rgba(8, 13, 21, 0.9);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.36);
+  padding: 22px;
+}
+
+.fadeSlide {
+  animation: fadeSlideIn 0.35s ease both;
+}
+
+.panelTitle {
+  margin: 0 0 14px;
+  color: #eaf4ff;
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(21px, 3vw, 30px);
+}
+
+.dropzone {
+  border: 1px dashed #2f5268;
+  border-radius: 14px;
+  padding: 28px;
+  background: rgba(12, 19, 30, 0.86);
   text-align: center;
-  margin-bottom: 40px;
+  transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
+}
+
+.dropzoneActive {
+  border-color: #00e5a0;
+  transform: translateY(-2px);
+  background: rgba(0, 229, 160, 0.08);
+}
+
+.fileInput {
+  display: none;
+}
+
+.dropTitle {
+  margin: 0;
+  color: #e8eef8;
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+}
+
+.dropHint {
+  margin: 8px 0 0;
+  color: #91a1b6;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.primaryButton {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #00e5a0, #00b4d8);
+  color: #041017;
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.fileInfo {
+  margin: 12px 0 0;
+  color: #00e5a0;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.analyzeButton {
+  margin-top: 14px;
+  border: none;
+  border-radius: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  color: #041017;
+  background: linear-gradient(90deg, #00e5a0, #00b4d8);
+  cursor: pointer;
+}
+
+.analyzeButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.queryGrid {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.checkboxRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #2b4d62;
+  border-radius: 9px;
+  background: #0b111b;
+  color: #cce7db;
+  padding: 10px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+}
+
+.checkboxInput {
+  accent-color: #00e5a0;
+}
+
+.loadingState {
+  border: 1px solid #27475b;
+  border-radius: 12px;
+  background: rgba(11, 17, 27, 0.85);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #9fb0c7;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 3px solid rgba(0, 229, 160, 0.2);
+  border-top-color: #00e5a0;
+  animation: spin 0.9s linear infinite;
 }
 
 .error {
-  color: #ff4444;
-  text-align: center;
-  margin-top: 20px;
+  margin: 0;
+  border: 1px solid rgba(255, 78, 106, 0.4);
+  background: rgba(255, 78, 106, 0.08);
+  color: #ff8ca1;
+  border-radius: 10px;
+  padding: 12px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.resultGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.resultCard {
+  border: 1px solid #22384a;
+  background: #0d1521;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.resultLabel {
+  margin: 0;
+  color: #96a8bf;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.resultValue {
+  margin: 7px 0 0;
+  color: #e6ecf7;
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.55;
+}
+
+.confidenceWrap {
+  margin-top: 14px;
+  border: 1px solid #22384a;
+  border-radius: 12px;
+  background: #0d1521;
+  padding: 12px;
+}
+
+.confidenceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #9fb0c7;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.confidenceHeader strong {
+  color: #00e5a0;
+  font-family: 'Syne', sans-serif;
+}
+
+.confidenceTrack {
+  margin-top: 9px;
+  height: 8px;
+  background: #1f3545;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.confidenceFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #00e5a0, #00b4d8);
+  transition: width 0.4s ease;
+}
+
+.skillsSection {
+  margin-top: 14px;
+}
+
+.chipList {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skillChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #275568;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #d7ffef;
+  background: rgba(0, 229, 160, 0.12);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+}
+
+.removeChip {
+  border: none;
+  background: transparent;
+  color: #c4f8e4;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  line-height: 1;
+}
+
+.skillInputRow {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.textInput {
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid #2f4d60;
+  border-radius: 9px;
+  background: #0b111b;
+  color: #e6edf8;
+  padding: 10px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.textInput:focus {
+  outline: none;
+  border-color: #00e5a0;
+}
+
+.secondaryButton {
+  border: 1px solid #2b4d62;
+  border-radius: 9px;
+  background: #0b111b;
+  color: #9fd7c2;
+  padding: 10px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  border-color: #00e5a0;
+  color: #d4ffef;
+}
+
+.listGrid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.listCard {
+  border: 1px solid #22384a;
+  border-radius: 12px;
+  background: #0d1521;
+  padding: 12px;
+}
+
+.list {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  color: #d8e2ef;
+  line-height: 1.6;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.emptyText {
+  color: #8ea0b8;
+  font-family: 'DM Sans', sans-serif;
+  margin: 8px 0 0;
+}
+
+.matchingButton {
+  margin-top: 14px;
+  width: 100%;
+  border: none;
+  border-radius: 11px;
+  padding: 12px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  color: #041017;
+  background: linear-gradient(90deg, #00e5a0, #00b4d8);
+  cursor: pointer;
+}
+
+.atsSection {
+  margin-top: 14px;
+  border: 1px solid #22384a;
+  border-radius: 12px;
+  background: #0d1521;
+  padding: 12px;
+}
+
+.jobTextarea {
+  margin-top: 8px;
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  border: 1px solid #2f4d60;
+  border-radius: 10px;
+  background: #0b111b;
+  color: #e6edf8;
+  padding: 10px;
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.5;
+}
+
+.jobTextarea:focus {
+  outline: none;
+  border-color: #00e5a0;
+}
+
+.atsActions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.atsResultList {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.atsResultCard {
+  border: 1px solid #294357;
+  border-radius: 10px;
+  background: #0a111b;
+  padding: 10px;
+}
+
+.atsTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  color: #e6edf8;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.atsRank {
+  border: 1px solid #00e5a066;
+  color: #00e5a0;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.atsMeta {
+  margin: 8px 0 0;
+  color: #9db0c7;
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.5;
+}
+
+.atsSkillWrap {
+  margin-top: 8px;
+}
+
+.missingSkillChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #b4455f;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #ffdce4;
+  background: rgba(255, 78, 106, 0.14);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+}
+
+.jobsSection {
+  margin-top: 14px;
+  border: 1px solid #22384a;
+  border-radius: 12px;
+  background: #0d1521;
+  padding: 12px;
+}
+
+.jobsGrid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.jobCard {
+  border: 1px solid #294357;
+  border-radius: 10px;
+  background: #0a111b;
+  padding: 10px;
+}
+
+.jobHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.jobTitle {
+  margin: 0;
+  color: #e6edf8;
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.jobCompany {
+  margin: 6px 0 0;
+  color: #d4e1f2;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+}
+
+.jobMeta {
+  margin: 6px 0 0;
+  color: #9db0c7;
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.5;
+}
+
+.jobDescription {
+  margin: 8px 0 0;
+  color: #cad9ec;
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.5;
+}
+
+.jobActions {
+  margin-top: 10px;
+}
+
+.jobApplyButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #00e5a0, #00b4d8);
+  color: #041017;
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  text-decoration: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .container {
+    padding-top: 102px;
+  }
+
+  .stepper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stepItem {
+    width: 100%;
+  }
+
+  .dropTitle {
+    font-size: 19px;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding-inline: 14px;
+    padding-bottom: 42px;
+  }
+
+  .header,
+  .panel {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .title {
+    font-size: 30px;
+  }
+
+  .skillInputRow {
+    flex-direction: column;
+  }
+
+  .secondaryButton,
+  .textInput,
+  .analyzeButton,
+  .matchingButton,
+  .jobTextarea,
+  .jobApplyButton {
+    width: 100%;
+  }
 }

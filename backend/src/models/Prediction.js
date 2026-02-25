@@ -11,6 +11,10 @@ const predictionSchema = new mongoose.Schema({
     ref: 'Resume',
     required: true
   },
+  mlServicePredictionId: {
+    type: String,
+    description: 'Reference to the prediction stored in ML Service'
+  },
   prediction: {
     type: String,
     required: true

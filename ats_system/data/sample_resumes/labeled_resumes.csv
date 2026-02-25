@@ -1,0 +1,26 @@
+text,category
+"Built machine learning pipelines in Python with TensorFlow and scikit-learn for prediction services deployed on AWS.",AI
+"Developed deep learning models for NLP tasks including text classification and entity extraction using PyTorch.",AI
+"Implemented computer vision models and MLOps workflows with Docker and Kubernetes for scalable inference.",AI
+"Trained recommendation models using feature engineering and hyperparameter tuning for an AI product.",AI
+"Performed exploratory data analysis in Python and SQL and created dashboards in Tableau for business teams.",Data Science
+"Built forecasting models with statistics and machine learning and presented insights using Power BI.",Data Science
+"Designed A/B testing experiments and analyzed user behavior using pandas and NumPy.",Data Science
+"Developed churn prediction analysis with SQL data pipelines and statistical validation.",Data Science
+"Created responsive web interfaces using HTML CSS JavaScript and React with reusable component architecture.",Web Development
+"Built full stack applications with React Node.js and Express.js and integrated REST API endpoints.",Web Development
+"Implemented authentication flows and frontend state management in TypeScript and React.",Web Development
+"Developed portfolio and e-commerce websites with modern CSS and client-side routing.",Web Development
+"Developed backend microservices using Node.js Express.js MongoDB and Redis for high throughput APIs.",Backend Development
+"Designed scalable Java Spring Boot services and PostgreSQL schema for transactional systems.",Backend Development
+"Implemented REST API services with authentication authorization and caching layers.",Backend Development
+"Built server side processing workflows and database optimization for backend applications.",Backend Development
+"Managed cloud infrastructure on AWS with Terraform Docker Kubernetes and CI/CD pipelines.",DevOps
+"Automated deployments using Jenkins GitHub Actions and Linux shell scripting across environments.",DevOps
+"Configured monitoring and alerting for microservices with log aggregation and system metrics.",DevOps
+"Built infrastructure as code modules and secure container workflows for production reliability.",DevOps
+"Developed Android applications in Kotlin and Java with REST API integration and Firebase.",Mobile Development
+"Built cross-platform mobile apps using Flutter with state management and API communication.",Mobile Development
+"Implemented iOS app features in Swift including push notifications and mobile analytics.",Mobile Development
+"Created mobile UI components and release pipelines for React Native applications.",Mobile Development
+

@@ -1,0 +1,33 @@
+
+> rexionai@1.0.0 dev
+> node scripts/dev-runner.cjs
+
+[dev-runner] Starting backend and frontend...
+[backend] > rexion-backend@1.0.0 dev
+[backend] > node --watch server.js
+[frontend] > rexion-frontend@1.0.0 dev
+[frontend] > vite --host 127.0.0.1 --port 5173 --strictPort
+[backend] (node:24464) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+[backend] (Use `node --trace-warnings ...` to show where the warning was created)
+[backend] Rexion backend listening on http://localhost:5000
+[backend] SQLite database: C:\Users\anshupal\OneDrive\Desktop\rexionAI\backend\data\rexion.sqlite
+[backend] LLM provider: local-llm-v1
+[backend] LLM store path: C:\Users\anshupal\OneDrive\Desktop\rexionAI\backend\llm-models\resume-analysis-store.json
+[backend] Restarting 'server.js'
+[backend] (node:480) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+[backend] (Use `node --trace-warnings ...` to show where the warning was created)
+[backend] Rexion backend listening on http://localhost:5000
+[backend] SQLite database: C:\Users\anshupal\OneDrive\Desktop\rexionAI\backend\data\rexion.sqlite
+[backend] LLM provider: local-llm-v1
+[backend] LLM store path: C:\Users\anshupal\OneDrive\Desktop\rexionAI\backend\llm-models\resume-analysis-store.json
+[frontend]   [32m[1mVITE[22m v4.5.14[39m  [2mready in [0m[1m449[22m[2m[0m ms[22m
+[frontend]   [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[frontend] [2m12:25:14 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ResumePredictor/ResumePredictor.jsx[22m
+[backend] Failed running 'server.js'. Waiting for file changes before restarting...
+[backend] ^C
+[frontend] ^C
+[frontend] ^C
+[frontend] Terminate batch job (Y/N)? 
+[backend] ^C
+[backend] Terminate batch job (Y/N)? 
+^C^C

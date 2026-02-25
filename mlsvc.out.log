@@ -1,0 +1,2 @@
+INFO:     127.0.0.1:63099 - "POST /predict HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:63103 - "GET /health HTTP/1.1" 200 OK

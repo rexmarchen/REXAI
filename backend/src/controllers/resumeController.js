@@ -2,8 +2,10 @@ import { readFileSync } from 'node:fs'
 import Resume from '../models/Resume.js'
 import Prediction from '../models/Prediction.js'
 import { analyzeResumeContent } from '../services/resumeAnalysisService.js'
+import { predictCareerPathViaMlService, getPredictionFromMlService } from '../services/mlServiceClient.js'
 import { catchAsync } from '../utils/catchAsync.js'
 import AppError from '../utils/AppError.js'
+import { logger } from '../utils/logger.js'
 
 const getUserId = (req) => req.user?.id || req.user?._id || null
 
@@ -54,45 +56,125 @@ export const predictResume = catchAsync(async (req, res, next) => {
     return next(new AppError('Please upload a file', 400))
   }
 
-  const resumeBuffer = readFileSync(req.file.path)
-  const analysis = await analyzeResumeContent(resumeBuffer, req.file.originalname || req.file.filename)
   const userId = getUserId(req)
+  
+  // Get file buffer and validate
+  const resumeBuffer = readFileSync(req.file.path)
+  const fileName = req.file.originalname || req.file.filename
 
-  let predictionId = null
-  if (userId) {
-    const savedResume = await Resume.create({
-      user: userId,
-      filename: req.file.filename,
-      path: req.file.path,
-      size: req.file.size,
-      mimetype: req.file.mimetype
+  try {
+    // Call ML Service for prediction
+    const mlPrediction = await predictCareerPathViaMlService(
+      resumeBuffer,
+      fileName,
+      userId
+    )
+
+    logger.info(`ML Service prediction received for ${fileName}`)
+
+    // Save resume to database
+    let savedResume = null
+    let predictionId = null
+
+    if (userId) {
+      savedResume = await Resume.create({
+        user: userId,
+        filename: req.file.filename,
+        path: req.file.path,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      })
+
+      // Store prediction reference in DB
+      const prediction = await Prediction.create({
+        user: userId,
+        resume: savedResume._id,
+        mlServicePredictionId: mlPrediction.prediction_id, // Reference to ML service
+        prediction: mlPrediction.career_path,
+        confidence: mlPrediction.confidence,
+        details: {
+          atsScore: mlPrediction.ats_score,
+          careerPath: mlPrediction.career_path,
+          confidence: mlPrediction.confidence,
+          jobsCount: mlPrediction.jobs?.length || 0,
+          mlServiceSource: true
+        }
+      })
+
+      predictionId = String(prediction._id)
+    }
+
+    // Return response with ML service data
+    res.status(201).json({
+      success: true,
+      fileName: fileName,
+      sizeBytes: req.file.size,
+      prediction_id: mlPrediction.prediction_id,
+      db_prediction_id: predictionId,
+      id: predictionId,
+      career_path: mlPrediction.career_path,
+      prediction: mlPrediction.career_path,
+      confidence: mlPrediction.confidence,
+      ats_score: mlPrediction.ats_score,
+      jobs: mlPrediction.jobs,
+      analysisMethod: 'ml-service',
+      source: 'ml-service'
     })
+  } catch (error) {
+    logger.error(`Resume prediction failed: ${error.message}`)
 
-    const prediction = await Prediction.create({
-      user: userId,
-      resume: savedResume._id,
-      prediction: analysis.prediction,
-      confidence: analysis.confidence,
-      details: {
-        confidenceLevel: analysis.confidenceLevel,
-        weaknesses: analysis.weaknesses,
-        precautions: analysis.precautions,
-        technologyRecommendations: analysis.technologyRecommendations,
-        improvementPlan: analysis.improvementPlan,
-        llmModel: analysis.llmModel,
-        analysisMethod: analysis.analysisMethod,
-        voiceSummary: analysis.voiceSummary
+    // Fallback to local analysis if ML service fails
+    if (process.env.USE_FALLBACK_ANALYSIS === 'true') {
+      logger.info('Falling back to local analysis...')
+      
+      try {
+        const analysis = await analyzeResumeContent(resumeBuffer, fileName)
+        
+        let predictionId = null
+        if (userId) {
+          const savedResume = await Resume.create({
+            user: userId,
+            filename: req.file.filename,
+            path: req.file.path,
+            size: req.file.size,
+            mimetype: req.file.mimetype
+          })
+
+          const prediction = await Prediction.create({
+            user: userId,
+            resume: savedResume._id,
+            prediction: analysis.prediction,
+            confidence: analysis.confidence,
+            details: {
+              confidenceLevel: analysis.confidenceLevel,
+              weaknesses: analysis.weaknesses,
+              precautions: analysis.precautions,
+              technologyRecommendations: analysis.technologyRecommendations,
+              improvementPlan: analysis.improvementPlan,
+              llmModel: analysis.llmModel,
+              analysisMethod: analysis.analysisMethod,
+              voiceSummary: analysis.voiceSummary,
+              mlServiceSource: false
+            }
+          })
+
+          predictionId = String(prediction._id)
+        }
+
+        res.status(201).json({
+          fileName: fileName,
+          sizeBytes: req.file.size,
+          ...buildPredictionPayload(analysis, predictionId),
+          analysisMethod: 'local-fallback',
+          source: 'local-analysis'
+        })
+      } catch (fallbackError) {
+        return next(new AppError(`Analysis failed: ${fallbackError.message}`, 500))
       }
-    })
-
-    predictionId = String(prediction._id)
+    } else {
+      return next(new AppError(`ML Service analysis failed: ${error.message}`, error.response?.status || 500))
+    }
   }
-
-  res.status(201).json({
-    fileName: req.file.originalname || req.file.filename,
-    sizeBytes: req.file.size,
-    ...buildPredictionPayload(analysis, predictionId)
-  })
 })
 
 export const analyzeResume = predictResume
