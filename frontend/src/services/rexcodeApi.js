@@ -1,7 +1,10 @@
 import apiClient from './apiClient'
 
-export const generateSite = async (prompt) => {
-  return apiClient.post('/rexcode/generate', { prompt })
+export const generateSite = async (prompt, options = {}) => {
+  return apiClient.post('/rexcode/generate', {
+    prompt,
+    ...(options || {})
+  })
 }
 
 export const getGeneratedSite = async (id) => {

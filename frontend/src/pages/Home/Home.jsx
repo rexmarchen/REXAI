@@ -2,22 +2,69 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import ParticleEarth from '../../components/common/ParticleEarth'
 import WorkspaceSection from '../Workspace'
-import { useResumeUpload } from '../../hooks/useResumeUpload'
 import { useRexcode } from '../../hooks/useRexcode'
 import styles from './Home.module.css'
 
+const BOLD_MARKDOWN_REGEX = /(\*\*[^*]+\*\*)/g
+
+const renderInlineAnswer = (text, keyPrefix) => {
+  return String(text)
+    .split(BOLD_MARKDOWN_REGEX)
+    .map((segment, index) => {
+      if (segment.startsWith('**') && segment.endsWith('**')) {
+        const content = segment.slice(2, -2).trim()
+        if (!content) {
+          return null
+        }
+
+        return <strong key={`${keyPrefix}-strong-${index}`}>{content}</strong>
+      }
+
+      return (
+        <React.Fragment key={`${keyPrefix}-text-${index}`}>
+          {segment}
+        </React.Fragment>
+      )
+    })
+}
+
+const renderAnswerBlocks = (answer) => {
+  const blocks = String(answer || '')
+    .replace(/\r\n/g, '\n')
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+
+  return blocks.map((block, blockIndex) => {
+    const lines = block
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+    const isList = lines.length > 0 && lines.every((line) => /^[-*]\s+/.test(line))
+
+    if (isList) {
+      return (
+        <ul key={`answer-list-${blockIndex}`} className={styles.answerList}>
+          {lines.map((line, itemIndex) => (
+            <li key={`answer-list-item-${blockIndex}-${itemIndex}`}>
+              {renderInlineAnswer(line.replace(/^[-*]\s+/, ''), `list-${blockIndex}-${itemIndex}`)}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    return (
+      <p key={`answer-para-${blockIndex}`} className={styles.answerParagraph}>
+        {renderInlineAnswer(lines.join(' '), `para-${blockIndex}`)}
+      </p>
+    )
+  })
+}
+
 const Home = () => {
   const [prompt, setPrompt] = useState('')
-  const [dragActive, setDragActive] = useState(false)
-  const [selectedFileName, setSelectedFileName] = useState('')
-  const [resumeResult, setResumeResult] = useState(null)
   const [rexcodeResult, setRexcodeResult] = useState(null)
-
-  const {
-    upload,
-    loading: resumeLoading,
-    error: resumeError
-  } = useResumeUpload()
 
   const {
     generate,
@@ -28,38 +75,24 @@ const Home = () => {
   const handleAsk = async () => {
     const trimmed = prompt.trim()
     if (!trimmed) return
-    const result = await generate(trimmed)
+    const result = await generate(trimmed, { mode: 'answer' })
     if (result) setRexcodeResult(result)
   }
-
-  const handleFileUpload = async (file) => {
-    if (!file) return
-    setSelectedFileName(file.name)
-    const result = await upload(file)
-    if (result) setResumeResult(result)
-  }
-
-  const handleDrop = (event) => {
-    event.preventDefault()
-    setDragActive(false)
-    handleFileUpload(event.dataTransfer.files?.[0])
-  }
-
-  const predictionText =
-    resumeResult?.prediction ||
-    resumeResult?.result?.prediction ||
-    ''
-  const confidence =
-    resumeResult?.confidence ??
-    resumeResult?.result?.confidence
   const generatedCode =
     rexcodeResult?.code ||
     rexcodeResult?.result?.code ||
+    ''
+  const generatedAnswer =
+    rexcodeResult?.answer ||
+    rexcodeResult?.result?.answer ||
     ''
   const generatedUrl =
     rexcodeResult?.siteUrl ||
     rexcodeResult?.result?.siteUrl ||
     ''
+  const generatedUrlLabel = generatedUrl.startsWith('data:text/html')
+    ? 'Open generated site preview'
+    : generatedUrl
 
   return (
     <>
@@ -108,77 +141,30 @@ const Home = () => {
 
         {rexcodeError && <p className={styles.errorText}>{rexcodeError}</p>}
 
-        <div className={styles.uploadSection}>
-          <label className={styles.uploadLabel}>RESUME PREDICTOR</label>
-          <div
-            className={`${styles.uploadDropzone} ${dragActive ? styles.dragOver : ''}`}
-            onDragEnter={(event) => {
-              event.preventDefault()
-              setDragActive(true)
-            }}
-            onDragOver={(event) => {
-              event.preventDefault()
-              setDragActive(true)
-            }}
-            onDragLeave={(event) => {
-              event.preventDefault()
-              setDragActive(false)
-            }}
-            onDrop={handleDrop}
-          >
-            <span className={styles.uploadIcon}>UPLOAD</span>
-            <div className={styles.uploadTitle}>Drop your resume for AI analysis</div>
-            <div className={styles.uploadHint}>PDF, DOC, DOCX</div>
-            <label htmlFor="resume-file" className={styles.uploadBtn}>
-              {resumeLoading ? 'ANALYZING...' : 'SELECT FILE'}
-            </label>
-            <input
-              id="resume-file"
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={(event) => handleFileUpload(event.target.files?.[0])}
-              className={styles.fileInput}
-            />
-            {selectedFileName && (
-              <div className={styles.fileInfo}>
-                {selectedFileName} ready for REXION analysis
+        <div className={styles.aiOutputSection}>
+          <div className={`${styles.resultCard} ${generatedAnswer ? styles.answerCard : ''}`}>
+            <h3>AI Output</h3>
+            {generatedAnswer && (
+              <div className={styles.answerBubble}>
+                {renderAnswerBlocks(generatedAnswer)}
               </div>
             )}
+            {!generatedAnswer && generatedUrl && (
+              <p>
+                Site URL:{' '}
+                <a href={generatedUrl} target="_blank" rel="noreferrer">
+                  {generatedUrlLabel}
+                </a>
+              </p>
+            )}
+            {!generatedAnswer && generatedCode && (
+              <pre className={styles.codeBlock}>{generatedCode}</pre>
+            )}
+            {!generatedAnswer && !generatedCode && !generatedUrl && (
+              <p>Ask something and your AI output will appear here.</p>
+            )}
           </div>
-          {resumeError && <p className={styles.errorText}>{resumeError}</p>}
         </div>
-
-        {(resumeResult || rexcodeResult) && (
-          <div className={styles.resultsGrid}>
-            <div className={styles.resultCard}>
-              <h3>Resume Result</h3>
-              {!resumeResult && <p>No resume analyzed yet.</p>}
-              {resumeResult && (
-                <>
-                  {predictionText && <p>{predictionText}</p>}
-                  {confidence !== undefined && confidence !== null && (
-                    <p>Confidence: {confidence}%</p>
-                  )}
-                </>
-              )}
-            </div>
-            <div className={styles.resultCard}>
-              <h3>AI Output</h3>
-              {!rexcodeResult && <p>No prompt generated yet.</p>}
-              {generatedUrl && (
-                <p>
-                  Site URL:{' '}
-                  <a href={generatedUrl} target="_blank" rel="noreferrer">
-                    {generatedUrl}
-                  </a>
-                </p>
-              )}
-              {generatedCode && (
-                <pre className={styles.codeBlock}>{generatedCode}</pre>
-              )}
-            </div>
-          </div>
-        )}
 
         <div className={styles.quickLinks}>
           <Link to="/resume-predictor">Open Resume Predictor Page</Link>

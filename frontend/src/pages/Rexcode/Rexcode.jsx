@@ -11,7 +11,7 @@ const Rexcode = () => {
   const [result, setResult] = useState(null)
 
   const handleGenerate = async (prompt) => {
-    const data = await generate(prompt)
+    const data = await generate(prompt, { mode: 'site' })
     setResult(data)
   }
 

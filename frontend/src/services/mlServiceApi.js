@@ -1,17 +1,4 @@
-import axios from 'axios'
 import apiClient from './apiClient'
-
-const mlServiceClient = axios.create({
-  baseURL: import.meta.env.VITE_ML_SERVICE_BASE_URL || 'http://127.0.0.1:8000'
-})
-
-mlServiceClient.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
-    console.error('ML Service Error:', error.response?.data || error.message)
-    return Promise.reject(error)
-  }
-)
 
 /**
  * Upload resume and get career prediction with job matches
@@ -36,11 +23,7 @@ export const predictCareerPath = async (file, options = {}) => {
     formData.append('remote', String(options.remote))
   }
   
-  return mlServiceClient.post('/predict', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+  return apiClient.post('/ml/predict', formData)
 }
 
 /**
@@ -66,12 +49,7 @@ export const searchJobs = async (query, options = {}) => {
     params.append('page', options.page)
   }
 
-  try {
-    return await mlServiceClient.get(`/jobs/search?${params.toString()}`)
-  } catch (error) {
-    // Fallback through backend proxy if direct ML service call fails.
-    return apiClient.get(`/resume/jobs/search?${params.toString()}`)
-  }
+  return apiClient.get(`/ml/jobs/search?${params.toString()}`)
 }
 
-export default mlServiceClient
+export default apiClient

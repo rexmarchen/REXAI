@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import re
 from typing import List, Tuple
+import warnings
 
 import joblib
 import numpy as np
@@ -14,11 +15,24 @@ class CareerPredictor:
         self.classes_ = None
         if model_path:
             try:
-                self.model = joblib.load(Path(model_path))
+                loaded_model = joblib.load(Path(model_path))
+                self._apply_model_compatibility(loaded_model)
+                self.model = loaded_model
                 self.classes_ = self.model.classes_ if hasattr(self.model, 'classes_') else None
             except Exception:
                 self.model = None
                 self.classes_ = None
+
+    def _apply_model_compatibility(self, model) -> None:
+        """
+        Patch known sklearn model attribute gaps that can happen when
+        loading artifacts trained with a different sklearn version.
+        """
+        if isinstance(model, LogisticRegression):
+            if not hasattr(model, "multi_class"):
+                model.multi_class = "auto"
+            if not hasattr(model, "n_features_in_") and hasattr(model, "coef_"):
+                model.n_features_in_ = model.coef_.shape[1]
 
     # Skill to career mapping for intelligent guessing when no model is trained
     SKILL_CAREER_MAP = {
@@ -116,29 +130,31 @@ class CareerPredictor:
         Falls back to heuristic prediction if model not trained
         """
         if self.model is not None:
-            # Use trained model
-            preds = self.model.predict(X)
-            probs = self.model.predict_proba(X).max(axis=1)
-            return preds, probs
-        else:
-            # Fallback: Return heuristic predictions
-            # Since we have features, we'll return a default but varied prediction
-            predictions = []
-            probabilities = []
-            
-            for i in range(X.shape[0]):
-                # Use sum of features as a seed for variation
-                feature_sum = np.sum(X[i].toarray())
-                # Map to different career paths based on feature sum
-                career_idx = int(feature_sum) % len(self.CAREER_PATHS)
-                career = self.CAREER_PATHS[career_idx]
-                # Confidence based on feature magnitude
-                confidence = min(0.95, 0.4 + (feature_sum % 100) / 200)
-                
-                predictions.append(career)
-                probabilities.append(confidence)
-            
-            return predictions, probabilities
+            try:
+                preds = self.model.predict(X)
+                probs = self.model.predict_proba(X).max(axis=1)
+                return preds, probs
+            except Exception as error:
+                warnings.warn(
+                    f"Career model inference failed ({error}). Falling back to heuristic predictions."
+                )
+
+        # Fallback: return deterministic predictions from feature signals.
+        predictions = []
+        probabilities = []
+
+        for i in range(X.shape[0]):
+            row = X[i]
+            dense_row = row.toarray() if hasattr(row, "toarray") else row
+            feature_sum = float(np.sum(dense_row))
+            career_idx = int(feature_sum) % len(self.CAREER_PATHS)
+            career = self.CAREER_PATHS[career_idx]
+            confidence = min(0.95, 0.4 + (feature_sum % 100) / 200)
+
+            predictions.append(career)
+            probabilities.append(confidence)
+
+        return predictions, probabilities
 
     def save(self, path):
         joblib.dump(self.model, path)

@@ -1,1 +1,0 @@
-import{b as a}from"./apiClient-df69f537.js";const s=async t=>{const e=new FormData;return e.append("resume",t),a.post("/resume/predict",e)},p=async t=>{const e=new FormData;return e.append("resume",t),a.post("/predict",e)};export{p,s as u};

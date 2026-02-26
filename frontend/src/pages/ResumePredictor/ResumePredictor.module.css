@@ -4,10 +4,9 @@
   position: relative;
   min-height: 100vh;
   padding: 112px 20px 56px;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(0, 229, 160, 0.13), transparent 42%),
-    radial-gradient(circle at 88% 18%, rgba(0, 180, 216, 0.15), transparent 45%),
-    #07090f;
+  overflow: hidden;
+  isolation: isolate;
+  background: #07090f;
 }
 
 .embedded {
@@ -16,12 +15,41 @@
   background: transparent;
 }
 
+.videoLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.videoBackground {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.36) saturate(1.08);
+}
+
+.videoOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(0, 229, 160, 0.2), transparent 42%),
+    radial-gradient(circle at 88% 18%, rgba(0, 180, 216, 0.2), transparent 45%),
+    linear-gradient(180deg, rgba(5, 8, 13, 0.52), rgba(5, 8, 13, 0.82));
+}
+
 .content {
+  position: relative;
+  z-index: 1;
   max-width: 1080px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.embedded .videoLayer {
+  display: none;
 }
 
 .header {

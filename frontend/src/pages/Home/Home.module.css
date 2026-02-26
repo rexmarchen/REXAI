@@ -183,96 +183,10 @@
   color: #ffcc44;
 }
 
-.uploadSection {
-  margin-top: 36px;
-  width: 100%;
-  max-width: 880px;
-}
-
-.uploadLabel {
-  display: block;
-  text-align: left;
-  font-size: 0.65rem;
-  letter-spacing: 0.28em;
-  color: rgba(255, 255, 255, 0.35);
-  margin-bottom: 12px;
-}
-
-.uploadDropzone {
-  border: 2px dashed rgba(0, 245, 255, 0.22);
-  border-radius: 20px;
-  padding: 34px 28px;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(10px);
-  transition: border-color 0.3s, background 0.3s, transform 0.2s, box-shadow 0.3s;
-}
-
-.dragOver {
-  border-color: var(--color-primary);
-  background: rgba(10, 10, 10, 0.86);
-  transform: translateY(-2px);
-  box-shadow: var(--glow);
-}
-
-.uploadIcon {
-  display: block;
-  font-family: var(--font-display);
-  letter-spacing: 0.14em;
-  font-size: 0.92rem;
-  color: var(--color-primary);
-  margin-bottom: 10px;
-}
-
-.uploadTitle {
-  font-family: var(--font-display);
-  font-size: 0.92rem;
-  letter-spacing: 0.1em;
-  margin-bottom: 8px;
-}
-
-.uploadHint {
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.4);
-  margin-bottom: 18px;
-}
-
-.uploadBtn {
-  display: inline-block;
-  background: transparent;
-  border: 1px solid rgba(0, 245, 255, 0.36);
-  border-radius: 10px;
-  padding: 10px 26px;
-  color: var(--color-primary);
-  font-family: var(--font-display);
-  font-size: 0.7rem;
-  letter-spacing: 0.14em;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.uploadBtn:hover {
-  background: rgba(0, 245, 255, 0.1);
-  box-shadow: 0 0 20px rgba(0, 245, 255, 0.25);
-}
-
-.fileInput {
-  display: none;
-}
-
-.fileInfo {
-  margin-top: 12px;
-  font-size: 0.83rem;
-  color: var(--color-primary);
-}
-
-.resultsGrid {
+.aiOutputSection {
   width: 100%;
   max-width: 880px;
   margin-top: 28px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
 }
 
 .resultCard {
@@ -281,6 +195,11 @@
   border-radius: 14px;
   padding: 18px;
   background: rgba(0, 0, 0, 0.58);
+}
+
+.answerCard {
+  border-color: rgba(0, 245, 255, 0.32);
+  background: radial-gradient(circle at 0% 0%, rgba(0, 245, 255, 0.1), rgba(0, 0, 0, 0.72) 45%);
 }
 
 .resultCard h3 {
@@ -310,6 +229,45 @@
   overflow: auto;
   white-space: pre-wrap;
   font-size: 0.8rem;
+}
+
+.answerBubble {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(7, 15, 35, 0.85));
+}
+
+.answerParagraph {
+  margin: 0 0 12px;
+  color: #eef3ff;
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.answerParagraph:last-child {
+  margin-bottom: 0;
+}
+
+.answerList {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  color: #eef3ff;
+  line-height: 1.65;
+}
+
+.answerList:last-child {
+  margin-bottom: 0;
+}
+
+.answerList li {
+  margin: 0 0 6px;
+}
+
+.answerParagraph strong,
+.answerList strong {
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .quickLinks {

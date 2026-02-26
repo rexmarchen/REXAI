@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import JobMatchingEngine from '../../components/resume/JobMatchingEngine'
 import { matchResumesWithJob, uploadResumesToAts } from '../../services/atsApi'
-import { predictResumePipeline } from '../../services/resumeApi'
 import { predictCareerPath, searchJobs } from '../../services/mlServiceApi'
 import styles from './ResumePredictor.module.css'
 
@@ -35,13 +34,36 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value))
 }
 
+function cleanReadableText(value, maxLength = 240) {
+  const normalized = String(value || '')
+    .replace(/\u0000/g, ' ')
+    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!normalized) {
+    return ''
+  }
+
+  const alphaNumericCount = (normalized.match(/[A-Za-z0-9]/g) || []).length
+  if (alphaNumericCount === 0) {
+    return ''
+  }
+
+  if (maxLength > 0 && normalized.length > maxLength) {
+    return `${normalized.slice(0, maxLength).trim()}...`
+  }
+
+  return normalized
+}
+
 function sanitizeList(value) {
   if (!Array.isArray(value)) {
     return []
   }
 
   return value
-    .map((item) => String(item || '').trim())
+    .map((item) => cleanReadableText(item, 120))
     .filter(Boolean)
 }
 
@@ -225,17 +247,17 @@ function normalizePrediction(data) {
     const experienceYears = parseExperienceYears(data.experience_years || data.required_experience)
 
     return {
-      name: String(data.name || '').trim(),
+      name: cleanReadableText(data.name, 80),
       skills: sanitizeList(data.extracted_skills || data.skills || data.required_skills || []),
-      education: String(data.education || data.required_education || '').trim(),
+      education: cleanReadableText(data.education || data.required_education, 180),
       certifications: sanitizeList(data.certifications || []),
       projects: sanitizeList(data.projects || []),
       experience_years: Number.isFinite(experienceYears) ? Math.max(0, experienceYears) : 0,
-      predicted_role: String(data.career_path || data.predicted_role || '').trim(),
+      predicted_role: cleanReadableText(data.career_path || data.predicted_role, 80),
       confidence,
       ats_score: Number(data.ats_score || 0),
-      predicted_category: String(data.predicted_category || '').trim(),
-      job_description_used: String(data.job_description_used || '').trim(),
+      predicted_category: cleanReadableText(data.predicted_category, 80),
+      job_description_used: cleanReadableText(data.job_description_used, 320),
       missing_skills: sanitizeList(data.missing_skills || []),
       jobs: sanitizeJobs(data.jobs)
     }
@@ -251,17 +273,17 @@ function normalizePrediction(data) {
   const experienceYears = parseExperienceYears(data.experience_years || data.required_experience)
 
   return {
-    name: String(data.name || '').trim(),
+    name: cleanReadableText(data.name, 80),
     skills: sanitizeList(data.skills),
-    education: String(data.education || '').trim(),
+    education: cleanReadableText(data.education, 180),
     certifications: sanitizeList(data.certifications),
     projects: sanitizeList(data.projects),
     experience_years: Number.isFinite(experienceYears) ? Math.max(0, experienceYears) : 0,
-    predicted_role: String(data.predicted_role || '').trim(),
+    predicted_role: cleanReadableText(data.predicted_role, 80),
     confidence,
     ats_score: Number(data.ats_score || 0),
-    predicted_category: String(data.predicted_category || '').trim(),
-    job_description_used: String(data.job_description_used || '').trim(),
+    predicted_category: cleanReadableText(data.predicted_category, 80),
+    job_description_used: cleanReadableText(data.job_description_used, 320),
     missing_skills: sanitizeList(data.missing_skills),
     jobs: sanitizeJobs(data.jobs)
   }
@@ -519,22 +541,13 @@ const ResumePredictor = ({ embedded = false }) => {
     setShowMatching(false)
 
     try {
-      let response
       const predictionOptions = {
         jobDescription: jobDescriptionInput.trim(),
         location: jobLocation.trim(),
         remote: remoteOnly
       }
 
-      // Try ML service first
-      try {
-        response = await predictCareerPath(file, predictionOptions)
-        console.log('ML Service response:', response)
-      } catch (mlError) {
-        console.log('ML Service failed, trying backend...', mlError.message)
-        // Fall back to backend
-        response = await predictResumePipeline(file)
-      }
+      const response = await predictCareerPath(file, predictionOptions)
 
       const normalized = normalizePrediction(response)
 
@@ -654,11 +667,20 @@ const ResumePredictor = ({ embedded = false }) => {
         setAtsError('No ATS results returned for the uploaded resumes.')
       }
     } catch (atsRequestError) {
+      const isNetworkFailure =
+        !atsRequestError?.response &&
+        /network error|failed to fetch|load failed|ecconnrefused|err_network/i.test(
+          String(atsRequestError?.message || '')
+        )
+      const atsServiceBaseUrl =
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/ml`
       const message =
-        atsRequestError?.response?.data?.detail ||
-        atsRequestError?.response?.data?.message ||
-        atsRequestError.message ||
-        'ATS engine request failed.'
+        isNetworkFailure
+          ? `ATS service is unreachable at ${atsServiceBaseUrl}. Start the Python service and retry.`
+          : atsRequestError?.response?.data?.message ||
+            atsRequestError?.response?.data?.detail ||
+            atsRequestError.message ||
+            'ATS engine request failed.'
       setAtsError(message)
     } finally {
       setAtsLoading(false)
@@ -667,6 +689,21 @@ const ResumePredictor = ({ embedded = false }) => {
 
   return (
     <div className={`${styles.container} ${embedded ? styles.embedded : ''}`}>
+      {!embedded && (
+        <div className={styles.videoLayer} aria-hidden="true">
+          <video
+            className={styles.videoBackground}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          >
+            <source src="/videos/resume-bg.mp4" type="video/mp4" />
+          </video>
+          <div className={styles.videoOverlay} />
+        </div>
+      )}
       <div className={styles.content}>
         <header className={styles.header}>
           <p className={styles.kicker}>RESUME TO JOB PIPELINE</p>

@@ -7,11 +7,11 @@ export const useRexcode = () => {
   const [error, setError] = useState(null)
   const { dispatch } = useApp()
 
-  const generate = async (prompt) => {
+  const generate = async (prompt, options = {}) => {
     setLoading(true)
     setError(null)
     try {
-      const result = await generateSite(prompt)
+      const result = await generateSite(prompt, options)
       dispatch({ type: 'SET_REXCODE_RESULT', payload: result })
       return result
     } catch (err) {

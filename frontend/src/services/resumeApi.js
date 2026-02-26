@@ -8,8 +8,8 @@ export const uploadResume = async (file) => {
 
 export const predictResumePipeline = async (file) => {
   const formData = new FormData()
-  formData.append('resume', file)
-  return apiClient.post('/predict', formData)
+  formData.append('file', file)
+  return apiClient.post('/ml/predict', formData)
 }
 
 export const getPredictionResult = async (id) => {

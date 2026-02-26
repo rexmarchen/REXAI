@@ -4,7 +4,48 @@ const http = require('node:http')
 const path = require('node:path')
 
 const rootDir = process.cwd()
+const resolveMlPythonBin = () => {
+  const candidates =
+    process.platform === 'win32'
+      ? [
+          path.join(rootDir, '.venv-1', 'Scripts', 'python.exe'),
+          path.join(rootDir, '.venv', 'Scripts', 'python.exe'),
+          path.join(rootDir, '.venv-2', 'Scripts', 'python.exe'),
+          'python'
+        ]
+      : [
+          path.join(rootDir, '.venv-1', 'bin', 'python'),
+          path.join(rootDir, '.venv', 'bin', 'python'),
+          path.join(rootDir, '.venv-2', 'bin', 'python'),
+          'python3',
+          'python'
+        ]
+
+  for (const candidate of candidates) {
+    if (!candidate.includes(path.sep)) {
+      return candidate
+    }
+    if (fs.existsSync(candidate)) {
+      return candidate
+    }
+  }
+
+  return process.platform === 'win32' ? 'python' : 'python3'
+}
+
+const mlPythonBin = resolveMlPythonBin()
+
 const services = [
+  {
+    name: 'ml_service',
+    cwd: rootDir,
+    checkUrl: 'http://127.0.0.1:8000/health',
+    optional: true,
+    command: {
+      bin: mlPythonBin,
+      args: ['-m', 'uvicorn', 'ml_service.app.main:app', '--host', '127.0.0.1', '--port', '8000']
+    }
+  },
   {
     name: 'backend',
     cwd: path.join(rootDir, 'backend'),
@@ -134,6 +175,16 @@ function startService(service) {
     }
 
     const exitReason = signal ? `signal ${signal}` : `code ${code}`
+    if (service.optional) {
+      console.error(
+        `[dev-runner] ${service.name} exited (${exitReason}). ATS/ML features will be unavailable until this service is started.`
+      )
+      if (childProcesses.size === 0) {
+        process.exitCode = 0
+      }
+      return
+    }
+
     console.error(`[dev-runner] ${service.name} exited (${exitReason}). Stopping all services.`)
     shutdown(code || 1)
   })
@@ -149,7 +200,7 @@ process.on('SIGTERM', () => {
   shutdown(0)
 })
 
-console.log('[dev-runner] Starting backend and frontend...')
+console.log('[dev-runner] Starting ML service, backend and frontend...')
 ;(async () => {
   for (const service of services) {
     if (await isServiceReachable(service.checkUrl)) {

@@ -192,6 +192,17 @@ def _find_known_skills(normalized_lower_text: str) -> list[str]:
 
 
 def _pick_name(lines: list[str]) -> str:
+    labeled_pattern = re.compile(
+        r"^(?:name|full\s*name)\s*[:\-]\s*([A-Za-z][A-Za-z.'-]*(?:\s+[A-Za-z][A-Za-z.'-]*){1,4})\s*$",
+        re.IGNORECASE,
+    )
+    for line in lines[:24]:
+        match = labeled_pattern.match(_normalize_line(line))
+        if match:
+            candidate = _normalize_line(match.group(1))
+            if 4 <= len(candidate) <= 80:
+                return candidate
+
     blocked_words = {
         "resume",
         "curriculum vitae",
@@ -217,7 +228,7 @@ def _pick_name(lines: list[str]) -> str:
             continue
         if re.search(r"[@:/\\|]", value):
             continue
-        if len(words) < 2 or len(words) > 4:
+        if len(words) < 2 or len(words) > 5:
             continue
         if lower in blocked_words:
             continue
@@ -236,6 +247,19 @@ def _pick_name(lines: list[str]) -> str:
         alpha_chunks = [chunk for chunk in chunks if chunk.isalpha()]
         if 1 < len(alpha_chunks) <= 4:
             return " ".join(part.capitalize() for part in alpha_chunks[:4])
+
+    # Some resumes use all-caps first line without labels.
+    for line in lines[:8]:
+        value = _normalize_line(line)
+        words = value.split()
+        if len(words) < 2 or len(words) > 5:
+            continue
+        if any(char.isdigit() for char in value):
+            continue
+        if re.search(r"[@:/\\|]", value):
+            continue
+        if all(re.fullmatch(r"[A-Z.'-]+", word) for word in words):
+            return " ".join(word.capitalize() for word in words)
     return ""
 
 
