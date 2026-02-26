@@ -694,14 +694,8 @@
   gap: 10px;
 }
 
-.remoteColumns {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
 .remoteColumn {
+  margin-top: 10px;
   border: 1px solid #24465c;
   border-radius: 12px;
   background: rgba(10, 17, 27, 0.72);
@@ -720,16 +714,6 @@
   color: #e6effb;
   font-family: 'Syne', sans-serif;
   font-size: 20px;
-}
-
-.remoteBadge {
-  border: 1px solid #00e5a066;
-  color: #00e5a0;
-  border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 700;
 }
 
 .remoteBadgeAlt {
@@ -801,9 +785,6 @@
     font-size: 19px;
   }
 
-  .remoteColumns {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 600px) {

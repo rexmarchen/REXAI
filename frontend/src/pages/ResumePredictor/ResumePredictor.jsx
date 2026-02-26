@@ -7,7 +7,7 @@ import styles from './ResumePredictor.module.css'
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 const ACCEPTED_EXTENSIONS = ['.pdf', '.doc', '.docx']
-const REMOTE_SLOT_COUNT = 5
+const INTERNATIONAL_REMOTE_SLOT_COUNT = 10
 const REMOTE_FETCH_TIMEOUT_MS = 12000
 const INDIA_LOCATION_KEYWORDS = [
   'india',
@@ -471,7 +471,6 @@ const ResumePredictor = ({ embedded = false }) => {
   const [remoteJobsLoading, setRemoteJobsLoading] = useState(false)
   const [remoteJobsError, setRemoteJobsError] = useState('')
   const [remoteJobs, setRemoteJobs] = useState({
-    india: [],
     international: []
   })
 
@@ -500,7 +499,7 @@ const ResumePredictor = ({ embedded = false }) => {
 
   useEffect(() => {
     if (!prediction) {
-      setRemoteJobs({ india: [], international: [] })
+      setRemoteJobs({ international: [] })
       setRemoteJobsError('')
       setRemoteJobsLoading(false)
       return
@@ -516,14 +515,6 @@ const ResumePredictor = ({ embedded = false }) => {
       const interestSkills = sanitizeList(editedSkills.length ? editedSkills : prediction.skills).slice(0, 3)
       const roleQuery = role
       const skillsQuery = interestSkills.length ? `${role} ${interestSkills.join(' ')}`.trim() : role
-      const indiaQueries = Array.from(
-        new Set([
-          `${roleQuery} India remote`,
-          interestSkills.length ? `${roleQuery} ${interestSkills[0]} India remote` : ''
-        ])
-      )
-        .filter(Boolean)
-        .slice(0, 1)
       const intlQueries = Array.from(
         new Set([
           `${roleQuery} remote`,
@@ -534,45 +525,27 @@ const ResumePredictor = ({ embedded = false }) => {
         .slice(0, 1)
 
       try {
-        const requestSpecs = [
-          ...indiaQueries.map((query) => ({
-            bucket: 'india',
-            run: () =>
-              withTimeout(
-                searchJobs(query, {
-                  remote: true,
-                  page: 1
-                }),
-                REMOTE_FETCH_TIMEOUT_MS
-              )
-          })),
-          ...intlQueries.map((query) => ({
-            bucket: 'international',
-            run: () =>
-              withTimeout(
-                searchJobs(query, {
-                  remote: true,
-                  page: 1
-                }),
-                REMOTE_FETCH_TIMEOUT_MS
-              )
-          }))
-        ]
+        const requestSpecs = intlQueries.map((query) => () =>
+          withTimeout(
+            searchJobs(query, {
+              remote: true,
+              page: 1
+            }),
+            REMOTE_FETCH_TIMEOUT_MS
+          )
+        )
 
-        const settledResponses = await Promise.allSettled(requestSpecs.map((spec) => spec.run()))
+        const settledResponses = await Promise.allSettled(requestSpecs.map((spec) => spec()))
         const fulfilled = settledResponses
-          .map((result, index) => ({ result, spec: requestSpecs[index] }))
+          .map((result) => ({ result }))
           .filter((item) => item.result.status === 'fulfilled')
-          .map((item) => ({
-            bucket: item.spec.bucket,
-            payload: item.result.value
-          }))
+          .map((item) => item.result.value)
 
         if (fulfilled.length === 0) {
           throw new Error('NO_LIVE_JOB_RESPONSES')
         }
 
-        const livePayloads = fulfilled.map((item) => item.payload)
+        const livePayloads = fulfilled
         const liveJobs = sanitizeJobs(livePayloads.flatMap((payload) => payload?.jobs || []))
         const predictionJobs = sanitizeJobs(prediction.jobs || [])
         const allMeta = livePayloads.map((payload) => payload?.meta).filter(Boolean)
@@ -585,12 +558,6 @@ const ResumePredictor = ({ embedded = false }) => {
           allMeta.find((meta) => typeof meta?.error === 'string' && meta.error.trim())?.error || ''
         const providerErrorLower = providerError.toLowerCase()
 
-        const indiaPool = dedupeJobs(
-          [
-            ...liveJobs.filter((job) => isIndianJob(job)),
-            ...predictionJobs.filter((job) => isIndianJob(job))
-          ].filter((job) => isRemoteJob(job))
-        )
         const intlPool = dedupeJobs(
           [
             ...liveJobs.filter((job) => !isIndianJob(job)),
@@ -598,15 +565,12 @@ const ResumePredictor = ({ embedded = false }) => {
           ].filter((job) => isRemoteJob(job))
         )
 
-        const rankedIndia = sortByInterest(indiaPool, role, interestSkills)
         const rankedIntl = sortByInterest(intlPool, role, interestSkills)
 
-        const topIndia = rankedIndia.slice(0, REMOTE_SLOT_COUNT)
-        const topIntl = rankedIntl.slice(0, REMOTE_SLOT_COUNT)
+        const topIntl = rankedIntl.slice(0, INTERNATIONAL_REMOTE_SLOT_COUNT)
 
         if (!cancelled) {
           setRemoteJobs({
-            india: topIndia,
             international: topIntl
           })
           if (providerSet.has('none')) {
@@ -623,17 +587,12 @@ const ResumePredictor = ({ embedded = false }) => {
             )
           } else if (providerError) {
             setRemoteJobsError('Live jobs API returned an issue. Showing best available matches.')
-          } else if (topIndia.length < REMOTE_SLOT_COUNT || topIntl.length < REMOTE_SLOT_COUNT) {
+          } else if (topIntl.length < INTERNATIONAL_REMOTE_SLOT_COUNT) {
             setRemoteJobsError('Limited live remote results right now. Showing best available matches.')
           }
         }
       } catch (fetchError) {
         const predictionRemote = sanitizeJobs(prediction.jobs || []).filter((job) => isRemoteJob(job))
-        const rankedIndia = sortByInterest(
-          predictionRemote.filter((job) => isIndianJob(job)),
-          role,
-          interestSkills
-        )
         const rankedIntl = sortByInterest(
           predictionRemote.filter((job) => !isIndianJob(job)),
           role,
@@ -642,8 +601,7 @@ const ResumePredictor = ({ embedded = false }) => {
 
         if (!cancelled) {
           setRemoteJobs({
-            india: rankedIndia.slice(0, REMOTE_SLOT_COUNT),
-            international: rankedIntl.slice(0, REMOTE_SLOT_COUNT)
+            international: rankedIntl.slice(0, INTERNATIONAL_REMOTE_SLOT_COUNT)
           })
           setRemoteJobsError('Live remote jobs could not be loaded. Showing available remote matches.')
         }
@@ -773,10 +731,21 @@ const ResumePredictor = ({ embedded = false }) => {
         setAtsJobDescription(normalized.job_description_used)
       }
     } catch (requestError) {
+      const isNetworkFailure =
+        !requestError?.response &&
+        /network error|failed to fetch|load failed|ecconnrefused|err_network/i.test(
+          String(requestError?.message || '')
+        )
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+      const mlBaseUrl = import.meta.env.VITE_ML_SERVICE_BASE_URL || 'http://127.0.0.1:8000'
       const message =
-        requestError?.response?.data?.message ||
-        requestError.message ||
-        'Unable to analyze this resume right now.'
+        isNetworkFailure
+          ? `Prediction services are unreachable. Checked backend (${apiBaseUrl}) and ML service (${mlBaseUrl}). Start services and retry.`
+          : requestError?.response?.data?.message ||
+            requestError?.response?.data?.detail ||
+            requestError?.detail ||
+            requestError?.message ||
+            'Unable to analyze this resume right now.'
       setError(message)
     } finally {
       setLoading(false)
@@ -1276,14 +1245,14 @@ const ResumePredictor = ({ embedded = false }) => {
                   <div className={styles.remoteJobsHeader}>
                     <div>
                       <p className={styles.resultLabel}>Live Remote Jobs</p>
-                      <h3 className={styles.remoteJobsTitle}>Top 10 Curated Remote Openings</h3>
+                      <h3 className={styles.remoteJobsTitle}>Top 10 Curated International Remote Openings</h3>
                       <p className={styles.remoteJobsSubtitle}>
                         Based on your role prediction and skill interests:
-                        <strong> 5 India remote + 5 international remote</strong>
+                        <strong> 10 international remote roles</strong>
                       </p>
                     </div>
                     <span className={styles.remoteJobsCount}>
-                      {(remoteJobs.india.length || 0) + (remoteJobs.international.length || 0)} live jobs
+                      {remoteJobs.international.length || 0} live jobs
                     </span>
                   </div>
 
@@ -1295,90 +1264,46 @@ const ResumePredictor = ({ embedded = false }) => {
                   )}
                   {remoteJobsError && <p className={styles.error}>{remoteJobsError}</p>}
 
-                  <div className={styles.remoteColumns}>
-                    <div className={styles.remoteColumn}>
-                      <div className={styles.remoteColumnHead}>
-                        <h4>India Remote Picks</h4>
-                        <span className={styles.remoteBadge}>Remote India</span>
-                      </div>
-                      {remoteJobs.india.length > 0 ? (
-                        <div className={styles.jobsGrid}>
-                          {remoteJobs.india.map((job) => (
-                            <article key={`india-${job.id}`} className={styles.jobCard}>
-                              <div className={styles.jobHeader}>
-                                <h3 className={styles.jobTitle}>{job.title}</h3>
-                                <span className={styles.remotePill}>Remote</span>
-                              </div>
-                              <p className={styles.jobCompany}>{job.company}</p>
-                              <p className={styles.jobMeta}>
-                                {job.location}
-                                {job.employment_type ? ` | ${job.employment_type}` : ''}
-                              </p>
-                              {job.description && <p className={styles.jobDescription}>{job.description}</p>}
-                              <div className={styles.jobFooter}>
-                                <span className={styles.jobSource}>{sourceLabel(job)}</span>
-                                {job.apply_link ? (
-                                  <a
-                                    href={job.apply_link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className={styles.jobApplyButton}
-                                  >
-                                    Apply Remote
-                                  </a>
-                                ) : (
-                                  <span className={styles.emptyText}>Apply link unavailable.</span>
-                                )}
-                              </div>
-                            </article>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className={styles.emptyText}>No India remote jobs found for this role yet.</p>
-                      )}
+                  <div className={styles.remoteColumn}>
+                    <div className={styles.remoteColumnHead}>
+                      <h4>International Remote Picks</h4>
+                      <span className={styles.remoteBadgeAlt}>Global Remote</span>
                     </div>
-
-                    <div className={styles.remoteColumn}>
-                      <div className={styles.remoteColumnHead}>
-                        <h4>International Remote Picks</h4>
-                        <span className={styles.remoteBadgeAlt}>Global Remote</span>
+                    {remoteJobs.international.length > 0 ? (
+                      <div className={styles.jobsGrid}>
+                        {remoteJobs.international.map((job) => (
+                          <article key={`global-${job.id}`} className={styles.jobCard}>
+                            <div className={styles.jobHeader}>
+                              <h3 className={styles.jobTitle}>{job.title}</h3>
+                              <span className={styles.remotePill}>Remote</span>
+                            </div>
+                            <p className={styles.jobCompany}>{job.company}</p>
+                            <p className={styles.jobMeta}>
+                              {job.location}
+                              {job.employment_type ? ` | ${job.employment_type}` : ''}
+                            </p>
+                            {job.description && <p className={styles.jobDescription}>{job.description}</p>}
+                            <div className={styles.jobFooter}>
+                              <span className={styles.jobSource}>{sourceLabel(job)}</span>
+                              {job.apply_link ? (
+                                <a
+                                  href={job.apply_link}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className={styles.jobApplyButton}
+                                >
+                                  Apply Remote
+                                </a>
+                              ) : (
+                                <span className={styles.emptyText}>Apply link unavailable.</span>
+                              )}
+                            </div>
+                          </article>
+                        ))}
                       </div>
-                      {remoteJobs.international.length > 0 ? (
-                        <div className={styles.jobsGrid}>
-                          {remoteJobs.international.map((job) => (
-                            <article key={`global-${job.id}`} className={styles.jobCard}>
-                              <div className={styles.jobHeader}>
-                                <h3 className={styles.jobTitle}>{job.title}</h3>
-                                <span className={styles.remotePill}>Remote</span>
-                              </div>
-                              <p className={styles.jobCompany}>{job.company}</p>
-                              <p className={styles.jobMeta}>
-                                {job.location}
-                                {job.employment_type ? ` | ${job.employment_type}` : ''}
-                              </p>
-                              {job.description && <p className={styles.jobDescription}>{job.description}</p>}
-                              <div className={styles.jobFooter}>
-                                <span className={styles.jobSource}>{sourceLabel(job)}</span>
-                                {job.apply_link ? (
-                                  <a
-                                    href={job.apply_link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className={styles.jobApplyButton}
-                                  >
-                                    Apply Remote
-                                  </a>
-                                ) : (
-                                  <span className={styles.emptyText}>Apply link unavailable.</span>
-                                )}
-                              </div>
-                            </article>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className={styles.emptyText}>No international remote jobs found for this role yet.</p>
-                      )}
-                    </div>
+                    ) : (
+                      <p className={styles.emptyText}>No international remote jobs found for this role yet.</p>
+                    )}
                   </div>
                 </div>
 

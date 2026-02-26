@@ -20,22 +20,60 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const workspaceRoot = path.dirname(__dirname)
 
+const runtimeEnvPaths = [path.join(workspaceRoot, 'rexion-backend', '.env'), path.join(__dirname, '.env')]
+
+function loadRuntimeEnv() {
+  for (const envPath of runtimeEnvPaths) {
+    loadEnv({ path: envPath, override: true })
+  }
+}
+
+function getOpenRouterApiKey() {
+  return String(process.env.OPENROUTER_API_KEY || '').trim()
+}
+
+function getDeepSeekApiKey() {
+  return String(process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || '').trim()
+}
+
+function getRexcodeModel() {
+  return String(process.env.REXCODE_MODEL || 'deepseek/deepseek-r1:free').trim()
+}
+
+function getRexcodeProvider() {
+  const configured = String(process.env.REXCODE_PROVIDER || 'auto').trim().toLowerCase()
+  if (configured === 'deepseek' || configured === 'openrouter') {
+    return configured
+  }
+
+  const deepSeekApiKey = getDeepSeekApiKey()
+  const openRouterApiKey = getOpenRouterApiKey()
+
+  if (hasUsableApiKey(deepSeekApiKey) && !deepSeekApiKey.startsWith('sk-or-')) {
+    return 'deepseek'
+  }
+
+  if (hasUsableApiKey(openRouterApiKey)) {
+    return 'openrouter'
+  }
+
+  return 'deepseek'
+}
+
 // Support both backend/.env and rexion-backend/.env so deployments can use either location.
-loadEnv({ path: path.join(workspaceRoot, 'rexion-backend', '.env'), override: true })
-loadEnv({ path: path.join(__dirname, '.env'), override: true })
+loadRuntimeEnv()
 
 const PORT = Number(process.env.PORT || 5000)
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
 const NODE_ENV = String(process.env.NODE_ENV || 'development').trim().toLowerCase()
-const OPENROUTER_API_KEY = String(
-  process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || process.env.DEEPSEEK_API_KEY || ''
-).trim()
 const OPENROUTER_BASE_URL = String(process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1')
   .trim()
   .replace(/\/+$/, '')
 const OPENROUTER_REFERER = String(process.env.OPENROUTER_REFERER || 'http://localhost:5173').trim()
 const OPENROUTER_APP_TITLE = String(process.env.OPENROUTER_APP_TITLE || 'Rexion AI').trim()
-const REXCODE_MODEL = String(process.env.REXCODE_MODEL || 'deepseek/deepseek-r1:free').trim()
+const DEEPSEEK_BASE_URL = String(process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com')
+  .trim()
+  .replace(/\/+$/, '')
 const REXCODE_REQUEST_TIMEOUT_MS = Math.max(
   10000,
   Number(process.env.REXCODE_REQUEST_TIMEOUT_MS || 60000)
@@ -882,13 +920,48 @@ function isOpenRouterAuthFailure(message) {
   )
 }
 
+function isDeepSeekAuthFailure(message) {
+  const text = String(message || '').toLowerCase()
+  return (
+    text.includes('authentication') ||
+    text.includes('invalid api key') ||
+    text.includes('missing authentication header') ||
+    (text.includes('unauthorized') && text.includes('deepseek')) ||
+    /\b401\b/.test(text)
+  )
+}
+
+function isDeepSeekBillingFailure(message) {
+  const text = String(message || '').toLowerCase()
+  return (
+    text.includes('insufficient balance') ||
+    text.includes('insufficient_quota') ||
+    /\b402\b/.test(text)
+  )
+}
+
 function toRexcodeFailure(error) {
   const rawMessage = String(error?.message || error || 'Unknown AI generation error')
+  if (isDeepSeekAuthFailure(rawMessage)) {
+    return {
+      statusCode: 401,
+      message:
+        'DeepSeek authentication failed (401). Set a valid DEEPSEEK_API_KEY in rexion-backend/.env or backend/.env.'
+    }
+  }
+
+  if (isDeepSeekBillingFailure(rawMessage)) {
+    return {
+      statusCode: 402,
+      message: 'DeepSeek quota/billing issue (402). Add balance or upgrade the DeepSeek account and retry.'
+    }
+  }
+
   if (isOpenRouterAuthFailure(rawMessage)) {
     return {
       statusCode: 401,
       message:
-        'OpenRouter authentication failed (401: User not found). Set a valid OPENROUTER_API_KEY in rexion-backend/.env or backend/.env and restart backend.'
+        'OpenRouter authentication failed (401: User not found). The configured API key is rejected. Set a valid OPENROUTER_API_KEY in rexion-backend/.env or backend/.env.'
     }
   }
 
@@ -927,7 +1000,158 @@ function inferRexcodeMode(requestedMode, prompt) {
   return websiteHints.some((hint) => text.includes(hint)) ? 'site' : 'answer'
 }
 
-async function requestOpenRouterGeneration(prompt, model) {
+function normalizeDeepSeekModel(model) {
+  const raw = String(model || '').trim().toLowerCase()
+  if (!raw) {
+    return 'deepseek-chat'
+  }
+
+  if (raw === 'deepseek-chat' || raw.endsWith('/deepseek-chat') || raw.endsWith('/deepseek-v3')) {
+    return 'deepseek-chat'
+  }
+
+  if (
+    raw === 'deepseek-reasoner' ||
+    raw.includes('deepseek-r1') ||
+    raw.endsWith('/deepseek-reasoner')
+  ) {
+    return 'deepseek-reasoner'
+  }
+
+  if (raw.startsWith('deepseek/')) {
+    return raw.split('/').pop() || 'deepseek-chat'
+  }
+
+  return 'deepseek-chat'
+}
+
+function buildDeepSeekModelCandidates(configuredModel, mode) {
+  const candidates = [normalizeDeepSeekModel(configuredModel)]
+  const fallbacks =
+    mode === 'site' ? ['deepseek-chat', 'deepseek-reasoner'] : ['deepseek-chat', 'deepseek-reasoner']
+
+  for (const fallback of fallbacks) {
+    if (!candidates.includes(fallback)) {
+      candidates.push(fallback)
+    }
+  }
+
+  return candidates
+}
+
+async function requestDeepSeekGeneration(prompt, model, apiKey) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => {
+    controller.abort()
+  }, REXCODE_REQUEST_TIMEOUT_MS)
+
+  try {
+    const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_tokens: 3200,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are an expert frontend engineer. Return only a complete, valid HTML document with embedded CSS and JavaScript. Do not include markdown.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      }),
+      signal: controller.signal
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`DeepSeek model ${model} failed (${response.status}): ${errorText.slice(0, 300)}`)
+    }
+
+    const payload = await response.json()
+    const content = payload?.choices?.[0]?.message?.content
+    const code = extractHtmlFromModelResponse(content, prompt)
+
+    return buildSiteResponseFromCode(code, {
+      provider: 'deepseek',
+      model: String(payload?.model || model)
+    })
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(`DeepSeek model ${model} timed out after ${REXCODE_REQUEST_TIMEOUT_MS}ms.`)
+    }
+
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+async function requestDeepSeekAnswer(prompt, model, apiKey) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => {
+    controller.abort()
+  }, REXCODE_REQUEST_TIMEOUT_MS)
+
+  try {
+    const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.4,
+        max_tokens: 900,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are REXION AI. Respond with plain text only. Use short paragraphs and optional bullet points. You may use markdown **bold** for emphasis. Do not return HTML, CSS, JavaScript, or code fences.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      }),
+      signal: controller.signal
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`DeepSeek model ${model} failed (${response.status}): ${errorText.slice(0, 300)}`)
+    }
+
+    const payload = await response.json()
+    const content = payload?.choices?.[0]?.message?.content
+    const answer = extractAnswerTextFromModelResponse(content, prompt)
+
+    return buildAnswerResponse(answer, {
+      provider: 'deepseek',
+      model: String(payload?.model || model)
+    })
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(`DeepSeek model ${model} timed out after ${REXCODE_REQUEST_TIMEOUT_MS}ms.`)
+    }
+
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+async function requestOpenRouterGeneration(prompt, model, apiKey) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => {
     controller.abort()
@@ -937,7 +1161,7 @@ async function requestOpenRouterGeneration(prompt, model) {
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': OPENROUTER_REFERER,
         'X-Title': OPENROUTER_APP_TITLE
@@ -991,7 +1215,7 @@ async function requestOpenRouterGeneration(prompt, model) {
   }
 }
 
-async function requestOpenRouterAnswer(prompt, model) {
+async function requestOpenRouterAnswer(prompt, model, apiKey) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => {
     controller.abort()
@@ -1001,7 +1225,7 @@ async function requestOpenRouterAnswer(prompt, model) {
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': OPENROUTER_REFERER,
         'X-Title': OPENROUTER_APP_TITLE
@@ -1056,23 +1280,63 @@ async function requestOpenRouterAnswer(prompt, model) {
 }
 
 async function generateRexcodeSite(prompt) {
-  if (!hasUsableApiKey(OPENROUTER_API_KEY)) {
-    throw new Error(
-      'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY and restart backend.'
-    )
-  }
-
-  const modelCandidates = [REXCODE_MODEL]
-  if (REXCODE_MODEL !== 'openrouter/free') {
-    modelCandidates.push('openrouter/free')
-  }
+  loadRuntimeEnv()
+  const openRouterApiKey = getOpenRouterApiKey()
+  const deepSeekApiKey = getDeepSeekApiKey()
+  const configuredModel = getRexcodeModel()
+  const configuredProvider = String(process.env.REXCODE_PROVIDER || 'auto').trim().toLowerCase()
+  const preferredProvider = getRexcodeProvider()
+  const providerOrder =
+    configuredProvider === 'deepseek'
+      ? ['deepseek']
+      : configuredProvider === 'openrouter'
+        ? ['openrouter']
+        : preferredProvider === 'deepseek'
+          ? ['deepseek', 'openrouter']
+          : ['openrouter', 'deepseek']
 
   const failures = []
-  for (const model of modelCandidates) {
-    try {
-      return await requestOpenRouterGeneration(prompt, model)
-    } catch (error) {
-      failures.push(String(error?.message || error))
+
+  for (const provider of providerOrder) {
+    if (provider === 'deepseek') {
+      if (!hasUsableApiKey(deepSeekApiKey)) {
+        failures.push(
+          'DeepSeek API key is missing or placeholder. Set DEEPSEEK_API_KEY in backend/.env or rexion-backend/.env.'
+        )
+        continue
+      }
+
+      const deepSeekModelCandidates = buildDeepSeekModelCandidates(configuredModel, 'site')
+      for (const model of deepSeekModelCandidates) {
+        try {
+          return await requestDeepSeekGeneration(prompt, model, deepSeekApiKey)
+        } catch (error) {
+          failures.push(String(error?.message || error))
+        }
+      }
+      continue
+    }
+
+    if (!hasUsableApiKey(openRouterApiKey)) {
+      failures.push(
+        'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY in backend/.env or rexion-backend/.env.'
+      )
+      continue
+    }
+
+    const modelCandidates = [configuredModel]
+    for (const fallbackModel of ['openrouter/auto', 'openrouter/free']) {
+      if (fallbackModel !== configuredModel) {
+        modelCandidates.push(fallbackModel)
+      }
+    }
+
+    for (const model of modelCandidates) {
+      try {
+        return await requestOpenRouterGeneration(prompt, model, openRouterApiKey)
+      } catch (error) {
+        failures.push(String(error?.message || error))
+      }
     }
   }
 
@@ -1080,23 +1344,63 @@ async function generateRexcodeSite(prompt) {
 }
 
 async function generateRexcodeAnswer(prompt) {
-  if (!hasUsableApiKey(OPENROUTER_API_KEY)) {
-    throw new Error(
-      'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY and restart backend.'
-    )
-  }
-
-  const modelCandidates = [REXCODE_MODEL]
-  if (REXCODE_MODEL !== 'openrouter/free') {
-    modelCandidates.push('openrouter/free')
-  }
+  loadRuntimeEnv()
+  const openRouterApiKey = getOpenRouterApiKey()
+  const deepSeekApiKey = getDeepSeekApiKey()
+  const configuredModel = getRexcodeModel()
+  const configuredProvider = String(process.env.REXCODE_PROVIDER || 'auto').trim().toLowerCase()
+  const preferredProvider = getRexcodeProvider()
+  const providerOrder =
+    configuredProvider === 'deepseek'
+      ? ['deepseek']
+      : configuredProvider === 'openrouter'
+        ? ['openrouter']
+        : preferredProvider === 'deepseek'
+          ? ['deepseek', 'openrouter']
+          : ['openrouter', 'deepseek']
 
   const failures = []
-  for (const model of modelCandidates) {
-    try {
-      return await requestOpenRouterAnswer(prompt, model)
-    } catch (error) {
-      failures.push(String(error?.message || error))
+
+  for (const provider of providerOrder) {
+    if (provider === 'deepseek') {
+      if (!hasUsableApiKey(deepSeekApiKey)) {
+        failures.push(
+          'DeepSeek API key is missing or placeholder. Set DEEPSEEK_API_KEY in backend/.env or rexion-backend/.env.'
+        )
+        continue
+      }
+
+      const deepSeekModelCandidates = buildDeepSeekModelCandidates(configuredModel, 'answer')
+      for (const model of deepSeekModelCandidates) {
+        try {
+          return await requestDeepSeekAnswer(prompt, model, deepSeekApiKey)
+        } catch (error) {
+          failures.push(String(error?.message || error))
+        }
+      }
+      continue
+    }
+
+    if (!hasUsableApiKey(openRouterApiKey)) {
+      failures.push(
+        'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY in backend/.env or rexion-backend/.env.'
+      )
+      continue
+    }
+
+    const modelCandidates = [configuredModel]
+    for (const fallbackModel of ['openrouter/auto', 'openrouter/free']) {
+      if (fallbackModel !== configuredModel) {
+        modelCandidates.push(fallbackModel)
+      }
+    }
+
+    for (const model of modelCandidates) {
+      try {
+        return await requestOpenRouterAnswer(prompt, model, openRouterApiKey)
+      } catch (error) {
+        failures.push(String(error?.message || error))
+      }
     }
   }
 
@@ -1498,10 +1802,16 @@ const server = http.createServer(async (request, response) => {
 })
 
 server.listen(PORT, () => {
+  const openRouterApiKey = getOpenRouterApiKey()
+  const deepSeekApiKey = getDeepSeekApiKey()
+  const configuredRexcodeModel = getRexcodeModel()
+  const configuredRexcodeProvider = getRexcodeProvider()
   console.log(`Rexion backend listening on http://localhost:${PORT}`)
   console.log(`SQLite database: ${dbPath}`)
   console.log(`LLM provider: ${llmRuntimeInfo.provider}`)
   console.log(`LLM store path: ${llmRuntimeInfo.storePath}`)
-  console.log(`Rexcode model target: ${REXCODE_MODEL}`)
-  console.log(`Rexcode API key loaded: ${hasUsableApiKey(OPENROUTER_API_KEY) ? 'yes' : 'no'}`)
+  console.log(`Rexcode provider target: ${configuredRexcodeProvider}`)
+  console.log(`Rexcode model target: ${configuredRexcodeModel}`)
+  console.log(`Rexcode API key loaded: ${hasUsableApiKey(openRouterApiKey) ? 'yes' : 'no'}`)
+  console.log(`DeepSeek API key loaded: ${hasUsableApiKey(deepSeekApiKey) ? 'yes' : 'no'}`)
 })

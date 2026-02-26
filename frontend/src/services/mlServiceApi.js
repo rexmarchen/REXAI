@@ -1,5 +1,18 @@
 import apiClient from './apiClient'
 
+const ML_SERVICE_BASE_URL = (import.meta.env.VITE_ML_SERVICE_BASE_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
+
+const isNetworkFailure = (error) =>
+  !error?.response &&
+  /network error|failed to fetch|load failed|ecconnrefused|err_network/i.test(
+    String(error?.message || '')
+  )
+
+const shouldUseDirectMlFallback = (error) => {
+  const status = Number(error?.response?.status || 0)
+  return isNetworkFailure(error) || status === 404 || status === 502 || status === 503
+}
+
 /**
  * Upload resume and get career prediction with job matches
  * @param {File} file - Resume file
@@ -22,8 +35,28 @@ export const predictCareerPath = async (file, options = {}) => {
   if (typeof options.remote === 'boolean') {
     formData.append('remote', String(options.remote))
   }
-  
-  return apiClient.post('/ml/predict', formData)
+
+  try {
+    return await apiClient.post('/ml/predict', formData)
+  } catch (error) {
+    if (!shouldUseDirectMlFallback(error)) {
+      throw error
+    }
+
+    // Fallback to direct ML service if backend proxy is unreachable.
+    const directResponse = await fetch(`${ML_SERVICE_BASE_URL}/predict`, {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!directResponse.ok) {
+      const errorPayload = await directResponse.json().catch(() => ({}))
+      const detail = String(errorPayload?.detail || errorPayload?.message || '').trim()
+      throw new Error(detail || `ML service returned ${directResponse.status}`)
+    }
+
+    return directResponse.json()
+  }
 }
 
 /**
@@ -49,7 +82,23 @@ export const searchJobs = async (query, options = {}) => {
     params.append('page', options.page)
   }
 
-  return apiClient.get(`/ml/jobs/search?${params.toString()}`)
+  try {
+    return await apiClient.get(`/ml/jobs/search?${params.toString()}`)
+  } catch (error) {
+    if (!shouldUseDirectMlFallback(error)) {
+      throw error
+    }
+
+    const directResponse = await fetch(`${ML_SERVICE_BASE_URL}/jobs/search?${params.toString()}`, {
+      method: 'GET'
+    })
+
+    if (!directResponse.ok) {
+      throw new Error(`ML jobs endpoint returned ${directResponse.status}`)
+    }
+
+    return directResponse.json()
+  }
 }
 
 export default apiClient
