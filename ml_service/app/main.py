@@ -156,7 +156,7 @@ async def predict(
         query=career_path,
         location=location,
         remote_jobs_only=remote_jobs_only,
-        num_pages=2,
+        num_pages=1,
     )
     jobs_limited = jobs[:20]
 
@@ -232,9 +232,9 @@ async def search_jobs(
         query=query,
         location=location,
         remote_jobs_only=remote,
-        num_pages=2,
+        num_pages=1,
     )
-    return {"jobs": jobs[:20]}
+    return {"jobs": jobs[:20], "meta": job_fetcher.status_meta()}
 
 
 @app.post("/upload-resumes", tags=["ats"])

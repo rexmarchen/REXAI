@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
+import { spawn } from 'node:child_process'
 import { config as loadEnv } from 'dotenv'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
@@ -20,8 +21,8 @@ const __dirname = path.dirname(__filename)
 const workspaceRoot = path.dirname(__dirname)
 
 // Support both backend/.env and rexion-backend/.env so deployments can use either location.
-loadEnv({ path: path.join(workspaceRoot, 'rexion-backend', '.env') })
-loadEnv({ path: path.join(__dirname, '.env') })
+loadEnv({ path: path.join(workspaceRoot, 'rexion-backend', '.env'), override: true })
+loadEnv({ path: path.join(__dirname, '.env'), override: true })
 
 const PORT = Number(process.env.PORT || 5000)
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
@@ -42,6 +43,7 @@ const REXCODE_REQUEST_TIMEOUT_MS = Math.max(
 const ML_SERVICE_URL = String(process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000')
   .trim()
   .replace(/\/+$/, '')
+const ML_SERVICE_AUTOSTART = String(process.env.ML_SERVICE_AUTOSTART || 'true').trim().toLowerCase() !== 'false'
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
   .split(',')
   .map((origin) => origin.trim())
@@ -224,6 +226,152 @@ async function readFetchJsonOrText(fetchResponse) {
   return parsed || { message: text }
 }
 
+let mlServiceChild = null
+let mlServiceStartPromise = null
+
+const mlServiceAddress = (() => {
+  try {
+    const parsed = new URL(ML_SERVICE_URL)
+    const host = parsed.hostname || '127.0.0.1'
+    const port = parsed.port || (parsed.protocol === 'https:' ? '443' : '80')
+    return { host, port }
+  } catch {
+    return { host: '127.0.0.1', port: '8000' }
+  }
+})()
+
+function resolveMlPythonBin() {
+  const windowsCandidates = [
+    path.join(workspaceRoot, '.venv-1', 'Scripts', 'python.exe'),
+    path.join(workspaceRoot, '.venv', 'Scripts', 'python.exe'),
+    path.join(workspaceRoot, '.venv-2', 'Scripts', 'python.exe')
+  ]
+  const unixCandidates = [
+    path.join(workspaceRoot, '.venv-1', 'bin', 'python'),
+    path.join(workspaceRoot, '.venv', 'bin', 'python'),
+    path.join(workspaceRoot, '.venv-2', 'bin', 'python')
+  ]
+  const candidates = process.platform === 'win32' ? windowsCandidates : unixCandidates
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate
+    }
+  }
+
+  return process.platform === 'win32' ? 'python' : 'python3'
+}
+
+function logChildOutput(prefix, chunk) {
+  const output = String(chunk || '')
+  const lines = output.split(/\r?\n/)
+  for (const line of lines) {
+    if (line.trim()) {
+      console.log(`[${prefix}] ${line}`)
+    }
+  }
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 20000) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+async function isMlHealthy(timeoutMs = 1500) {
+  try {
+    const response = await fetchWithTimeout(`${ML_SERVICE_URL}/health`, { method: 'GET' }, timeoutMs)
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
+function startMlServiceProcess() {
+  if (mlServiceChild && mlServiceChild.exitCode === null) {
+    return mlServiceChild
+  }
+
+  const mlPythonBin = resolveMlPythonBin()
+  const args = [
+    '-m',
+    'uvicorn',
+    'ml_service.app.main:app',
+    '--host',
+    mlServiceAddress.host,
+    '--port',
+    mlServiceAddress.port
+  ]
+
+  const child = spawn(mlPythonBin, args, {
+    cwd: workspaceRoot,
+    env: process.env,
+    stdio: ['ignore', 'pipe', 'pipe']
+  })
+
+  child.stdout?.on('data', (chunk) => logChildOutput('ml_service', chunk))
+  child.stderr?.on('data', (chunk) => logChildOutput('ml_service', chunk))
+
+  child.on('exit', (code, signal) => {
+    if (mlServiceChild === child) {
+      mlServiceChild = null
+    }
+    const reason = signal ? `signal ${signal}` : `code ${code}`
+    console.error(`[ml_service] exited (${reason})`)
+  })
+
+  mlServiceChild = child
+  return child
+}
+
+async function waitForMlHealthy(maxWaitMs = 30000) {
+  const startedAt = Date.now()
+  while (Date.now() - startedAt < maxWaitMs) {
+    if (await isMlHealthy(1200)) {
+      return true
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+  return false
+}
+
+async function ensureMlServiceAvailable() {
+  if (await isMlHealthy(1200)) {
+    return
+  }
+
+  if (NODE_ENV === 'production' || !ML_SERVICE_AUTOSTART) {
+    return
+  }
+
+  if (!mlServiceStartPromise) {
+    mlServiceStartPromise = (async () => {
+      startMlServiceProcess()
+      const ready = await waitForMlHealthy(30000)
+      if (!ready) {
+        throw new Error(`ML service failed to become healthy at ${ML_SERVICE_URL}.`)
+      }
+    })().finally(() => {
+      mlServiceStartPromise = null
+    })
+  }
+
+  await mlServiceStartPromise
+}
+
+async function requestMlService(targetPath, options) {
+  try {
+    return await fetchWithTimeout(`${ML_SERVICE_URL}${targetPath}`, options, 25000)
+  } catch (firstError) {
+    await ensureMlServiceAvailable()
+    return await fetchWithTimeout(`${ML_SERVICE_URL}${targetPath}`, options, 25000)
+  }
+}
+
 async function handleMlProxyMultipart(request, response, origin, targetPath) {
   const contentType = String(request.headers['content-type'] || '')
   const boundaryMatch = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType)
@@ -252,7 +400,7 @@ async function handleMlProxyMultipart(request, response, origin, targetPath) {
   }
 
   try {
-    const mlResponse = await fetch(`${ML_SERVICE_URL}${targetPath}`, {
+    const mlResponse = await requestMlService(targetPath, {
       method: 'POST',
       headers: {
         'Content-Type': contentType
@@ -289,7 +437,7 @@ async function handleMlProxyJson(request, response, origin, targetPath) {
   }
 
   try {
-    const mlResponse = await fetch(`${ML_SERVICE_URL}${targetPath}`, {
+    const mlResponse = await requestMlService(targetPath, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -314,7 +462,7 @@ async function handleMlProxyJson(request, response, origin, targetPath) {
 
 async function handleMlProxyGet(response, origin, targetPathWithQuery) {
   try {
-    const mlResponse = await fetch(`${ML_SERVICE_URL}${targetPathWithQuery}`, {
+    const mlResponse = await requestMlService(targetPathWithQuery, {
       method: 'GET'
     })
     const payload = await readFetchJsonOrText(mlResponse)
@@ -724,6 +872,32 @@ function buildAnswerResponse(answer, extra = {}) {
   }
 }
 
+function isOpenRouterAuthFailure(message) {
+  const text = String(message || '').toLowerCase()
+  return (
+    text.includes('user not found') ||
+    text.includes('invalid api key') ||
+    text.includes('unauthorized') ||
+    /\b401\b/.test(text)
+  )
+}
+
+function toRexcodeFailure(error) {
+  const rawMessage = String(error?.message || error || 'Unknown AI generation error')
+  if (isOpenRouterAuthFailure(rawMessage)) {
+    return {
+      statusCode: 401,
+      message:
+        'OpenRouter authentication failed (401: User not found). Set a valid OPENROUTER_API_KEY in rexion-backend/.env or backend/.env and restart backend.'
+    }
+  }
+
+  return {
+    statusCode: 502,
+    message: `AI generation failed. ${rawMessage}`
+  }
+}
+
 function inferRexcodeMode(requestedMode, prompt) {
   const normalizedMode = String(requestedMode || 'auto').trim().toLowerCase()
   if (normalizedMode === 'site' || normalizedMode === 'answer') {
@@ -884,7 +1058,7 @@ async function requestOpenRouterAnswer(prompt, model) {
 async function generateRexcodeSite(prompt) {
   if (!hasUsableApiKey(OPENROUTER_API_KEY)) {
     throw new Error(
-      'API key not loaded. Set OPENROUTER_API_KEY in backend/.env (or rexion-backend/.env), then restart backend.'
+      'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY and restart backend.'
     )
   }
 
@@ -908,7 +1082,7 @@ async function generateRexcodeSite(prompt) {
 async function generateRexcodeAnswer(prompt) {
   if (!hasUsableApiKey(OPENROUTER_API_KEY)) {
     throw new Error(
-      'API key not loaded. Set OPENROUTER_API_KEY in backend/.env (or rexion-backend/.env), then restart backend.'
+      'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY and restart backend.'
     )
   }
 
@@ -1170,11 +1344,12 @@ async function handleRexcodeGenerate(request, response, origin) {
     generatedResult =
       resolvedMode === 'site' ? await generateRexcodeSite(prompt) : await generateRexcodeAnswer(prompt)
   } catch (error) {
+    const failure = toRexcodeFailure(error)
     sendJson(
       response,
-      502,
+      failure.statusCode,
       {
-        message: `AI generation failed. ${String(error?.message || error)}`
+        message: failure.message
       },
       origin
     )

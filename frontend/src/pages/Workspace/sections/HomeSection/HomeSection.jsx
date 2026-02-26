@@ -2,10 +2,34 @@ import React from 'react'
 import styles from '../../WorkspaceSection.module.css'
 
 const QUICK_ACTIONS = [
-  { key: 'new-app', icon: 'NA', title: 'New App', desc: 'Generate a production-ready project scaffold.', iconClass: styles.quickIconBlue },
-  { key: 'fix-bugs', icon: 'FB', title: 'Fix Bugs', desc: 'Run AI-assisted diagnostics and patch suggestions.', iconClass: styles.quickIconPurple },
-  { key: 'optimize', icon: 'OP', title: 'Optimize', desc: 'Improve performance, DX and deployment quality.', iconClass: styles.quickIconGreen },
-  { key: 'ship', icon: 'DP', title: 'Deploy', desc: 'Publish your latest build with one click.', iconClass: styles.quickIconOrange }
+  {
+    key: 'new-app',
+    icon: 'NA',
+    title: 'New App',
+    desc: 'Generate a production-ready project scaffold.',
+    iconClass: styles.quickIconBlue
+  },
+  {
+    key: 'fix-bugs',
+    icon: 'FB',
+    title: 'Fix Bugs',
+    desc: 'Run AI-assisted diagnostics and patch suggestions.',
+    iconClass: styles.quickIconPurple
+  },
+  {
+    key: 'optimize',
+    icon: 'OP',
+    title: 'Optimize',
+    desc: 'Improve performance, DX and deployment quality.',
+    iconClass: styles.quickIconGreen
+  },
+  {
+    key: 'ship',
+    icon: 'DP',
+    title: 'Deploy',
+    desc: 'Publish your latest build with one click.',
+    iconClass: styles.quickIconOrange
+  }
 ]
 
 const ACTIVITIES = [
@@ -32,10 +56,19 @@ const HomeSection = () => {
 
       <div className={styles.quickGrid}>
         {QUICK_ACTIONS.map((item) => (
-          <article key={item.key} className={styles.quickCard}>
-            <div className={`${styles.quickCardIcon} ${item.iconClass}`}>{item.icon}</div>
+          <article key={item.key} className={`${styles.quickCard} ${styles.quickCardComingSoon}`}>
+            <div className={styles.quickCardTop}>
+              <div className={`${styles.quickCardIcon} ${item.iconClass}`}>{item.icon}</div>
+              <span className={styles.comingSoonPill}>
+                <span className={styles.comingSoonDot}></span>
+                Coming Soon
+              </span>
+            </div>
             <h3 className={styles.quickCardTitle}>{item.title}</h3>
             <p className={styles.quickCardDesc}>{item.desc}</p>
+            <button type="button" className={styles.quickCardSoonBtn} disabled>
+              Coming Soon
+            </button>
           </article>
         ))}
       </div>

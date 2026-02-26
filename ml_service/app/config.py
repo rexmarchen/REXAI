@@ -17,6 +17,7 @@ UPLOADS_DIR = PROJECT_ROOT / "uploads"
 
 # Load env in precedence order, lowest -> highest priority.
 load_dotenv(REPO_ROOT / ".env", override=False)
+load_dotenv(REPO_ROOT / "rexion-backend" / ".env", override=False)
 load_dotenv(REPO_ROOT / "backend" / ".env", override=False)
 load_dotenv(PROJECT_ROOT / ".env", override=True)
 
@@ -33,6 +34,26 @@ def _as_bool(value: str | None, default: bool) -> bool:
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _as_float(value: str | None, default: float) -> float:
+    if value is None:
+        return default
+    try:
+        numeric = float(value.strip())
+    except Exception:
+        return default
+    return numeric if numeric > 0 else default
+
+
+def _as_int(value: str | None, default: int) -> int:
+    if value is None:
+        return default
+    try:
+        numeric = int(str(value).strip())
+    except Exception:
+        return default
+    return numeric if numeric > 0 else default
 
 
 @dataclass(frozen=True)
@@ -61,6 +82,9 @@ class Settings:
     ) or "jsearch.p.rapidapi.com"
     jsearch_default_remote: bool = _as_bool(os.getenv("JSEARCH_DEFAULT_REMOTE"), True)
     jsearch_default_location: str | None = os.getenv("JSEARCH_DEFAULT_LOCATION") or None
+    jsearch_enable_fallback: bool = _as_bool(os.getenv("JSEARCH_ENABLE_FALLBACK"), False)
+    jsearch_timeout_seconds: float = _as_float(os.getenv("JSEARCH_TIMEOUT_SECONDS"), 35.0)
+    jsearch_cache_ttl_seconds: int = _as_int(os.getenv("JSEARCH_CACHE_TTL_SECONDS"), 300)
 
     cors_origins: tuple[str, ...] = (
         "http://localhost:3000",

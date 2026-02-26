@@ -32,6 +32,12 @@
   font-size: 0.92rem;
 }
 
+.status {
+  margin-top: 8px;
+  color: rgba(216, 243, 232, 0.82);
+  font-size: 0.82rem;
+}
+
 .actions {
   display: flex;
   gap: 10px;

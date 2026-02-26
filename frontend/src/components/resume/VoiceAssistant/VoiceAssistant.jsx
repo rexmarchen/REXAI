@@ -1,7 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import styles from './VoiceAssistant.module.css'
 
-const VoiceAssistant = ({ message }) => {
+const VoiceAssistant = ({
+  message,
+  title = 'AI Voice Assistant',
+  description = 'The assistant explains your weaknesses and improvement priorities automatically.',
+  autoPlay = true
+}) => {
   const [supported, setSupported] = useState(false)
   const [speaking, setSpeaking] = useState(false)
 
@@ -48,7 +53,7 @@ const VoiceAssistant = ({ message }) => {
   }, [supported, cleanedMessage])
 
   useEffect(() => {
-    if (!supported || !cleanedMessage) {
+    if (!supported || !cleanedMessage || !autoPlay) {
       return
     }
 
@@ -57,16 +62,21 @@ const VoiceAssistant = ({ message }) => {
       window.speechSynthesis.cancel()
       setSpeaking(false)
     }
-  }, [supported, cleanedMessage, speak])
+  }, [supported, cleanedMessage, autoPlay, speak])
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h4 className={styles.title}>AI Voice Assistant</h4>
+        <h4 className={styles.title}>{title}</h4>
         {!supported && <span className={styles.unsupported}>Voice not supported on this browser.</span>}
       </div>
-      <p className={styles.copy}>
-        The assistant explains your weaknesses and improvement priorities automatically.
+      <p className={styles.copy}>{description}</p>
+      <p className={styles.status}>
+        {supported
+          ? speaking
+            ? 'Speaking now...'
+            : 'Ready to speak.'
+          : 'Switch to a supported browser to enable voice playback.'}
       </p>
       <div className={styles.actions}>
         <button

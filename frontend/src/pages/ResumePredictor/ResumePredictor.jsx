@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import JobMatchingEngine from '../../components/resume/JobMatchingEngine'
+import VoiceAssistant from '../../components/resume/VoiceAssistant'
 import { matchResumesWithJob, uploadResumesToAts } from '../../services/atsApi'
 import { predictCareerPath, searchJobs } from '../../services/mlServiceApi'
 import styles from './ResumePredictor.module.css'
@@ -7,7 +8,7 @@ import styles from './ResumePredictor.module.css'
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 const ACCEPTED_EXTENSIONS = ['.pdf', '.doc', '.docx']
 const REMOTE_SLOT_COUNT = 5
-const INDIA_REMOTE_LOCATIONS = ['Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Chennai']
+const REMOTE_FETCH_TIMEOUT_MS = 12000
 const INDIA_LOCATION_KEYWORDS = [
   'india',
   'bengaluru',
@@ -65,6 +66,22 @@ function sanitizeList(value) {
   return value
     .map((item) => cleanReadableText(item, 120))
     .filter(Boolean)
+}
+
+function dedupeTextList(items) {
+  const seen = new Set()
+  const output = []
+
+  for (const item of sanitizeList(items)) {
+    const key = item.toLowerCase()
+    if (seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+    output.push(item)
+  }
+
+  return output
 }
 
 function truncateText(value, maxLength = 220) {
@@ -164,16 +181,35 @@ function dedupeJobs(jobs) {
 }
 
 function isIndianLocation(value) {
-  const location = String(value || '').toLowerCase()
-  return INDIA_LOCATION_KEYWORDS.some((keyword) => location.includes(keyword))
+  const text = String(value || '').toLowerCase()
+  return INDIA_LOCATION_KEYWORDS.some((keyword) => text.includes(keyword))
+}
+
+function isIndianJob(job) {
+  const locationText = String(job?.location || '').toLowerCase()
+  if (isIndianLocation(locationText)) {
+    return true
+  }
+
+  const deepCorpus = `${job?.title || ''} ${job?.description || ''} ${job?.apply_link || ''} ${job?.source || ''} ${
+    job?.company || ''
+  }`.toLowerCase()
+  if (isIndianLocation(deepCorpus)) {
+    return true
+  }
+
+  return /(?:\.in\/|\.co\.in\/)/.test(deepCorpus)
 }
 
 function isRemoteJob(job) {
   if (job?.is_remote) {
     return true
   }
-  const corpus = `${job?.location || ''} ${job?.employment_type || ''} ${job?.title || ''}`.toLowerCase()
-  return /\bremote\b|\bwork from home\b|\bwfh\b/.test(corpus)
+  const corpus =
+    `${job?.location || ''} ${job?.employment_type || ''} ${job?.title || ''} ${job?.description || ''} ${
+      job?.apply_link || ''
+    }`.toLowerCase()
+  return /\bremote\b|\bwork from home\b|\bwfh\b|\banywhere\b/.test(corpus)
 }
 
 function computeInterestScore(job, role, skills) {
@@ -232,6 +268,28 @@ function sourceLabel(job) {
   return 'Live Source'
 }
 
+function withTimeout(promise, timeoutMs) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    return promise
+  }
+
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('REQUEST_TIMEOUT'))
+    }, timeoutMs)
+
+    promise
+      .then((value) => {
+        clearTimeout(timer)
+        resolve(value)
+      })
+      .catch((error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+  })
+}
+
 function normalizePrediction(data) {
   if (!data || typeof data !== 'object') {
     return null
@@ -259,6 +317,7 @@ function normalizePrediction(data) {
       predicted_category: cleanReadableText(data.predicted_category, 80),
       job_description_used: cleanReadableText(data.job_description_used, 320),
       missing_skills: sanitizeList(data.missing_skills || []),
+      weaknesses: sanitizeList(data.weaknesses || data.resume_weaknesses || []),
       jobs: sanitizeJobs(data.jobs)
     }
   }
@@ -285,6 +344,7 @@ function normalizePrediction(data) {
     predicted_category: cleanReadableText(data.predicted_category, 80),
     job_description_used: cleanReadableText(data.job_description_used, 320),
     missing_skills: sanitizeList(data.missing_skills),
+    weaknesses: sanitizeList(data.weaknesses),
     jobs: sanitizeJobs(data.jobs)
   }
 }
@@ -321,6 +381,69 @@ function buildAutoJobDescription(prediction, skills) {
     `Required skills: ${skillsText}.`,
     years > 0 ? `Preferred experience: around ${years} years.` : 'Experience: 0-5 years.',
     'Must be able to build production-ready solutions and collaborate with cross-functional teams.'
+  ].join(' ')
+}
+
+function buildWeaknessInsights(prediction, missingSkills) {
+  if (!prediction) {
+    return []
+  }
+
+  const insights = [...dedupeTextList(prediction.weaknesses || [])]
+  const atsScore = clamp(Math.round(Number(prediction.ats_score || 0)), 0, 100)
+  const confidencePercent = Math.round(clamp(Number(prediction.confidence || 0), 0, 1) * 100)
+  const detectedSkillsCount = sanitizeList(prediction.skills).length
+
+  if (atsScore < 55) {
+    insights.push(
+      'ATS score is below shortlist benchmark. Add stronger role-specific keywords and quantified achievements.'
+    )
+  } else if (atsScore < 75) {
+    insights.push(
+      'ATS score is moderate. Tighten role alignment and measurable impact statements to improve recruiter screening.'
+    )
+  }
+
+  if (confidencePercent < 55) {
+    insights.push('Role prediction confidence is low. Resume narrative may be broad and needs clearer positioning.')
+  }
+
+  if (detectedSkillsCount > 0 && detectedSkillsCount < 6) {
+    insights.push('Skill coverage appears limited for competitive screening. Add relevant frameworks and tool depth.')
+  }
+
+  const prioritizedMissing = dedupeTextList(missingSkills).slice(0, 5)
+  if (prioritizedMissing.length > 0) {
+    insights.push(`Top missing skills: ${prioritizedMissing.join(', ')}.`)
+  }
+
+  if (insights.length === 0) {
+    insights.push('No major weakness detected. Keep improving role-specific outcomes and project impact metrics.')
+  }
+
+  return dedupeTextList(insights).slice(0, 4)
+}
+
+function buildVoiceAssistantSummary(prediction, weaknesses, missingSkills) {
+  if (!prediction) {
+    return ''
+  }
+
+  const atsScore = clamp(Math.round(Number(prediction.ats_score || 0)), 0, 100)
+  const role = cleanReadableText(prediction.predicted_role || 'your target role', 80) || 'your target role'
+  const leadWeakness =
+    cleanReadableText(Array.isArray(weaknesses) ? weaknesses[0] : '', 180) || 'No major weakness detected.'
+  const prioritizedMissing = dedupeTextList(missingSkills).slice(0, 5)
+  const missingLine = prioritizedMissing.length
+    ? prioritizedMissing.join(', ')
+    : 'No critical missing skills detected for the current job description.'
+
+  return [
+    'Resume analysis complete.',
+    `ATS score is ${atsScore} percent for ${role}.`,
+    `Primary weakness: ${leadWeakness}`,
+    `Missing skills to prioritize: ${missingLine}`,
+    'Next step: update your resume with targeted keywords and measurable outcomes, then run ATS match again.'
   ].join(' ')
 }
 
@@ -393,40 +516,85 @@ const ResumePredictor = ({ embedded = false }) => {
       const interestSkills = sanitizeList(editedSkills.length ? editedSkills : prediction.skills).slice(0, 3)
       const roleQuery = role
       const skillsQuery = interestSkills.length ? `${role} ${interestSkills.join(' ')}`.trim() : role
-      const queries = Array.from(new Set([roleQuery, skillsQuery])).filter(Boolean)
+      const indiaQueries = Array.from(
+        new Set([
+          `${roleQuery} India remote`,
+          interestSkills.length ? `${roleQuery} ${interestSkills[0]} India remote` : ''
+        ])
+      )
+        .filter(Boolean)
+        .slice(0, 1)
+      const intlQueries = Array.from(
+        new Set([
+          `${roleQuery} remote`,
+          skillsQuery && skillsQuery !== roleQuery ? `${skillsQuery} remote` : ''
+        ])
+      )
+        .filter(Boolean)
+        .slice(0, 1)
 
       try {
-        const intlResponses = await Promise.all(
-          queries.map((query) =>
-            searchJobs(query, {
-              remote: true
-            })
-          )
-        )
+        const requestSpecs = [
+          ...indiaQueries.map((query) => ({
+            bucket: 'india',
+            run: () =>
+              withTimeout(
+                searchJobs(query, {
+                  remote: true,
+                  page: 1
+                }),
+                REMOTE_FETCH_TIMEOUT_MS
+              )
+          })),
+          ...intlQueries.map((query) => ({
+            bucket: 'international',
+            run: () =>
+              withTimeout(
+                searchJobs(query, {
+                  remote: true,
+                  page: 1
+                }),
+                REMOTE_FETCH_TIMEOUT_MS
+              )
+          }))
+        ]
 
-        const indiaResponses = await Promise.all(
-          INDIA_REMOTE_LOCATIONS.map((location) =>
-            searchJobs(roleQuery, {
-              location,
-              remote: true
-            })
-          )
-        )
+        const settledResponses = await Promise.allSettled(requestSpecs.map((spec) => spec.run()))
+        const fulfilled = settledResponses
+          .map((result, index) => ({ result, spec: requestSpecs[index] }))
+          .filter((item) => item.result.status === 'fulfilled')
+          .map((item) => ({
+            bucket: item.spec.bucket,
+            payload: item.result.value
+          }))
 
-        const intlLive = sanitizeJobs(intlResponses.flatMap((payload) => payload?.jobs || []))
-        const indiaLive = sanitizeJobs(indiaResponses.flatMap((payload) => payload?.jobs || []))
+        if (fulfilled.length === 0) {
+          throw new Error('NO_LIVE_JOB_RESPONSES')
+        }
+
+        const livePayloads = fulfilled.map((item) => item.payload)
+        const liveJobs = sanitizeJobs(livePayloads.flatMap((payload) => payload?.jobs || []))
         const predictionJobs = sanitizeJobs(prediction.jobs || [])
+        const allMeta = livePayloads.map((payload) => payload?.meta).filter(Boolean)
+        const providerSet = new Set(
+          allMeta
+            .map((meta) => String(meta?.provider || '').trim().toLowerCase())
+            .filter(Boolean)
+        )
+        const providerError =
+          allMeta.find((meta) => typeof meta?.error === 'string' && meta.error.trim())?.error || ''
+        const providerErrorLower = providerError.toLowerCase()
 
         const indiaPool = dedupeJobs(
           [
-            ...indiaLive,
-            ...predictionJobs.filter((job) => isIndianLocation(job.location))
+            ...liveJobs.filter((job) => isIndianJob(job)),
+            ...predictionJobs.filter((job) => isIndianJob(job))
           ].filter((job) => isRemoteJob(job))
         )
         const intlPool = dedupeJobs(
           [
-            ...intlLive,
-            ...predictionJobs.filter((job) => !isIndianLocation(job.location))
+            ...liveJobs.filter((job) => !isIndianJob(job)),
+            ...predictionJobs.filter((job) => !isIndianJob(job))
           ].filter((job) => isRemoteJob(job))
         )
 
@@ -441,19 +609,33 @@ const ResumePredictor = ({ embedded = false }) => {
             india: topIndia,
             international: topIntl
           })
-          if (topIndia.length < REMOTE_SLOT_COUNT || topIntl.length < REMOTE_SLOT_COUNT) {
+          if (providerSet.has('none')) {
+            setRemoteJobsError(
+              'JSearch API key is missing. Add JSEARCH_API_KEY in backend/.env or rexion-backend/.env and restart services.'
+            )
+          } else if (providerSet.has('arbeitnow')) {
+            setRemoteJobsError(
+              'Using fallback jobs source. Set JSEARCH_API_KEY to fetch live jobs from your configured provider.'
+            )
+          } else if (providerErrorLower.includes('429') || providerErrorLower.includes('quota')) {
+            setRemoteJobsError(
+              'JSearch quota exceeded (429). Upgrade/reset your RapidAPI JSearch plan to fetch live jobs.'
+            )
+          } else if (providerError) {
+            setRemoteJobsError('Live jobs API returned an issue. Showing best available matches.')
+          } else if (topIndia.length < REMOTE_SLOT_COUNT || topIntl.length < REMOTE_SLOT_COUNT) {
             setRemoteJobsError('Limited live remote results right now. Showing best available matches.')
           }
         }
       } catch (fetchError) {
         const predictionRemote = sanitizeJobs(prediction.jobs || []).filter((job) => isRemoteJob(job))
         const rankedIndia = sortByInterest(
-          predictionRemote.filter((job) => isIndianLocation(job.location)),
+          predictionRemote.filter((job) => isIndianJob(job)),
           role,
           interestSkills
         )
         const rankedIntl = sortByInterest(
-          predictionRemote.filter((job) => !isIndianLocation(job.location)),
+          predictionRemote.filter((job) => !isIndianJob(job)),
           role,
           interestSkills
         )
@@ -494,6 +676,33 @@ const ResumePredictor = ({ embedded = false }) => {
       role_target: prediction.predicted_role || 'Software Engineer'
     }
   }, [editedSkills, prediction])
+
+  const prioritizedMissingSkills = useMemo(() => {
+    if (!prediction) {
+      return []
+    }
+
+    if (Array.isArray(atsResults) && atsResults.length > 0) {
+      const ranked = [...atsResults].sort((left, right) => Number(right?.ats_score || 0) - Number(left?.ats_score || 0))
+      const fromAts = ranked.flatMap((result) => sanitizeList(result?.missing_skills || []))
+      const dedupedAts = dedupeTextList(fromAts)
+      if (dedupedAts.length > 0) {
+        return dedupedAts.slice(0, 8)
+      }
+    }
+
+    return dedupeTextList(prediction.missing_skills || []).slice(0, 8)
+  }, [atsResults, prediction])
+
+  const weaknessInsights = useMemo(
+    () => buildWeaknessInsights(prediction, prioritizedMissingSkills),
+    [prediction, prioritizedMissingSkills]
+  )
+
+  const voiceAssistantMessage = useMemo(
+    () => buildVoiceAssistantSummary(prediction, weaknessInsights, prioritizedMissingSkills),
+    [prediction, weaknessInsights, prioritizedMissingSkills]
+  )
 
   const validateFile = (selectedFile) => {
     if (!selectedFile) {
@@ -942,6 +1151,18 @@ const ResumePredictor = ({ embedded = false }) => {
                       </ul>
                     )}
                   </div>
+                  <div className={styles.listCard}>
+                    <p className={styles.resultLabel}>Weakness Insights</p>
+                    {weaknessInsights.length === 0 ? (
+                      <p className={styles.emptyText}>No major weakness detected.</p>
+                    ) : (
+                      <ul className={styles.list}>
+                        {weaknessInsights.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
 
                 <div className={styles.atsSection}>
@@ -1039,6 +1260,16 @@ const ResumePredictor = ({ embedded = false }) => {
                       ))}
                     </div>
                   )}
+
+                  <div className={styles.voiceSection}>
+                    <p className={styles.resultLabel}>Voice ATS Assistant</p>
+                    <VoiceAssistant
+                      message={voiceAssistantMessage}
+                      title="Resume Voice Assistant"
+                      description="Speaks ATS score, weakness summary, and missing skills from your current analysis."
+                      autoPlay
+                    />
+                  </div>
                 </div>
 
                 <div className={styles.jobsSection}>

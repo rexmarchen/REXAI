@@ -548,6 +548,10 @@
   margin-top: 8px;
 }
 
+.voiceSection {
+  margin-top: 12px;
+}
+
 .missingSkillChip {
   display: inline-flex;
   align-items: center;
