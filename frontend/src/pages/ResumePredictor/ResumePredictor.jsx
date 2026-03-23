@@ -1,14 +1,41 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import JobMatchingEngine from '../../components/resume/JobMatchingEngine'
-import VoiceAssistant from '../../components/resume/VoiceAssistant'
+// TODO: Install missing components or implement stubs
+// import JobMatchingEngine from '../../components/resume/JobMatchingEngine'
+// import VoiceAssistant from '../../components/resume/VoiceAssistant'
+
+const JobMatchingEngine = ({ resume }) => (
+  <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+    <h3>Job Matching Engine</h3>
+    <p>Component coming soon. Resume: {resume?.role_target || 'N/A'}</p>
+  </div>
+)
+
+const VoiceAssistant = ({ message, title, description, autoPlay }) => (
+  <div style={{ padding: '1.5rem', border: '1px solid #e0e0e0', borderRadius: '8px', background: '#f9f9f9' }}>
+    <h4>{title || 'Voice Assistant'}</h4>
+    <p>{description || 'Text-to-speech component stub'}</p>
+    <details>
+      <summary>Latest message ({message?.length || 0} chars)</summary>
+      <p style={{ fontSize: '14px', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+        {message?.slice(0, 300) || 'No message yet'}
+        {message?.length > 300 && '...'}
+      </p>
+    </details>
+  </div>
+)
 import { matchResumesWithJob, uploadResumesToAts } from '../../services/atsApi'
 import { predictCareerPath, searchJobs } from '../../services/mlServiceApi'
+import { normalizeResumePrediction as normalizePrediction } from '../../services/resumePredictionAdapter'
+import { motion, AnimatePresence, useInView, useMotionValue, useSpring } from 'framer-motion'
+import ParticleEarth from '../../components/common/ParticleEarth'
 import styles from './ResumePredictor.module.css'
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 const ACCEPTED_EXTENSIONS = ['.pdf', '.doc', '.docx']
 const INTERNATIONAL_REMOTE_SLOT_COUNT = 10
 const REMOTE_FETCH_TIMEOUT_MS = 12000
+const LIVE_JOB_WINDOW_HOURS = 72
+const LIVE_JOB_REFRESH_INTERVAL_MS = 5 * 60 * 1000
 const INDIA_LOCATION_KEYWORDS = [
   'india',
   'bengaluru',
@@ -105,6 +132,59 @@ function cleanDescription(value) {
     .replace(/&#x27;/gi, "'")
     .replace(/&#x2F;/gi, '/')
   return truncateText(decoded.replace(/\s+/g, ' ').trim(), 260)
+}
+
+function parseUtcDate(value) {
+  const raw = String(value || '').trim()
+  if (!raw) {
+    return null
+  }
+  const parsed = new Date(raw)
+  if (Number.isNaN(parsed.getTime())) {
+    return null
+  }
+  return parsed
+}
+
+function postedAgeHours(postedDate) {
+  const parsed = parseUtcDate(postedDate)
+  if (!parsed) {
+    return null
+  }
+  const ageMs = Date.now() - parsed.getTime()
+  if (ageMs <= 0) {
+    return 0
+  }
+  return ageMs / (1000 * 60 * 60)
+}
+
+function formatTimeAgo(value) {
+  const parsed = parseUtcDate(value)
+  if (!parsed) {
+    return ''
+  }
+  const ageMs = Date.now() - parsed.getTime()
+  if (ageMs < 0) {
+    return 'just now'
+  }
+  const minutes = Math.floor(ageMs / (1000 * 60))
+  if (minutes < 1) {
+    return 'just now'
+  }
+  if (minutes < 60) {
+    return `${minutes}m ago`
+  }
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) {
+    return `${hours}h ago`
+  }
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
+
+function formatPostedLabel(postedDate) {
+  const ago = formatTimeAgo(postedDate)
+  return ago ? `Posted ${ago}` : ''
 }
 
 function parseExperienceYears(value) {
@@ -238,6 +318,19 @@ function computeInterestScore(job, role, skills) {
   if (isRemoteJob(job)) {
     score += 6
   }
+
+  const ageHours = postedAgeHours(job?.posted_date)
+  if (ageHours !== null) {
+    if (ageHours <= 6) {
+      score += 12
+    } else if (ageHours <= 24) {
+      score += 8
+    } else if (ageHours <= LIVE_JOB_WINDOW_HOURS) {
+      score += 4
+    } else if (ageHours <= 7 * 24) {
+      score += 1
+    }
+  }
   return clamp(score, 20, 99)
 }
 
@@ -288,65 +381,6 @@ function withTimeout(promise, timeoutMs) {
         reject(error)
       })
   })
-}
-
-function normalizePrediction(data) {
-  if (!data || typeof data !== 'object') {
-    return null
-  }
-
-  // Handle ML Service response format (career_path, confidence, ats_score, jobs)
-  if (data.career_path) {
-    const rawConfidence = Number(data.confidence)
-    const confidence =
-      Number.isFinite(rawConfidence) && rawConfidence > 1
-        ? clamp(rawConfidence / 100, 0, 1)
-        : clamp(rawConfidence || 0, 0, 1)
-    const experienceYears = parseExperienceYears(data.experience_years || data.required_experience)
-
-    return {
-      name: cleanReadableText(data.name, 80),
-      skills: sanitizeList(data.extracted_skills || data.skills || data.required_skills || []),
-      education: cleanReadableText(data.education || data.required_education, 180),
-      certifications: sanitizeList(data.certifications || []),
-      projects: sanitizeList(data.projects || []),
-      experience_years: Number.isFinite(experienceYears) ? Math.max(0, experienceYears) : 0,
-      predicted_role: cleanReadableText(data.career_path || data.predicted_role, 80),
-      confidence,
-      ats_score: Number(data.ats_score || 0),
-      predicted_category: cleanReadableText(data.predicted_category, 80),
-      job_description_used: cleanReadableText(data.job_description_used, 320),
-      missing_skills: sanitizeList(data.missing_skills || []),
-      weaknesses: sanitizeList(data.weaknesses || data.resume_weaknesses || []),
-      jobs: sanitizeJobs(data.jobs)
-    }
-  }
-
-  // Handle legacy backend response format
-  const rawConfidence = Number(data.confidence)
-  const confidence =
-    Number.isFinite(rawConfidence) && rawConfidence > 1
-      ? clamp(rawConfidence / 100, 0, 1)
-      : clamp(rawConfidence || 0, 0, 1)
-
-  const experienceYears = parseExperienceYears(data.experience_years || data.required_experience)
-
-  return {
-    name: cleanReadableText(data.name, 80),
-    skills: sanitizeList(data.skills),
-    education: cleanReadableText(data.education, 180),
-    certifications: sanitizeList(data.certifications),
-    projects: sanitizeList(data.projects),
-    experience_years: Number.isFinite(experienceYears) ? Math.max(0, experienceYears) : 0,
-    predicted_role: cleanReadableText(data.predicted_role, 80),
-    confidence,
-    ats_score: Number(data.ats_score || 0),
-    predicted_category: cleanReadableText(data.predicted_category, 80),
-    job_description_used: cleanReadableText(data.job_description_used, 320),
-    missing_skills: sanitizeList(data.missing_skills),
-    weaknesses: sanitizeList(data.weaknesses),
-    jobs: sanitizeJobs(data.jobs)
-  }
 }
 
 function formatBytes(size) {
@@ -473,6 +507,8 @@ const ResumePredictor = ({ embedded = false }) => {
   const [remoteJobs, setRemoteJobs] = useState({
     international: []
   })
+  const [remoteJobsLastUpdatedAt, setRemoteJobsLastUpdatedAt] = useState('')
+  const [remoteJobsProvider, setRemoteJobsProvider] = useState('')
 
   useEffect(() => {
     if (!prediction) {
@@ -502,14 +538,18 @@ const ResumePredictor = ({ embedded = false }) => {
       setRemoteJobs({ international: [] })
       setRemoteJobsError('')
       setRemoteJobsLoading(false)
+      setRemoteJobsLastUpdatedAt('')
+      setRemoteJobsProvider('')
       return
     }
 
     let cancelled = false
 
-    const loadRemoteJobs = async () => {
-      setRemoteJobsLoading(true)
-      setRemoteJobsError('')
+    const loadRemoteJobs = async (forceRefresh = false, silentRefresh = false) => {
+      if (!silentRefresh) {
+        setRemoteJobsLoading(true)
+        setRemoteJobsError('')
+      }
 
       const role = String(prediction.predicted_role || 'Software Engineer').trim()
       const interestSkills = sanitizeList(editedSkills.length ? editedSkills : prediction.skills).slice(0, 3)
@@ -529,7 +569,9 @@ const ResumePredictor = ({ embedded = false }) => {
           withTimeout(
             searchJobs(query, {
               remote: true,
-              page: 1
+              page: 1,
+              postedWithinHours: LIVE_JOB_WINDOW_HOURS,
+              refresh: forceRefresh
             }),
             REMOTE_FETCH_TIMEOUT_MS
           )
@@ -573,9 +615,12 @@ const ResumePredictor = ({ embedded = false }) => {
           setRemoteJobs({
             international: topIntl
           })
+          setRemoteJobsLastUpdatedAt(new Date().toISOString())
+          const primaryProvider = Array.from(providerSet)[0] || ''
+          setRemoteJobsProvider(primaryProvider)
           if (providerSet.has('none')) {
             setRemoteJobsError(
-              'JSearch API key is missing. Add JSEARCH_API_KEY in backend/.env or rexion-backend/.env and restart services.'
+              'JSearch API key is missing. Add JSEARCH_API_KEY in backend/.env and restart services.'
             )
           } else if (providerSet.has('arbeitnow')) {
             setRemoteJobsError(
@@ -603,19 +648,27 @@ const ResumePredictor = ({ embedded = false }) => {
           setRemoteJobs({
             international: rankedIntl.slice(0, INTERNATIONAL_REMOTE_SLOT_COUNT)
           })
+          setRemoteJobsLastUpdatedAt(new Date().toISOString())
+          setRemoteJobsProvider('')
           setRemoteJobsError('Live remote jobs could not be loaded. Showing available remote matches.')
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && !silentRefresh) {
           setRemoteJobsLoading(false)
         }
       }
     }
 
-    loadRemoteJobs()
+    loadRemoteJobs(true, false)
+    const refreshTimer = window.setInterval(() => {
+      if (!cancelled) {
+        loadRemoteJobs(false, true)
+      }
+    }, LIVE_JOB_REFRESH_INTERVAL_MS)
 
     return () => {
       cancelled = true
+      window.clearInterval(refreshTimer)
     }
   }, [prediction, editedSkills])
 
@@ -661,6 +714,33 @@ const ResumePredictor = ({ embedded = false }) => {
     () => buildVoiceAssistantSummary(prediction, weaknessInsights, prioritizedMissingSkills),
     [prediction, weaknessInsights, prioritizedMissingSkills]
   )
+
+  const statsContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15
+      }
+    }
+  };
+
+  const statsItem = {
+    hidden: { y: 30, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { duration: 0.6, ease: "easeOut" }
+    }
+  };
+
+  const dropZoneVariants = {
+    hover: { 
+      scale: 1.02, 
+      rotateX: 5,
+      transition: { duration: 0.3 }
+    }
+  };
 
   const validateFile = (selectedFile) => {
     if (!selectedFile) {
@@ -865,8 +945,21 @@ const ResumePredictor = ({ embedded = false }) => {
     }
   }
 
+  const confidencePercent = Math.round(clamp(Number(prediction?.confidence || 0), 0, 1) * 100)
+  const atsScorePercent = clamp(Math.round(Number(prediction?.ats_score || 0)), 0, 100)
+  const skillsCount = sanitizeList(editedSkills.length ? editedSkills : prediction?.skills || []).length
+  const pipelineStatus = loading ? 'Analyzing' : prediction ? 'Ready' : file ? 'Resume Added' : 'Waiting'
+  const resumeLabel = file ? `${file.name} (${formatBytes(file.size)})` : 'No resume uploaded yet'
+  const roleSnapshot =
+    cleanReadableText(prediction?.predicted_role || lastResult?.predicted_role || '', 70) || 'Role Pending'
+
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true })
+
   return (
-    <div className={`${styles.container} ${embedded ? styles.embedded : ''}`}>
+    <div ref={ref} className={`${styles.container} ${embedded ? styles.embedded : ''}`}>
+      <ParticleEarth />
+
       {!embedded && (
         <div className={styles.videoLayer} aria-hidden="true">
           <video
@@ -884,49 +977,117 @@ const ResumePredictor = ({ embedded = false }) => {
       )}
       <div className={styles.content}>
         <header className={styles.header}>
-          <p className={styles.kicker}>RESUME TO JOB PIPELINE</p>
-          <h1 className={styles.title}>Analyze Resume and Find Matching Jobs</h1>
-          <p className={styles.subtitle}>
-            Upload your resume, review extracted profile data, then jump straight into role-based
-            job opportunities.
-          </p>
-          <div className={styles.headerActions}>
-            <button type="button" className={styles.secondaryButton} onClick={handleReupload}>
-              Re-upload
-            </button>
-            {lastResult && !prediction && (
-              <button type="button" className={styles.secondaryButton} onClick={useLastResult}>
-                Restore Last Result
-              </button>
-            )}
+          <div className={styles.headerMain}>
+            <p className={styles.kicker}>RESUME TO JOB PIPELINE</p>
+            <motion.h1 
+              className={styles.title} 
+              initial={{ opacity: 0, y: 50 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}} 
+              transition={{ duration: 0.8 }}
+            >
+              <motion.span 
+                className="typing-text glitch"
+                initial={{ width: 0 }}
+                animate={{ width: isInView ? '100%' : 0 }}
+                transition={{ duration: 2.5, delay: 0.5 }}
+              >
+                Analyze Resume
+              </motion.span>
+              <span>Find Matching Jobs</span>
+            </motion.h1>
+
+            <p className={styles.subtitle}>
+              Upload your resume, review extracted profile intelligence, and move directly into
+              high-fit opportunities ranked by role and ATS strength.
+            </p>
+            <div className={styles.heroPills}>
+              <span className={styles.statusPill}>Pipeline: {pipelineStatus}</span>
+              <span className={styles.subtlePill}>{remoteOnly ? 'Remote-first mode' : 'Flexible mode'}</span>
+              <span className={styles.subtlePill}>{resumeLabel}</span>
+            </div>
           </div>
+
+          <aside className={styles.heroAside}>
+            <motion.div 
+              className={styles.heroStatsGrid}
+              variants={statsContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              <motion.article 
+                className={styles.heroStatCard + ' card-3d'}
+                variants={statsItem}
+                whileHover={{ rotateX: 5, rotateY: 5, scale: 1.05 }}
+              >
+                <span className={styles.heroStatValue}>{prediction ? `${atsScorePercent}%` : '--'}</span>
+                <span className={styles.heroStatLabel}>ATS Score</span>
+              </motion.article>
+              <article className={styles.heroStatCard}>
+                <span className={styles.heroStatValue}>{prediction ? `${confidencePercent}%` : '--'}</span>
+                <span className={styles.heroStatLabel}>Prediction Confidence</span>
+              </article>
+              <article className={styles.heroStatCard}>
+                <span className={styles.heroStatValue}>{prediction ? skillsCount : '--'}</span>
+                <span className={styles.heroStatLabel}>Detected Skills</span>
+              </article>
+              <article className={styles.heroStatCard}>
+                <span className={styles.heroStatValue}>{roleSnapshot}</span>
+                <span className={styles.heroStatLabel}>Role Snapshot</span>
+              </article>
+            </motion.div>
+            <div className={styles.headerActions}>
+              <button type="button" className={styles.secondaryButton} onClick={handleReupload}>
+                Re-upload
+              </button>
+              {lastResult && !prediction && (
+                <button type="button" className={styles.secondaryButton} onClick={useLastResult}>
+                  Restore Last Result
+                </button>
+              )}
+            </div>
+          </aside>
         </header>
 
-        <div className={styles.stepper}>
-          {STEPS.map((item) => {
-            const isComplete = step > item.id
-            const isCurrent = step === item.id
+        <div className={styles.workflowRow}>
+          <div className={styles.stepper}>
+            {STEPS.map((item) => {
+              const isComplete = step > item.id
+              const isCurrent = step === item.id
 
-            return (
-              <div key={item.id} className={styles.stepItem}>
-                <div
-                  className={`${styles.stepIndex} ${isComplete ? styles.complete : ''} ${
-                    isCurrent ? styles.current : ''
-                  }`}
-                >
-                  {item.id}
+              return (
+                <div key={item.id} className={styles.stepItem}>
+                  <div
+                    className={`${styles.stepIndex} ${isComplete ? styles.complete : ''} ${
+                      isCurrent ? styles.current : ''
+                    }`}
+                  >
+                    {item.id}
+                  </div>
+                  <span className={styles.stepLabel}>{item.label}</span>
                 </div>
-                <span className={styles.stepLabel}>{item.label}</span>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
+
+          <aside className={styles.howItWorksCard}>
+            <p className={styles.howTitle}>How It Works</p>
+            <ul className={styles.howList}>
+              <li>Upload one resume in PDF or DOCX format.</li>
+              <li>Run AI prediction to extract role, ATS score, and skill gaps.</li>
+              <li>Launch ATS matching and review ranked live remote opportunities.</li>
+            </ul>
+          </aside>
         </div>
 
         <section className={`${styles.panel} ${styles.fadeSlide}`}>
           <h2 className={styles.panelTitle}>Step 1 - Upload Resume</h2>
 
-          <div
-            className={`${styles.dropzone} ${dragActive ? styles.dropzoneActive : ''}`}
+          <motion.div
+            className={`${styles.dropzone} ${dragActive ? styles.dropzoneActive : ''} card-3d`}
+            variants={dropZoneVariants}
+            whileHover="hover"
+
             onDragEnter={(event) => {
               event.preventDefault()
               setDragActive(true)
@@ -1051,10 +1212,13 @@ const ResumePredictor = ({ embedded = false }) => {
                     <strong>{Math.round(prediction.confidence * 100)}%</strong>
                   </div>
                   <div className={styles.confidenceTrack}>
-                    <div
+                    <motion.div
                       className={styles.confidenceFill}
-                      style={{ width: `${Math.round(prediction.confidence * 100)}%` }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.round(prediction.confidence * 100)}%` }}
+                      transition={{ duration: 1.5, ease: "easeOut" }}
                     />
+
                   </div>
                 </div>
 
@@ -1248,8 +1412,16 @@ const ResumePredictor = ({ embedded = false }) => {
                       <h3 className={styles.remoteJobsTitle}>Top 10 Curated International Remote Openings</h3>
                       <p className={styles.remoteJobsSubtitle}>
                         Based on your role prediction and skill interests:
-                        <strong> 10 international remote roles</strong>
+                        <strong> 10 international remote roles</strong> posted in last{' '}
+                        <strong>{LIVE_JOB_WINDOW_HOURS} hours</strong>. Auto-refresh every{' '}
+                        <strong>{Math.round(LIVE_JOB_REFRESH_INTERVAL_MS / 60000)} minutes</strong>.
                       </p>
+                      {remoteJobsLastUpdatedAt && (
+                        <p className={styles.jobMeta}>
+                          Last updated {formatTimeAgo(remoteJobsLastUpdatedAt)}
+                          {remoteJobsProvider ? ` via ${remoteJobsProvider}` : ''}
+                        </p>
+                      )}
                     </div>
                     <span className={styles.remoteJobsCount}>
                       {remoteJobs.international.length || 0} live jobs
@@ -1282,6 +1454,9 @@ const ResumePredictor = ({ embedded = false }) => {
                               {job.location}
                               {job.employment_type ? ` | ${job.employment_type}` : ''}
                             </p>
+                            {formatPostedLabel(job.posted_date) && (
+                              <p className={styles.jobMeta}>{formatPostedLabel(job.posted_date)}</p>
+                            )}
                             {job.description && <p className={styles.jobDescription}>{job.description}</p>}
                             <div className={styles.jobFooter}>
                               <span className={styles.jobSource}>{sourceLabel(job)}</span>
