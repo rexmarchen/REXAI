@@ -1,25 +1,26 @@
 import logger from '../utils/logger.js'
 
 export const errorHandler = (err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err)
+  }
+
   err.statusCode = err.statusCode || 500
   err.message = err.message || 'Internal Server Error'
 
-  // Log error
+  console.error(err.message)
   logger.error(`${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`)
 
-  // Mongoose duplicate key error
   if (err.code === 11000) {
     err.statusCode = 400
     err.message = 'Duplicate field value entered'
   }
 
-  // Mongoose validation error
   if (err.name === 'ValidationError') {
     err.statusCode = 400
     err.message = Object.values(err.errors).map(val => val.message).join(', ')
   }
 
-  // JWT errors
   if (err.name === 'JsonWebTokenError') {
     err.statusCode = 401
     err.message = 'Invalid token. Please log in again.'
@@ -31,6 +32,7 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   res.status(err.statusCode).json({
+    error: err.message,
     success: false,
     message: err.message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined

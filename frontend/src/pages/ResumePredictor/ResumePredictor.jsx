@@ -1,31 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-// TODO: Install missing components or implement stubs
-// import JobMatchingEngine from '../../components/resume/JobMatchingEngine'
-// import VoiceAssistant from '../../components/resume/VoiceAssistant'
-
-const JobMatchingEngine = ({ resume }) => (
-  <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
-    <h3>Job Matching Engine</h3>
-    <p>Component coming soon. Resume: {resume?.role_target || 'N/A'}</p>
-  </div>
-)
-
-const VoiceAssistant = ({ message, title, description, autoPlay }) => (
-  <div style={{ padding: '1.5rem', border: '1px solid #e0e0e0', borderRadius: '8px', background: '#f9f9f9' }}>
-    <h4>{title || 'Voice Assistant'}</h4>
-    <p>{description || 'Text-to-speech component stub'}</p>
-    <details>
-      <summary>Latest message ({message?.length || 0} chars)</summary>
-      <p style={{ fontSize: '14px', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-        {message?.slice(0, 300) || 'No message yet'}
-        {message?.length > 300 && '...'}
-      </p>
-    </details>
-  </div>
-)
+import JobMatchingEngine from '../../components/resume/JobMatchingEngine/JobMatchingEngine'
+import VoiceAssistant from '../../components/resume/VoiceAssistant/VoiceAssistant'
 import { matchResumesWithJob, uploadResumesToAts } from '../../services/atsApi'
 import { predictCareerPath, searchJobs } from '../../services/mlServiceApi'
-import { normalizeResumePrediction as normalizePrediction } from '../../services/resumePredictionAdapter'
+import { normalizeResumePrediction } from '../../services/resumePredictionAdapter'
 import { motion, AnimatePresence, useInView, useMotionValue, useSpring } from 'framer-motion'
 import ParticleEarth from '../../components/common/ParticleEarth'
 import styles from './ResumePredictor.module.css'
@@ -794,9 +772,9 @@ const ResumePredictor = ({ embedded = false }) => {
         remote: remoteOnly
       }
 
-      const response = await predictCareerPath(file, predictionOptions)
+     const response = await predictCareerPath(file, predictionOptions)
 
-      const normalized = normalizePrediction(response)
+      const normalized = normalizeResumePrediction(response)   
 
       if (!normalized) {
         throw new Error('Prediction API returned an invalid response.')
@@ -1124,7 +1102,7 @@ const ResumePredictor = ({ embedded = false }) => {
                 {file.name} ({formatBytes(file.size)})
               </p>
             )}
-          </div>
+          </motion.div>
 
           <div className={styles.queryGrid}>
             <textarea

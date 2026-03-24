@@ -215,10 +215,38 @@ export const searchJobs = catchAsync(async (req, res) => {
       : remoteRaw === 'false' || remoteRaw === '0' || remoteRaw === 'no'
         ? false
         : undefined
+  const pageRaw = req.query.page ?? null
+  const parsedPage = Number.parseInt(String(pageRaw ?? '').trim(), 10)
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.min(parsedPage, 10) : undefined
+  const numPagesRaw = req.query.num_pages ?? req.query.numPages ?? null
+  const parsedNumPages = Number.parseInt(String(numPagesRaw ?? '').trim(), 10)
+  const numPages =
+    Number.isFinite(parsedNumPages) && parsedNumPages > 0 ? Math.min(parsedNumPages, 5) : undefined
+  const limitRaw = req.query.limit ?? null
+  const parsedLimit = Number.parseInt(String(limitRaw ?? '').trim(), 10)
+  const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 50) : undefined
+  const postedWithinHoursRaw =
+    req.query.posted_within_hours ?? req.query.postedWithinHours ?? null
+  const parsedPostedWithinHours = Number.parseInt(String(postedWithinHoursRaw ?? '').trim(), 10)
+  const postedWithinHours = Number.isFinite(parsedPostedWithinHours) && parsedPostedWithinHours > 0
+    ? Math.min(parsedPostedWithinHours, 720)
+    : undefined
+  const refreshRaw = String(req.query.refresh || '').trim().toLowerCase()
+  const refresh =
+    refreshRaw === 'true' || refreshRaw === '1' || refreshRaw === 'yes'
+      ? true
+      : refreshRaw === 'false' || refreshRaw === '0' || refreshRaw === 'no'
+        ? false
+        : undefined
 
-  const jobs = await searchJobsViaMlService(query, {
+  const jobSearchPayload = await searchJobsViaMlService(query, {
     location: location || undefined,
-    remote
+    remote,
+    page,
+    numPages,
+    limit,
+    postedWithinHours,
+    refresh
   })
 
   res.status(200).json({
@@ -226,7 +254,13 @@ export const searchJobs = catchAsync(async (req, res) => {
     query,
     location: location || null,
     remote: remote ?? null,
-    jobs
+    page: page ?? null,
+    num_pages: numPages ?? null,
+    limit: limit ?? null,
+    posted_within_hours: postedWithinHours ?? null,
+    refresh: refresh ?? null,
+    jobs: Array.isArray(jobSearchPayload?.jobs) ? jobSearchPayload.jobs : [],
+    meta: jobSearchPayload?.meta || null
   })
 })
 

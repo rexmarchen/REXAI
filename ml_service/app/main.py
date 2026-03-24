@@ -26,6 +26,7 @@ from .service.parser import parse_upload_file
 from .service.resume_profile_extractor import extract_resume_profile
 from .service.skill_extractor import extract_skills, missing_skills
 from .utils.database import db
+from ..resume_classifier.inference import InferenceBundle, load_bundle, predict_resume_text
 
 
 parser = ResumeParser()
@@ -33,6 +34,41 @@ feature_extractor: FeatureExtractor | None = None
 predictor: CareerPredictor | None = None
 scorer: ATSScorer | None = None
 job_fetcher: JobFetcher | None = None
+bert_bundle: InferenceBundle | None = None
+DEFAULT_LIVE_JOB_WINDOW_HOURS = 72
+
+
+def _should_try_bert() -> bool:
+    return settings.career_prediction_backend in {"bert", "auto"}
+
+
+def _active_career_backend() -> str:
+    if settings.career_prediction_backend == "bert":
+        return "bert" if bert_bundle is not None else "bert_unavailable"
+    if settings.career_prediction_backend == "auto":
+        return "bert" if bert_bundle is not None else "production"
+    return "production"
+
+
+def _predict_career_path(text: str) -> tuple[str, float, str]:
+    active_backend = _active_career_backend()
+    if active_backend == "bert":
+        assert bert_bundle is not None
+        bert_result = predict_resume_text(bert_bundle, text)
+        return bert_result.predicted_role, float(bert_result.confidence), "bert"
+
+    if active_backend == "bert_unavailable":
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "CAREER_PREDICTION_BACKEND is set to 'bert' but no BERT model could be loaded. "
+                "Train/save a BERT model first or switch the backend to 'production' or 'auto'."
+            ),
+        )
+
+    features = feature_extractor.transform([text])
+    predictions, probabilities = predictor.predict(features)
+    return str(predictions[0]), float(probabilities[0]), "production"
 
 
 def _parse_remote_flag(remote: Optional[str]) -> bool:
@@ -82,12 +118,21 @@ def _name_from_filename(filename: str | None) -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global feature_extractor, predictor, scorer, job_fetcher
+    global feature_extractor, predictor, scorer, job_fetcher, bert_bundle
 
     feature_extractor = FeatureExtractor(settings.tfidf_vectorizer_path)
     predictor = CareerPredictor(settings.career_model_path)
     scorer = ATSScorer(feature_extractor.vectorizer)
     job_fetcher = JobFetcher()
+    bert_bundle = None
+    if _should_try_bert() and settings.production_bert_model_dir.exists():
+        try:
+            bert_bundle = load_bundle(
+                settings.production_bert_model_dir,
+                device=settings.bert_resume_device,
+            )
+        except Exception:
+            bert_bundle = None
     get_models()  # Warm ATS category models.
     yield
 
@@ -110,7 +155,12 @@ app.add_middleware(
 
 @app.get("/health", tags=["system"])
 async def health():
-    return {"status": "ok", "service": "rexion_ml_ats"}
+    return {
+        "status": "ok",
+        "service": "rexion_ml_ats",
+        "configured_career_backend": settings.career_prediction_backend,
+        "active_career_backend": _active_career_backend(),
+    }
 
 
 @app.post("/predict", response_model=PredictionResponse, tags=["prediction"])
@@ -119,6 +169,7 @@ async def predict(
     job_description: Optional[str] = Form(default=None),
     location: Optional[str] = Form(default=None),
     remote: Optional[str] = Form(default=None),
+    posted_within_hours: Optional[int] = Form(default=None, ge=1, le=720),
     user_id: Optional[str] = Form(default=None),
 ):
     if not feature_extractor or not predictor or not scorer or not job_fetcher:
@@ -132,10 +183,7 @@ async def predict(
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"Could not parse resume: {error}") from error
 
-    features = feature_extractor.transform([text])
-    predictions, probabilities = predictor.predict(features)
-    career_path = str(predictions[0])
-    confidence = float(probabilities[0])
+    career_path, confidence, career_model_backend = _predict_career_path(text)
 
     profile = extract_resume_profile(text)
     resolved_name = profile.name or _name_from_filename(file.filename)
@@ -146,6 +194,7 @@ async def predict(
         else _build_auto_job_description(career_path, extracted)
     )
     remote_jobs_only = _parse_remote_flag(remote)
+    effective_posted_within_hours = posted_within_hours or DEFAULT_LIVE_JOB_WINDOW_HOURS
 
     score_details = scorer.score(text, job_description=jd_used, return_details=True)
     ats_score = float(score_details["ats_score"])
@@ -157,6 +206,8 @@ async def predict(
         location=location,
         remote_jobs_only=remote_jobs_only,
         num_pages=1,
+        posted_within_hours=effective_posted_within_hours,
+        refresh=True,
     )
     jobs_limited = jobs[:20]
 
@@ -174,10 +225,12 @@ async def predict(
         "job_description_used": jd_used,
         "extracted_skills": extracted,
         "missing_skills": missing,
+        "career_model_backend": career_model_backend,
         "jobs_query_meta": {
             "query": career_path,
             "location": location,
             "remote": remote_jobs_only,
+            "posted_within_hours": effective_posted_within_hours,
         },
         "score_breakdown": {
             "tfidf_similarity": score_details["tfidf_similarity"],
@@ -224,6 +277,11 @@ async def search_jobs(
     query: str = Query(..., min_length=2),
     location: Optional[str] = Query(default=None),
     remote: Optional[bool] = Query(default=None),
+    page: int = Query(default=1, ge=1, le=10),
+    num_pages: int = Query(default=1, ge=1, le=5),
+    limit: int = Query(default=20, ge=1, le=50),
+    posted_within_hours: Optional[int] = Query(default=DEFAULT_LIVE_JOB_WINDOW_HOURS, ge=1, le=720),
+    refresh: bool = Query(default=False),
 ):
     if not job_fetcher:
         raise HTTPException(status_code=503, detail="Job fetcher is still loading.")
@@ -231,10 +289,24 @@ async def search_jobs(
     jobs = await job_fetcher.search_jobs(
         query=query,
         location=location,
+        page=page,
         remote_jobs_only=remote,
-        num_pages=1,
+        num_pages=num_pages,
+        posted_within_hours=posted_within_hours,
+        refresh=refresh,
     )
-    return {"jobs": jobs[:20], "meta": job_fetcher.status_meta()}
+    return {
+        "jobs": jobs[:limit],
+        "meta": {
+            **job_fetcher.status_meta(),
+            "page": page,
+            "num_pages": num_pages,
+            "limit": limit,
+            "total_available": len(jobs),
+            "posted_within_hours": posted_within_hours,
+            "refresh": refresh,
+        },
+    }
 
 
 @app.post("/upload-resumes", tags=["ats"])

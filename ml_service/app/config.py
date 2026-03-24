@@ -17,7 +17,7 @@ UPLOADS_DIR = PROJECT_ROOT / "uploads"
 
 # Load env in precedence order, lowest -> highest priority.
 load_dotenv(REPO_ROOT / ".env", override=False)
-load_dotenv(REPO_ROOT / "rexion-backend" / ".env", override=False)
+load_dotenv(REPO_ROOT / "backend" / "legacy" / "rexion-backend" / ".env", override=False)
 load_dotenv(REPO_ROOT / "backend" / ".env", override=False)
 load_dotenv(PROJECT_ROOT / ".env", override=True)
 
@@ -56,16 +56,32 @@ def _as_int(value: str | None, default: int) -> int:
     return numeric if numeric > 0 else default
 
 
+def _career_backend_default() -> str:
+    explicit = _get_env("CAREER_PREDICTION_BACKEND")
+    if explicit:
+        normalized = explicit.strip().lower()
+    elif _as_bool(os.getenv("USE_BERT_RESUME_CLASSIFIER"), False):
+        normalized = "auto"
+    else:
+        normalized = "production"
+    if normalized in {"production", "bert", "auto"}:
+        return normalized
+    return "production"
+
+
 @dataclass(frozen=True)
 class Settings:
     model_dir: Path = MODELS_DIR
     career_model_path: Path = MODELS_DIR / "career_model.pkl"
     tfidf_vectorizer_path: Path = MODELS_DIR / "tfidf_vectorizer.pkl"
+    career_prediction_backend: str = _career_backend_default()
+    production_bert_model_dir: Path = Path(_get_env("BERT_RESUME_MODEL_DIR", "MODEL_DIR") or (PROJECT_ROOT / "model"))
+    bert_resume_device: str = _get_env("BERT_RESUME_DEVICE", "MODEL_DEVICE") or "auto"
 
     ats_vectorizer_path: Path = MODELS_DIR / "ats_vectorizer.pkl"
     ats_classifier_path: Path = MODELS_DIR / "ats_classifier.pkl"
     ats_training_dataset_path: Path = (
-        PROJECT_ROOT.parent / "ats_system" / "data" / "sample_resumes" / "labeled_resumes.csv"
+        PROJECT_ROOT / "ats_system" / "data" / "sample_resumes" / "labeled_resumes.csv"
     )
     ats_skills_path: Path = DATA_DIR / "skills.json"
 

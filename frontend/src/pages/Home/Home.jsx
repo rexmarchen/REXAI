@@ -107,11 +107,6 @@ const Home = () => {
         <h1 className={styles.heroTitle}>REXION</h1>
         <p className={styles.heroSub}>INTELLIGENCE BEYOND IMAGINATION</p>
 
-        <div className={styles.authActions}>
-          <Link to="/login" className={styles.loginCta}>Login</Link>
-          <Link to="/register" className={styles.registerCta}>Register</Link>
-        </div>
-
         <div className={styles.searchSection}>
           <div className={styles.searchWrap}>
             <input

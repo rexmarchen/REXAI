@@ -1,0 +1,12 @@
+.page {
+  min-height: 100vh;
+  background: #07080f;
+}
+
+.frame {
+  width: 100%;
+  height: 100vh;
+  border: none;
+  display: block;
+  background: #07080f;
+}

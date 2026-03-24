@@ -1,28 +1,15 @@
-# Fix Vite 500 Error - ResumePredictor.jsx
+# ResumePredictor Page Fix - TODO Steps
 
-✅ **Step 1:** Install missing dependencies  
-`cd frontend && npm install framer-motion @types/react @types/react-dom`
+## Plan Breakdown
+**Goal:** Fix "Failed to fetch dynamically imported module: src/pages/ResumePredictor/index.js"
 
-✅ **Step 2:** Add ErrorBoundary to App.jsx  
-Updated frontend/src/App.jsx with React ErrorBoundary wrapper.
+**Step 1: [COMPLETE]** ✅ Edit `frontend/src/routes.jsx` - Updated ResumePredictor lazy import to `'./pages/ResumePredictor/ResumePredictor.jsx'`
 
-✅ **Step 3:** Stub missing components in ResumePredictor.jsx  
-Conditional rendering for JobMatchingEngine and VoiceAssistant.
+**Step 2: [COMPLETE]** ✅ JSX syntax validated - ResumePredictor.jsx fully parseable, no unclosed tags
 
-✅ **Step 4:** Dependencies installed successfully**  
-framer-motion, @types/react, @types/react-dom installed (7 packages added).
+**Step 3: [PENDING]** Restart Vite: Run `cd frontend` then `npm run dev` (clears cache, applies import fix)
 
-**Next:** Restart dev server and test  
-```
-cd frontend
-npm run dev
-```
+**Step 4: [PENDING]** Test route: http://127.0.0.1:5173/resume-predictor - No "Failed to fetch", page renders upload form + stats
 
-Navigate to http://127.0.0.1:5173/resume-predictor
+**Status:** Code fixes complete. Restart dev server to verify.
 
-**Step 5:** Test navigation**  
-Navigate to http://127.0.0.1:5173/resume-predictor  
-Check browser console for remaining errors.
-
-**Step 6:** Verify completion**  
-No more "Failed to fetch dynamically imported module" errors.

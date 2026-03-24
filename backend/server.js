@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { config as loadEnv } from 'dotenv'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import http from 'node:http'
@@ -15,12 +15,19 @@ import {
   serializeAnalysis
 } from './src/services/resumeAnalysisService.js'
 import { extractResumeProfile } from './src/services/resumeProfileExtractor.js'
+import { config as internHubConfig } from './intern-hub/src/config/index.js'
+import {
+  validateInternshipSearch,
+  validateLinkedInRedirect
+} from './intern-hub/src/middleware/validate.js'
+import { searchInternships } from './intern-hub/src/services/adzunaService.js'
+import { resolveLinkedInDestination } from './intern-hub/src/services/apifyService.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const workspaceRoot = path.dirname(__dirname)
 
-const runtimeEnvPaths = [path.join(workspaceRoot, 'rexion-backend', '.env'), path.join(__dirname, '.env')]
+const runtimeEnvPaths = [path.join(__dirname, 'legacy', 'rexion-backend', '.env'), path.join(__dirname, '.env')]
 
 function loadRuntimeEnv() {
   for (const envPath of runtimeEnvPaths) {
@@ -60,7 +67,7 @@ function getRexcodeProvider() {
   return 'deepseek'
 }
 
-// Support both backend/.env and rexion-backend/.env so deployments can use either location.
+// Support both backend/.env and backend/legacy/rexion-backend/.env during migration.
 loadRuntimeEnv()
 
 const PORT = Number(process.env.PORT || 5000)
@@ -221,6 +228,15 @@ function sendNoContent(response, origin) {
   response.end()
 }
 
+function sendRedirect(response, statusCode, location, origin, extraHeaders = {}) {
+  response.writeHead(statusCode, {
+    ...getJsonHeaders(origin),
+    ...extraHeaders,
+    Location: location
+  })
+  response.end()
+}
+
 function readRawBody(request, maxBytes = 10 * 1024 * 1024) {
   return new Promise((resolve, reject) => {
     const chunks = []
@@ -280,19 +296,34 @@ const mlServiceAddress = (() => {
 
 function resolveMlPythonBin() {
   const windowsCandidates = [
-    path.join(workspaceRoot, '.venv-1', 'Scripts', 'python.exe'),
     path.join(workspaceRoot, '.venv', 'Scripts', 'python.exe'),
-    path.join(workspaceRoot, '.venv-2', 'Scripts', 'python.exe')
+    path.join(workspaceRoot, '.venv-1', 'Scripts', 'python.exe'),
+    path.join(workspaceRoot, '.venv-2', 'Scripts', 'python.exe'),
+    'python'
   ]
   const unixCandidates = [
-    path.join(workspaceRoot, '.venv-1', 'bin', 'python'),
     path.join(workspaceRoot, '.venv', 'bin', 'python'),
-    path.join(workspaceRoot, '.venv-2', 'bin', 'python')
+    path.join(workspaceRoot, '.venv-1', 'bin', 'python'),
+    path.join(workspaceRoot, '.venv-2', 'bin', 'python'),
+    'python3',
+    'python'
   ]
   const candidates = process.platform === 'win32' ? windowsCandidates : unixCandidates
 
   for (const candidate of candidates) {
-    if (existsSync(candidate)) {
+    if (candidate.includes(path.sep) && !existsSync(candidate)) {
+      continue
+    }
+
+    const probe = spawnSync(candidate, ['-c', 'import ml_service.app.main'], {
+      cwd: workspaceRoot,
+      env: process.env,
+      stdio: 'ignore',
+      timeout: 15000,
+      windowsHide: true
+    })
+
+    if (probe.status === 0) {
       return candidate
     }
   }
@@ -946,7 +977,7 @@ function toRexcodeFailure(error) {
     return {
       statusCode: 401,
       message:
-        'DeepSeek authentication failed (401). Set a valid DEEPSEEK_API_KEY in rexion-backend/.env or backend/.env.'
+        'DeepSeek authentication failed (401). Set a valid DEEPSEEK_API_KEY in backend/.env.'
     }
   }
 
@@ -961,7 +992,7 @@ function toRexcodeFailure(error) {
     return {
       statusCode: 401,
       message:
-        'OpenRouter authentication failed (401: User not found). The configured API key is rejected. Set a valid OPENROUTER_API_KEY in rexion-backend/.env or backend/.env.'
+        'OpenRouter authentication failed (401: User not found). The configured API key is rejected. Set a valid OPENROUTER_API_KEY in backend/.env.'
     }
   }
 
@@ -1301,7 +1332,7 @@ async function generateRexcodeSite(prompt) {
     if (provider === 'deepseek') {
       if (!hasUsableApiKey(deepSeekApiKey)) {
         failures.push(
-          'DeepSeek API key is missing or placeholder. Set DEEPSEEK_API_KEY in backend/.env or rexion-backend/.env.'
+          'DeepSeek API key is missing or placeholder. Set DEEPSEEK_API_KEY in backend/.env.'
         )
         continue
       }
@@ -1319,7 +1350,7 @@ async function generateRexcodeSite(prompt) {
 
     if (!hasUsableApiKey(openRouterApiKey)) {
       failures.push(
-        'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY in backend/.env or rexion-backend/.env.'
+        'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY in backend/.env.'
       )
       continue
     }
@@ -1365,7 +1396,7 @@ async function generateRexcodeAnswer(prompt) {
     if (provider === 'deepseek') {
       if (!hasUsableApiKey(deepSeekApiKey)) {
         failures.push(
-          'DeepSeek API key is missing or placeholder. Set DEEPSEEK_API_KEY in backend/.env or rexion-backend/.env.'
+          'DeepSeek API key is missing or placeholder. Set DEEPSEEK_API_KEY in backend/.env.'
         )
         continue
       }
@@ -1383,7 +1414,7 @@ async function generateRexcodeAnswer(prompt) {
 
     if (!hasUsableApiKey(openRouterApiKey)) {
       failures.push(
-        'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY in backend/.env or rexion-backend/.env.'
+        'OpenRouter API key is missing or placeholder. Set OPENROUTER_API_KEY in backend/.env.'
       )
       continue
     }
@@ -1708,6 +1739,80 @@ function handleGetGeneratedSite(response, origin, siteId) {
   sendJson(response, 200, result, origin)
 }
 
+function sendInternHubError(response, origin, error) {
+  const statusCode = Number(error?.statusCode || error?.status || 500)
+  const message = String(error?.message || 'Internal server error.')
+
+  sendJson(
+    response,
+    statusCode,
+    {
+      success: false,
+      error: message
+    },
+    origin
+  )
+}
+
+async function handleInternHubHealth(response, origin) {
+  sendJson(
+    response,
+    200,
+    {
+      success: true,
+      status: 'ok',
+      service: 'intern-hub',
+      provider: 'adzuna',
+      adzuna_base_url: internHubConfig.adzunaBaseUrl,
+      adzuna_app_id_loaded: Boolean(internHubConfig.adzunaAppId),
+      timestamp: new Date().toISOString()
+    },
+    origin
+  )
+}
+
+async function handleInternHubSearch(response, origin, searchParams) {
+  try {
+    const params = validateInternshipSearch(searchParams)
+    const payload = await searchInternships(params)
+
+    sendJson(
+      response,
+      200,
+      {
+        success: true,
+        query: params.query,
+        location: params.location || null,
+        remote: params.remote ?? null,
+        page: params.page,
+        num_pages: params.numPages,
+        limit: params.limit,
+        posted_within_hours: params.postedWithinHours,
+        refresh: params.refresh,
+        jobs: payload.jobs,
+        meta: payload.meta
+      },
+      origin
+    )
+  } catch (error) {
+    sendInternHubError(response, origin, error)
+  }
+}
+
+async function handleInternHubLinkedInRedirect(response, origin, searchParams) {
+  try {
+    const params = validateLinkedInRedirect(searchParams)
+    const resolved = await resolveLinkedInDestination(params)
+
+    sendRedirect(response, 302, resolved.url, origin, {
+      'Cache-Control': 'no-store',
+      'X-Intern-Hub-Redirect-Source': resolved.source
+    })
+  } catch (error) {
+    sendInternHubError(response, origin, error)
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`)
   const method = request.method || 'GET'
@@ -1728,6 +1833,25 @@ const server = http.createServer(async (request, response) => {
       },
       origin
     )
+    return
+  }
+
+  if (method === 'GET' && url.pathname === '/api/intern-hub/health') {
+    await handleInternHubHealth(response, origin)
+    return
+  }
+
+  if (
+    method === 'GET' &&
+    (url.pathname === '/api/intern-hub/internships/search' ||
+      url.pathname === '/api/intern-hub/ml/jobs/search')
+  ) {
+    await handleInternHubSearch(response, origin, url.searchParams)
+    return
+  }
+
+  if (method === 'GET' && url.pathname === '/api/intern-hub/linkedin/redirect') {
+    await handleInternHubLinkedInRedirect(response, origin, url.searchParams)
     return
   }
 

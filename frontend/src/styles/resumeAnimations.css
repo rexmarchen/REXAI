@@ -1,0 +1,105 @@
+/* Premium Resume Predictor Animations - Typing, Glitch, 3D, Particles */
+
+/* Typing Effect */
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+@keyframes blink-cursor {
+  0%, 50% { border-color: transparent; }
+  51%, 100% { border-color: var(--rp-accent); }
+}
+.typing-text {
+  border-right: 2px solid var(--rp-accent);
+  white-space: nowrap;
+  overflow: hidden;
+  animation: typing 3s steps(40, end), blink-cursor 0.75s step-end infinite;
+}
+
+/* Glitch Effect */
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+.glitch {
+  animation: glitch 0.3s infinite;
+}
+
+/* Stagger Children */
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stagger > * {
+  animation: staggerIn 0.6s ease forwards;
+  opacity: 0;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger > *:nth-child(4) { animation-delay: 0.4s; }
+
+/* 3D Card Tilt */
+@keyframes cardTilt {
+  0% { transform: rotateX(0) rotateY(0) rotateZ(0); }
+  100% { transform: rotateX(var(--rotateX, 0deg)) rotateY(var(--rotateY, 0deg)) rotateZ(0); }
+}
+.card-3d {
+  transition: transform 0.2s ease-out;
+  transform-style: preserve-3d;
+}
+.card-3d.tilt {
+  animation: cardTilt 0.2s ease-out;
+}
+
+/* Shimmer Gradient */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(32,229,203,0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Count Up */
+@keyframes countPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.count-up {
+  animation: countPulse 0.5s ease-in-out;
+}
+
+/* Particle Burst */
+@keyframes particleBurst {
+  0% { opacity: 1; transform: scale(0) translate(0, 0); }
+  50% { opacity: 0.8; transform: scale(1.2) translate(var(--dx, 0), var(--dy, 0)); }
+  100% { opacity: 0; transform: scale(0) translate(var(--dx, 0), var(--dy, 0)); }
+}
+
+/* Progress Ring */
+@keyframes ringSpin {
+  from { transform: rotate(0deg); }
+}
+.progress-ring {
+  animation: ringSpin 2s linear infinite;
+}
+
+/* Floating Elements */
+@keyframes float3d {
+  0%, 100% { 
+    transform: translateY(0) rotateX(0deg) rotateY(0deg); 
+  }
+  33% { 
+    transform: translateY(-8px) rotateX(2deg) rotateY(-2deg); 
+  }
+  66% { 
+    transform: translateY(-16px) rotateX(-1deg) rotateY(3deg); 
+  }
+}

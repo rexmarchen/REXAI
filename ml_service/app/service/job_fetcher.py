@@ -1,9 +1,15 @@
-import httpx
 import re
 import time
 from datetime import datetime, timezone
-from typing import List, Dict, Optional
-from loguru import logger
+from typing import Dict, List, Optional
+
+import httpx
+try:
+    from loguru import logger
+except Exception:
+    import logging
+
+    logger = logging.getLogger(__name__)
 
 from ..config import settings
 
@@ -51,6 +57,7 @@ class JobFetcher:
         remote_jobs_only: Optional[bool],
         salary_min: Optional[int],
         salary_max: Optional[int],
+        posted_within_hours: Optional[int],
     ) -> str:
         return "|".join(
             [
@@ -61,6 +68,7 @@ class JobFetcher:
                 str(bool(remote_jobs_only)).lower() if remote_jobs_only is not None else "none",
                 str(salary_min or ""),
                 str(salary_max or ""),
+                str(posted_within_hours or ""),
             ]
         )
 
@@ -115,6 +123,88 @@ class JobFetcher:
             )
         return False
 
+    @staticmethod
+    def _parse_utc_datetime(value: object) -> Optional[datetime]:
+        if isinstance(value, datetime):
+            if value.tzinfo is None:
+                return value.replace(tzinfo=timezone.utc)
+            return value.astimezone(timezone.utc)
+        if isinstance(value, (int, float)):
+            try:
+                return datetime.fromtimestamp(float(value), tz=timezone.utc)
+            except Exception:
+                return None
+
+        text = str(value or "").strip()
+        if not text:
+            return None
+        normalized = text.replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(normalized)
+        except Exception:
+            return None
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+
+    @classmethod
+    def _posted_datetime_from_job(cls, job: Dict) -> Optional[datetime]:
+        for key in ("posted_date", "job_posted_at_datetime_utc", "job_posted_at"):
+            dt = cls._parse_utc_datetime(job.get(key))
+            if dt is not None:
+                return dt
+
+        for key in ("job_posted_at_timestamp", "created_at"):
+            raw_value = job.get(key)
+            if raw_value is None:
+                continue
+            try:
+                numeric = float(raw_value)
+            except Exception:
+                continue
+            # Large epoch values are likely milliseconds.
+            if numeric > 10_000_000_000:
+                numeric = numeric / 1000.0
+            dt = cls._parse_utc_datetime(numeric)
+            if dt is not None:
+                return dt
+        return None
+
+    @classmethod
+    def _posted_hours_ago_from_job(cls, job: Dict) -> Optional[int]:
+        posted_dt = cls._posted_datetime_from_job(job)
+        if posted_dt is None:
+            return None
+        delta_seconds = (datetime.now(timezone.utc) - posted_dt).total_seconds()
+        if delta_seconds < 0:
+            return 0
+        return int(delta_seconds // 3600)
+
+    @classmethod
+    def _sort_jobs_by_recency(cls, jobs: List[Dict]) -> List[Dict]:
+        def key_fn(job: Dict) -> float:
+            dt = cls._posted_datetime_from_job(job)
+            if dt is None:
+                return float("-inf")
+            return dt.timestamp()
+
+        return sorted(jobs, key=key_fn, reverse=True)
+
+    @classmethod
+    def _filter_jobs_by_recency(cls, jobs: List[Dict], posted_within_hours: int) -> List[Dict]:
+        if posted_within_hours <= 0:
+            return jobs
+        now = datetime.now(timezone.utc)
+        filtered: list[dict] = []
+        for job in jobs:
+            posted_dt = cls._posted_datetime_from_job(job)
+            if posted_dt is None:
+                continue
+            age_hours = (now - posted_dt).total_seconds() / 3600.0
+            if 0 <= age_hours <= float(posted_within_hours):
+                filtered.append(job)
+        return filtered
+
     async def search_jobs(
         self,
         query: str,
@@ -124,9 +214,11 @@ class JobFetcher:
         remote_jobs_only: Optional[bool] = None,
         salary_min: Optional[int] = None,
         salary_max: Optional[int] = None,
+        posted_within_hours: Optional[int] = None,
+        refresh: bool = False,
     ) -> List[Dict]:
         """
-        Search for jobs using JSearch API
+        Search for jobs using JSearch API.
 
         Args:
             query: Job title or keywords (e.g., "Software Engineer")
@@ -136,10 +228,21 @@ class JobFetcher:
             remote_jobs_only: Filter for remote positions only
             salary_min: Minimum annual salary
             salary_max: Maximum annual salary
+            posted_within_hours: Restrict to recently posted jobs
+            refresh: If true, bypass in-memory cache
 
         Returns:
             List of job postings
         """
+        effective_posted_within_hours: Optional[int] = None
+        if posted_within_hours is not None:
+            try:
+                normalized = int(posted_within_hours)
+            except Exception:
+                normalized = 0
+            if normalized > 0:
+                effective_posted_within_hours = min(normalized, 24 * 30)
+
         if not self.api_key:
             message = (
                 "JSearch API key is not configured. Set JSEARCH_API_KEY (or RAPIDAPI_KEY/RAPID_API_KEY)."
@@ -147,12 +250,17 @@ class JobFetcher:
             logger.warning(message)
             if self.enable_fallback:
                 self._set_status("arbeitnow", message)
-                return await self._search_arbeitnow(query, location, num_pages, remote_jobs_only)
+                return await self._search_arbeitnow(
+                    query,
+                    location,
+                    num_pages,
+                    remote_jobs_only,
+                    posted_within_hours=effective_posted_within_hours,
+                )
             self._set_status("none", message)
             return []
 
         headers = {"X-RapidAPI-Key": self.api_key, "X-RapidAPI-Host": self.api_host}
-
         params = {
             "query": query,
             "page": str(page),
@@ -162,9 +270,7 @@ class JobFetcher:
         effective_location = location or self.default_location
         if effective_location:
             params["location"] = effective_location
-        effective_remote = (
-            self.default_remote if remote_jobs_only is None else bool(remote_jobs_only)
-        )
+        effective_remote = self.default_remote if remote_jobs_only is None else bool(remote_jobs_only)
         cache_key = self._cache_key(
             query=query,
             location=effective_location,
@@ -173,11 +279,14 @@ class JobFetcher:
             remote_jobs_only=effective_remote,
             salary_min=salary_min,
             salary_max=salary_max,
+            posted_within_hours=effective_posted_within_hours,
         )
-        fresh_cache = self._get_cached_jobs(cache_key)
-        if fresh_cache is not None:
-            self._set_status("jsearch-cache")
-            return fresh_cache
+        if not refresh:
+            fresh_cache = self._get_cached_jobs(cache_key)
+            if fresh_cache is not None:
+                self._set_status("jsearch-cache")
+                return fresh_cache
+
         if effective_remote:
             params["remote_jobs_only"] = "true"
         if salary_min:
@@ -190,7 +299,7 @@ class JobFetcher:
                 response = await client.get(
                     f"{self.base_url}/search",
                     headers=headers,
-                    params=params
+                    params=params,
                 )
                 response.raise_for_status()
                 data = response.json()
@@ -198,12 +307,18 @@ class JobFetcher:
                 if data.get("status") == "OK":
                     jobs = data.get("data", [])
                     if effective_location:
-                        jobs = [
-                            job for job in jobs if self._matches_location_raw(job, str(effective_location))
-                        ]
+                        jobs = [job for job in jobs if self._matches_location_raw(job, str(effective_location))]
                     if effective_remote:
                         jobs = [job for job in jobs if self._is_remote_raw(job)]
+
                     formatted_jobs = self._format_jobs(jobs)
+                    formatted_jobs = self._sort_jobs_by_recency(formatted_jobs)
+                    if effective_posted_within_hours is not None:
+                        formatted_jobs = self._filter_jobs_by_recency(
+                            formatted_jobs,
+                            effective_posted_within_hours,
+                        )
+
                     self._set_cached_jobs(cache_key, formatted_jobs)
                     logger.info(f"Found {len(formatted_jobs)} jobs for query '{query}'")
                     self._set_status("jsearch")
@@ -217,12 +332,18 @@ class JobFetcher:
                     return stale_cache
                 if self.enable_fallback:
                     self._set_status("arbeitnow", message)
-                    return await self._search_arbeitnow(query, location, num_pages, remote_jobs_only)
+                    return await self._search_arbeitnow(
+                        query,
+                        location,
+                        num_pages,
+                        remote_jobs_only,
+                        posted_within_hours=effective_posted_within_hours,
+                    )
                 self._set_status("jsearch", message)
                 return []
 
-        except Exception as e:
-            message = f"JSearch request failed ({type(e).__name__}): {str(e) or 'no details'}"
+        except Exception as error:
+            message = f"JSearch request failed ({type(error).__name__}): {str(error) or 'no details'}"
             logger.error(message)
             stale_cache = self._get_cached_jobs(cache_key, allow_expired=True)
             if stale_cache is not None:
@@ -230,30 +351,43 @@ class JobFetcher:
                 return stale_cache
             if self.enable_fallback:
                 self._set_status("arbeitnow", message)
-                return await self._search_arbeitnow(query, location, num_pages, remote_jobs_only)
+                return await self._search_arbeitnow(
+                    query,
+                    location,
+                    num_pages,
+                    remote_jobs_only,
+                    posted_within_hours=effective_posted_within_hours,
+                )
             self._set_status("jsearch", message)
             return []
 
     def _format_jobs(self, raw_jobs: List[Dict]) -> List[Dict]:
-        """Format jobs for consistent API response"""
+        """Format jobs for consistent API response."""
         formatted = []
         for job in raw_jobs:
-            formatted.append({
-                "title": job.get("job_title"),
-                "company": job.get("employer_name"),
-                "location": job.get("job_location"),
-                "description": job.get("job_description"),
-                "salary": job.get("job_salary"),
-                "posted_date": job.get("job_posted_at_datetime_utc"),
-                "apply_link": job.get("job_apply_link"),
-                "employment_type": job.get("job_employment_type"),
-                "is_remote": self._is_remote_raw(job),
-                "source": job.get("job_publisher"),
-                "company_logo": job.get("employer_logo"),
-                "required_skills": job.get("job_required_skills", []),
-                "required_experience": job.get("job_required_experience"),
-                "required_education": job.get("job_required_education"),
-            })
+            posted_dt = self._posted_datetime_from_job(job)
+            posted_iso = posted_dt.isoformat() if posted_dt is not None else job.get(
+                "job_posted_at_datetime_utc"
+            )
+            formatted.append(
+                {
+                    "title": job.get("job_title"),
+                    "company": job.get("employer_name"),
+                    "location": job.get("job_location"),
+                    "description": job.get("job_description"),
+                    "salary": job.get("job_salary"),
+                    "posted_date": posted_iso,
+                    "posted_hours_ago": self._posted_hours_ago_from_job({"posted_date": posted_iso}),
+                    "apply_link": job.get("job_apply_link"),
+                    "employment_type": job.get("job_employment_type"),
+                    "is_remote": self._is_remote_raw(job),
+                    "source": job.get("job_publisher"),
+                    "company_logo": job.get("employer_logo"),
+                    "required_skills": job.get("job_required_skills", []),
+                    "required_experience": job.get("job_required_experience"),
+                    "required_education": job.get("job_required_education"),
+                }
+            )
         return formatted
 
     async def _search_arbeitnow(
@@ -262,6 +396,7 @@ class JobFetcher:
         location: Optional[str],
         num_pages: int,
         remote_jobs_only: Optional[bool],
+        posted_within_hours: Optional[int] = None,
     ) -> List[Dict]:
         """
         No-key fallback using Arbeitnow public API.
@@ -308,6 +443,9 @@ class JobFetcher:
             filtered.append(row)
 
         formatted = [self._format_arbeitnow_job(row) for row in filtered]
+        formatted = self._sort_jobs_by_recency(formatted)
+        if posted_within_hours is not None:
+            formatted = self._filter_jobs_by_recency(formatted, posted_within_hours)
         logger.info(f"Arbeitnow fallback returned {len(formatted)} jobs for query '{query}'")
         return formatted
 
@@ -325,8 +463,11 @@ class JobFetcher:
             "description": job.get("description"),
             "salary": None,
             "posted_date": created_iso,
+            "posted_hours_ago": self._posted_hours_ago_from_job({"posted_date": created_iso}),
             "apply_link": job.get("url"),
-            "employment_type": ", ".join(job.get("job_types", [])) if isinstance(job.get("job_types"), list) else None,
+            "employment_type": ", ".join(job.get("job_types", []))
+            if isinstance(job.get("job_types"), list)
+            else None,
             "is_remote": bool(job.get("remote")),
             "source": "arbeitnow",
             "company_logo": None,

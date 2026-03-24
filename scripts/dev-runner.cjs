@@ -1,31 +1,43 @@
-const { spawn } = require('node:child_process')
+const { spawn, spawnSync } = require('node:child_process')
 const fs = require('node:fs')
 const http = require('node:http')
 const path = require('node:path')
 
 const rootDir = process.cwd()
+const useMongoBackend = process.argv.includes('--mongo') || process.env.REXION_BACKEND_MODE === 'mongo'
+const backendNpmScript = useMongoBackend ? 'dev:mongo' : 'dev'
+const windowsCmd = process.env.ComSpec || 'cmd.exe'
 const resolveMlPythonBin = () => {
   const candidates =
     process.platform === 'win32'
       ? [
-          path.join(rootDir, '.venv-1', 'Scripts', 'python.exe'),
           path.join(rootDir, '.venv', 'Scripts', 'python.exe'),
+          path.join(rootDir, '.venv-1', 'Scripts', 'python.exe'),
           path.join(rootDir, '.venv-2', 'Scripts', 'python.exe'),
           'python'
         ]
       : [
-          path.join(rootDir, '.venv-1', 'bin', 'python'),
           path.join(rootDir, '.venv', 'bin', 'python'),
+          path.join(rootDir, '.venv-1', 'bin', 'python'),
           path.join(rootDir, '.venv-2', 'bin', 'python'),
           'python3',
           'python'
         ]
 
   for (const candidate of candidates) {
-    if (!candidate.includes(path.sep)) {
-      return candidate
+    if (candidate.includes(path.sep) && !fs.existsSync(candidate)) {
+      continue
     }
-    if (fs.existsSync(candidate)) {
+
+    const probe = spawnSync(candidate, ['-c', 'import ml_service.app.main'], {
+      cwd: rootDir,
+      env: process.env,
+      stdio: 'ignore',
+      timeout: 15000,
+      windowsHide: true
+    })
+
+    if (probe.status === 0) {
       return candidate
     }
   }
@@ -52,7 +64,16 @@ const services = [
     checkUrl: 'http://127.0.0.1:5000/api/health',
     command:
       process.platform === 'win32'
-        ? { bin: 'cmd.exe', args: ['/d', '/s', '/c', 'npm run dev'] }
+        ? { bin: windowsCmd, args: ['/d', '/s', '/c', `npm run ${backendNpmScript}`] }
+        : { bin: 'npm', args: ['run', backendNpmScript] }
+  },
+  {
+    name: 'intern_hub_backend',
+    cwd: path.join(rootDir, 'backend', 'intern-hub'),
+    checkUrl: 'http://127.0.0.1:5051/api/health',
+    command:
+      process.platform === 'win32'
+        ? { bin: windowsCmd, args: ['/d', '/s', '/c', 'npm run dev'] }
         : { bin: 'npm', args: ['run', 'dev'] }
   },
   {
@@ -62,7 +83,7 @@ const services = [
     command:
       process.platform === 'win32'
         ? {
-            bin: 'cmd.exe',
+            bin: windowsCmd,
             args: ['/d', '/s', '/c', 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort']
           }
         : {
@@ -143,11 +164,16 @@ function shutdown(exitCode = 0) {
 }
 
 function startService(service) {
-  const child = spawn(service.command.bin, service.command.args, {
-    cwd: service.cwd,
-    env: process.env,
-    stdio: ['ignore', 'pipe', 'pipe']
-  })
+  let child
+  try {
+    child = spawn(service.command.bin, service.command.args, {
+      cwd: service.cwd,
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
+  } catch (error) {
+    throw new Error(`Failed to spawn ${service.name}: ${error.message}`)
+  }
 
   childProcesses.set(service.name, child)
 
@@ -200,7 +226,9 @@ process.on('SIGTERM', () => {
   shutdown(0)
 })
 
-console.log('[dev-runner] Starting ML service, backend and frontend...')
+console.log(
+  `[dev-runner] Starting ML service, backend (${useMongoBackend ? 'mongo' : 'sqlite'}), intern hub service, and frontend...`
+)
 ;(async () => {
   for (const service of services) {
     if (await isServiceReachable(service.checkUrl)) {
