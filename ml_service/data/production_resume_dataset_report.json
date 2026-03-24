@@ -1,0 +1,97 @@
+{
+  "source_paths": {
+    "resume_dataset": "C:\\Users\\anshupal\\OneDrive\\Desktop\\rexionAI\\ml_service\\data\\datasets\\resume_dataset.csv",
+    "resume_dataset_10k": "C:\\Users\\anshupal\\OneDrive\\Desktop\\rexionAI\\ml_service\\data\\datasets\\resume_dataset_10k.csv",
+    "students_resume_dataset": "C:\\Users\\anshupal\\OneDrive\\Desktop\\rexionAI\\ml_service\\data\\datasets\\students_resume_dataset.csv"
+  },
+  "thresholds": {
+    "min_score": 3.5,
+    "min_margin": 0.7,
+    "requested_target_per_class": 2000,
+    "selected_target_per_class": 2000,
+    "min_required_per_class": 1000
+  },
+  "rows": {
+    "combined_before_dedupe": 21577,
+    "after_dedupe": 19060,
+    "final_balanced": 8000
+  },
+  "counts_before_dedupe": {
+    "Software Engineer": 4687,
+    "Data Scientist": 9233,
+    "Web Developer": 2753,
+    "DevOps Engineer": 4904
+  },
+  "counts_after_dedupe": {
+    "Software Engineer": 4258,
+    "Data Scientist": 8540,
+    "Web Developer": 2054,
+    "DevOps Engineer": 4208
+  },
+  "counts_final": {
+    "Software Engineer": 2000,
+    "Data Scientist": 2000,
+    "Web Developer": 2000,
+    "DevOps Engineer": 2000
+  },
+  "source_breakdown_before_dedupe": {
+    "resume_dataset": {
+      "Software Engineer": 1500,
+      "Data Scientist": 1500,
+      "Web Developer": 1500,
+      "DevOps Engineer": 1500
+    },
+    "resume_dataset_10k": {
+      "Software Engineer": 1485,
+      "Data Scientist": 4067,
+      "Web Developer": 330,
+      "DevOps Engineer": 2469
+    },
+    "students_resume_dataset": {
+      "Software Engineer": 1702,
+      "Data Scientist": 3666,
+      "Web Developer": 923,
+      "DevOps Engineer": 935
+    }
+  },
+  "source_breakdown_after_dedupe": {
+    "resume_dataset": {
+      "Software Engineer": 1071,
+      "Data Scientist": 807,
+      "Web Developer": 801,
+      "DevOps Engineer": 804
+    },
+    "resume_dataset_10k": {
+      "Software Engineer": 1485,
+      "Data Scientist": 4067,
+      "Web Developer": 330,
+      "DevOps Engineer": 2469
+    },
+    "students_resume_dataset": {
+      "Software Engineer": 1702,
+      "Data Scientist": 3666,
+      "Web Developer": 923,
+      "DevOps Engineer": 935
+    }
+  },
+  "source_breakdown_final": {
+    "resume_dataset": {
+      "Software Engineer": 1071,
+      "Data Scientist": 807,
+      "Web Developer": 801,
+      "DevOps Engineer": 804
+    },
+    "resume_dataset_10k": {
+      "Software Engineer": 607,
+      "Data Scientist": 929,
+      "Web Developer": 326,
+      "DevOps Engineer": 1139
+    },
+    "students_resume_dataset": {
+      "Software Engineer": 322,
+      "Data Scientist": 264,
+      "Web Developer": 873,
+      "DevOps Engineer": 57
+    }
+  }
+}

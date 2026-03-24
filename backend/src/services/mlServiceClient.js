@@ -4,6 +4,23 @@ import { logger } from '../utils/logger.js'
 const DEFAULT_ML_SERVICE_URL = ML_SERVICE_URL || 'http://localhost:8000'
 
 /**
+ * Check if ML Service is available
+ * @returns {Promise<boolean>}
+ */
+export const isMLServiceAvailable = async () => {
+  try {
+    const response = await fetch(`${DEFAULT_ML_SERVICE_URL}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000)
+    })
+    return response.ok
+  } catch (error) {
+    logger.warn(`ML Service health check failed: ${error.message}`)
+    return false
+  }
+}
+
+/**
  * Call ML Service to predict career path from resume
  * @param {Buffer} fileBuffer - Resume file buffer
  * @param {string} fileName - Original file name
@@ -22,10 +39,12 @@ export const predictCareerPathViaMlService = async (fileBuffer, fileName, userId
   }
 
   try {
+    logger.info(`Attempting ML Service prediction at: ${DEFAULT_ML_SERVICE_URL}`)
+    
     const response = await fetch(`${DEFAULT_ML_SERVICE_URL}/predict`, {
       method: 'POST',
       body: formData,
-      timeout: 60000
+      signal: AbortSignal.timeout(60000)
     })
 
     if (!response.ok) {
@@ -37,8 +56,16 @@ export const predictCareerPathViaMlService = async (fileBuffer, fileName, userId
     logger.info(`ML Service prediction successful for ${fileName}`)
     return prediction
   } catch (error) {
-    logger.error(`ML Service prediction failed: ${error.message}`)
-    throw new Error(`ML Service prediction failed: ${error.message}`)
+    const errorMsg = error.message || String(error)
+    logger.error(`ML Service prediction failed: ${errorMsg}`)
+    
+    // Enhanced error messages for debugging
+    if (errorMsg.includes('ECONNREFUSED') || errorMsg.includes('Failed to fetch')) {
+      logger.error(`ML Service unavailable at ${DEFAULT_ML_SERVICE_URL}. Is it running?`)
+      throw new Error(`ML Service unavailable at ${DEFAULT_ML_SERVICE_URL}. Falling back to local analysis.`)
+    }
+    
+    throw new Error(`ML Service prediction failed: ${errorMsg}`)
   }
 }
 
@@ -117,7 +144,7 @@ export const deletePredictionFromMlService = async (predictionId) => {
  * Search for jobs from ML Service
  * @param {string} query - Job search query
  * @param {Object} options - Search options
- * @returns {Promise} List of jobs
+ * @returns {Promise} Jobs payload with jobs array and provider metadata
  */
 export const searchJobsViaMlService = async (query, options = {}) => {
   const params = new URLSearchParams()
@@ -131,6 +158,21 @@ export const searchJobsViaMlService = async (query, options = {}) => {
   } else if (typeof options.remote === 'string' && options.remote.trim()) {
     params.append('remote', options.remote.trim())
   }
+  if (Number.isFinite(options.page) && Number(options.page) > 0) {
+    params.append('page', String(Math.round(Number(options.page))))
+  }
+  if (Number.isFinite(options.numPages) && Number(options.numPages) > 0) {
+    params.append('num_pages', String(Math.round(Number(options.numPages))))
+  }
+  if (Number.isFinite(options.limit) && Number(options.limit) > 0) {
+    params.append('limit', String(Math.round(Number(options.limit))))
+  }
+  if (Number.isFinite(options.postedWithinHours) && Number(options.postedWithinHours) > 0) {
+    params.append('posted_within_hours', String(Math.round(Number(options.postedWithinHours))))
+  }
+  if (typeof options.refresh === 'boolean') {
+    params.append('refresh', String(options.refresh))
+  }
 
   try {
     const response = await fetch(
@@ -143,10 +185,19 @@ export const searchJobsViaMlService = async (query, options = {}) => {
     }
 
     const data = await response.json()
-    return data.jobs || []
+    return {
+      jobs: Array.isArray(data.jobs) ? data.jobs : [],
+      meta: data.meta && typeof data.meta === 'object' ? data.meta : null
+    }
   } catch (error) {
     logger.error(`Job search from ML Service failed: ${error.message}`)
-    // Return empty array instead of throwing for graceful degradation
-    return []
+    // Return empty payload instead of throwing for graceful degradation.
+    return {
+      jobs: [],
+      meta: {
+        provider: 'none',
+        error: error.message
+      }
+    }
   }
 }

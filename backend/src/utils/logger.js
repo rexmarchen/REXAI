@@ -18,9 +18,11 @@ const log = (level, message) => {
   fs.appendFileSync(logFile, logMessage + '\n')
 }
 
-export default {
+export const logger = {
   info: (msg) => log('INFO', msg),
   error: (msg) => log('ERROR', msg),
   warn: (msg) => log('WARN', msg),
   debug: (msg) => log('DEBUG', msg)
 }
+
+export default logger

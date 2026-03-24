@@ -5,6 +5,7 @@ const Home = lazy(() => import('./pages/Home/Home'))
 const InternHunt = lazy(() => import('./pages/InternHunt/InternHunt'))
 const ResumePredictor = lazy(() => import('./pages/ResumePredictor/ResumePredictor'))
 const Rexcode = lazy(() => import('./pages/Rexcode/Rexcode'))
+const RexPro = lazy(() => import('./pages/RexPro/RexPro'))
 const Login = lazy(() => import('./pages/Login/Login'))
 const Register = lazy(() => import('./pages/Register/Register'))
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'))
@@ -14,6 +15,7 @@ const routes = [
   { path: '/intern-hunt', element: <InternHunt /> },
   { path: '/resume-predictor', element: <ResumePredictor /> },
   { path: '/rexcode', element: <Rexcode /> },
+  { path: '/rex-pro', element: <RexPro /> },
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
   { path: '*', element: <NotFound /> }

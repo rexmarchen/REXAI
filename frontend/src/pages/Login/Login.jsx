@@ -64,7 +64,13 @@ const Login = () => {
       setSubmitMessage(response.message || 'Login successful. Redirecting to home...')
       setTimeout(() => navigate('/'), 500)
     } catch (error) {
-      setSubmitError(error.response?.data?.message || 'Login failed. Please try again.')
+      const friendlyMessage =
+        error.response?.data?.message ||
+        (error.code === 'ERR_NETWORK'
+          ? 'Cannot reach the backend. Start it with npm run dev. Use npm run dev:mongo only if you specifically need the Atlas-backed backend.'
+          : error.message) ||
+        'Login failed. Please try again.'
+      setSubmitError(friendlyMessage)
     } finally {
       setLoading(false)
     }

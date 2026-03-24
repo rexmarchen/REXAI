@@ -2,8 +2,10 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
+import mongoose from 'mongoose'
 import authRoutes from './routes/authRoutes.js'
 import resumeRoutes from './routes/resumeRoutes.js'
+import mlRoutes from './routes/mlRoutes.js'
 import rexcodeRoutes from './routes/rexcodeRoutes.js'
 import { errorHandler } from './middleware/errorMiddleware.js'
 import { NODE_ENV } from './config/env.js'
@@ -52,11 +54,23 @@ app.use('/api', limiter)
 // Routes
 app.use('/api/auth', authRoutes)
 app.use('/api/resume', resumeRoutes)
+app.use('/api/ml', mlRoutes)
 app.use('/api/rexcode', rexcodeRoutes)
 
 // Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', environment: NODE_ENV })
+  const connectionStates = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  }
+
+  res.status(200).json({
+    status: 'ok',
+    environment: NODE_ENV,
+    database: connectionStates[mongoose.connection.readyState] || 'unknown'
+  })
 })
 
 // 404 handler

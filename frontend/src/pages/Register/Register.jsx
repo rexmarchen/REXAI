@@ -71,7 +71,13 @@ const Register = () => {
       setSubmitMessage(response.message || 'Registration successful. Redirecting to login...')
       setTimeout(() => navigate('/login'), 700)
     } catch (error) {
-      setSubmitError(error.response?.data?.message || 'Registration failed. Please try again.')
+      const friendlyMessage =
+        error.response?.data?.message ||
+        (error.code === 'ERR_NETWORK'
+          ? 'Cannot reach the backend. Start it with npm run dev. Use npm run dev:mongo only if you specifically need the Atlas-backed backend.'
+          : error.message) ||
+        'Registration failed. Please try again.'
+      setSubmitError(friendlyMessage)
     } finally {
       setLoading(false)
     }

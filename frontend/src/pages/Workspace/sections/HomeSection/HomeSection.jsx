@@ -1,34 +1,44 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import styles from '../../WorkspaceSection.module.css'
 
 const QUICK_ACTIONS = [
   {
     key: 'new-app',
-    icon: 'NA',
-    title: 'New App',
-    desc: 'Generate a production-ready project scaffold.',
-    iconClass: styles.quickIconBlue
+    icon: 'RP',
+    title: 'REX PRO',
+    desc: 'Open and start building inside REX PRO.',
+    iconClass: styles.quickIconBlue,
+    status: 'open',
+    href: '/rex-pro',
+    actionLabel: 'Open in REX PRO'
   },
   {
     key: 'fix-bugs',
     icon: 'FB',
     title: 'Fix Bugs',
     desc: 'Run AI-assisted diagnostics and patch suggestions.',
-    iconClass: styles.quickIconPurple
+    iconClass: styles.quickIconPurple,
+    status: 'soon',
+    actionLabel: 'Coming Soon'
   },
   {
     key: 'optimize',
     icon: 'OP',
     title: 'Optimize',
     desc: 'Improve performance, DX and deployment quality.',
-    iconClass: styles.quickIconGreen
+    iconClass: styles.quickIconGreen,
+    status: 'soon',
+    actionLabel: 'Coming Soon'
   },
   {
     key: 'ship',
     icon: 'DP',
     title: 'Deploy',
     desc: 'Publish your latest build with one click.',
-    iconClass: styles.quickIconOrange
+    iconClass: styles.quickIconOrange,
+    status: 'soon',
+    actionLabel: 'Coming Soon'
   }
 ]
 
@@ -56,19 +66,37 @@ const HomeSection = () => {
 
       <div className={styles.quickGrid}>
         {QUICK_ACTIONS.map((item) => (
-          <article key={item.key} className={`${styles.quickCard} ${styles.quickCardComingSoon}`}>
+          <article
+            key={item.key}
+            className={`${styles.quickCard} ${
+              item.status === 'open' ? styles.quickCardOpen : styles.quickCardComingSoon
+            }`}
+          >
             <div className={styles.quickCardTop}>
               <div className={`${styles.quickCardIcon} ${item.iconClass}`}>{item.icon}</div>
-              <span className={styles.comingSoonPill}>
-                <span className={styles.comingSoonDot}></span>
-                Coming Soon
-              </span>
+              {item.status === 'open' ? (
+                <span className={styles.openNowPill}>
+                  <span className={styles.openNowDot}></span>
+                  Open Now
+                </span>
+              ) : (
+                <span className={styles.comingSoonPill}>
+                  <span className={styles.comingSoonDot}></span>
+                  Coming Soon
+                </span>
+              )}
             </div>
             <h3 className={styles.quickCardTitle}>{item.title}</h3>
             <p className={styles.quickCardDesc}>{item.desc}</p>
-            <button type="button" className={styles.quickCardSoonBtn} disabled>
-              Coming Soon
-            </button>
+            {item.status === 'open' ? (
+              <Link to={item.href} className={styles.quickCardOpenBtn}>
+                {item.actionLabel}
+              </Link>
+            ) : (
+              <button type="button" className={styles.quickCardSoonBtn} disabled>
+                {item.actionLabel}
+              </button>
+            )}
           </article>
         ))}
       </div>

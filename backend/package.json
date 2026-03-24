@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "start:mongo": "node server-debug.js",
+    "dev:mongo": "node server-debug.js"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
