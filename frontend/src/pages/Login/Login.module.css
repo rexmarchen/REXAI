@@ -148,6 +148,28 @@
   cursor: not-allowed;
 }
 
+.authDivider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+}
+
+.authDivider::before,
+.authDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 245, 255, 0.18);
+}
+
+.authDivider span {
+  white-space: nowrap;
+}
+
 .error {
   color: #ff8f8f;
   font-size: 0.78rem;

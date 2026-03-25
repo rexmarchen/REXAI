@@ -12,6 +12,10 @@ export const loginSchema = Joi.object({
   password: Joi.string().required()
 })
 
+export const googleAuthSchema = Joi.object({
+  credential: Joi.string().trim().required()
+})
+
 export const resumeUploadSchema = Joi.object({
   userId: Joi.string().required()
 })

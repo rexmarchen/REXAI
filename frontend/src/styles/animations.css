@@ -1,3 +1,5 @@
+@import './resumeAnimations.css';
+
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -17,5 +19,3 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-
-@import '../resumeAnimations.css';
