@@ -1,0 +1,30 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.surface {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+  transition: opacity 0.2s ease;
+}
+
+.mount {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.disabled {
+  opacity: 0.68;
+  pointer-events: none;
+}
+
+.helper {
+  margin: 0;
+  color: #ffd9a0;
+  font-size: 0.78rem;
+  text-align: center;
+}

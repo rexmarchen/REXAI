@@ -1,8 +1,12 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import AuthParticleBackground from '../../components/common/AuthParticleBackground'
 import authApi from '../../services/authApi'
+import { getAuthErrorMessage, persistAuthSession } from '../../utils/authSession'
 import styles from './Login.module.css'
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 const Login = () => {
   const navigate = useNavigate()
@@ -36,6 +40,12 @@ const Login = () => {
     return Object.keys(nextErrors).length === 0
   }
 
+  const completeLogin = (response, remember) => {
+    persistAuthSession(response, remember)
+    setSubmitMessage(response.message || 'Login successful. Redirecting to home...')
+    setTimeout(() => navigate('/'), 500)
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setSubmitMessage('')
@@ -50,27 +60,25 @@ const Login = () => {
         password: form.password
       })
 
-      const authPayload = JSON.stringify(response.user)
-      const storage = form.remember ? localStorage : sessionStorage
-
-      localStorage.removeItem('rexionAuthToken')
-      localStorage.removeItem('rexionUser')
-      sessionStorage.removeItem('rexionAuthToken')
-      sessionStorage.removeItem('rexionUser')
-
-      storage.setItem('rexionAuthToken', response.token)
-      storage.setItem('rexionUser', authPayload)
-
-      setSubmitMessage(response.message || 'Login successful. Redirecting to home...')
-      setTimeout(() => navigate('/'), 500)
+      completeLogin(response, form.remember)
     } catch (error) {
-      const friendlyMessage =
-        error.response?.data?.message ||
-        (error.code === 'ERR_NETWORK'
-          ? 'Cannot reach the backend. Start it with npm run dev. Use npm run dev:mongo only if you specifically need the Atlas-backed backend.'
-          : error.message) ||
-        'Login failed. Please try again.'
-      setSubmitError(friendlyMessage)
+      setSubmitError(getAuthErrorMessage(error, 'Login failed. Please try again.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleCredential = async (credential) => {
+    setSubmitMessage('')
+    setSubmitError('')
+    setErrors({})
+    setLoading(true)
+
+    try {
+      const response = await authApi.googleLogin({ credential })
+      completeLogin(response, form.remember)
+    } catch (error) {
+      setSubmitError(getAuthErrorMessage(error, 'Google sign-in failed. Please try again.'))
     } finally {
       setLoading(false)
     }
@@ -145,6 +153,17 @@ const Login = () => {
           <button type="submit" className={styles.submitButton} disabled={loading}>
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
+
+          <div className={styles.authDivider} aria-hidden="true">
+            <span>OR</span>
+          </div>
+
+          <GoogleSignInButton
+            clientId={googleClientId}
+            text="signin_with"
+            disabled={loading}
+            onCredential={handleGoogleCredential}
+          />
 
           {submitMessage && <p className={styles.success}>{submitMessage}</p>}
           {submitError && <p className={styles.error}>{submitError}</p>}

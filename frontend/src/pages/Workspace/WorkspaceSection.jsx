@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import HomeSection from './sections/HomeSection'
 import AIChatSection from './sections/AIChatSection'
 import EditorSection from './sections/EditorSection'
@@ -14,16 +15,18 @@ import styles from './WorkspaceSection.module.css'
 const NAV_ITEMS = [
   { id: 'home', label: 'Home', icon: 'H' },
   { id: 'aiChat', label: 'AI Chat', icon: 'A', badge: '3' },
+  { id: 'resume-builder', label: 'Resume Builder', icon: 'R', badge: 'New' },
   { id: 'editor', label: 'Editor', icon: 'E' },
   { id: 'models', label: 'Models', icon: 'M' },
   { id: 'files', label: 'Files', icon: 'F' },
   { id: 'tools', label: 'Tools', icon: 'T' },
   { id: 'deploy', label: 'Deploy', icon: 'D' },
   { id: 'analytics', label: 'Analytics', icon: 'N' },
-  { id: 'settings', label: 'Settings', icon: 'S' }
+  { id: 'settings', label: 'Settings', icon: 'S' },
 ]
 
 const WorkspaceSection = () => {
+  const navigate = useNavigate()
   const [activeSection, setActiveSection] = useState('home')
   const [isPinnedExpanded, setIsPinnedExpanded] = useState(false)
   const [isHoverExpanded, setIsHoverExpanded] = useState(false)
@@ -74,7 +77,14 @@ const WorkspaceSection = () => {
               key={item.id}
               type="button"
               className={`${styles.navItem} ${activeSection === item.id ? styles.navItemActive : ''}`}
-              onClick={() => setActiveSection(item.id)}
+              onClick={() => {
+                if (item.id === 'resume-builder') {
+                  navigate('/resume')
+                  return
+                }
+
+                setActiveSection(item.id)
+              }}
             >
               <span className={styles.navIcon}>{item.icon}</span>
               <span className={styles.navText}>{item.label}</span>
@@ -106,10 +116,10 @@ const WorkspaceSection = () => {
 
       <div className={styles.main}>
         <div className={styles.bgCanvas}>
-          <div className={`${styles.orb} ${styles.orb1}`}></div>
-          <div className={`${styles.orb} ${styles.orb2}`}></div>
-          <div className={`${styles.orb} ${styles.orb3}`}></div>
-          <div className={styles.gridOverlay}></div>
+          <div className={`${styles.orb} ${styles.orb1}`} />
+          <div className={`${styles.orb} ${styles.orb2}`} />
+          <div className={`${styles.orb} ${styles.orb3}`} />
+          <div className={styles.gridOverlay} />
         </div>
 
         <div className={styles.content}>{activeContent}</div>

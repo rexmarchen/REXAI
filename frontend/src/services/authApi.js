@@ -6,6 +6,9 @@ const authApi = {
   },
   login(payload) {
     return apiClient.post('/auth/login', payload)
+  },
+  googleLogin(payload) {
+    return apiClient.post('/auth/google', payload)
   }
 }
 

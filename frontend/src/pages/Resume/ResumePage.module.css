@@ -1,0 +1,67 @@
+@import '../../styles/variables.css';
+
+.page {
+  position: relative;
+  min-height: 100svh;
+  padding: 5.9rem clamp(0.55rem, 1vw, 1rem) 0.9rem;
+  background:
+    radial-gradient(circle at top left, rgba(0, 229, 255, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(0, 127, 255, 0.12), transparent 24%),
+    linear-gradient(180deg, #03070d 0%, #07101c 42%, #05070d 100%);
+  overflow-x: hidden;
+}
+
+.pageGlow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(0, 229, 255, 0.14), transparent 18%),
+    radial-gradient(circle at 86% 12%, rgba(91, 123, 255, 0.14), transparent 18%),
+    radial-gradient(circle at 50% 78%, rgba(124, 249, 196, 0.08), transparent 18%);
+  pointer-events: none;
+}
+
+.pageGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 92%);
+  pointer-events: none;
+}
+
+.pageShell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: calc(100svh - 6.8rem);
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding-top: 7.2rem;
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+    padding-bottom: 0.55rem;
+  }
+}
+
+@media print {
+  .page {
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .pageGlow,
+  .pageGrid {
+    display: none;
+  }
+
+  :global(nav),
+  :global(footer) {
+    display: none !important;
+  }
+}
