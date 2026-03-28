@@ -9,6 +9,11 @@ const authApi = {
   },
   googleLogin(payload) {
     return apiClient.post('/auth/google', payload)
+  },
+  me() {
+    return apiClient.get('/auth/me', {
+      __skipUnauthorizedRedirect: true
+    })
   }
 }
 

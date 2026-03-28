@@ -16,7 +16,7 @@
   font-size: 0.65rem;
   letter-spacing: 0.35em;
   color: var(--color-primary);
-  border: 1px solid rgba(0,245,255,0.28);
+  border: 1px solid rgba(82, 139, 255, 0.2);
   padding: 6px 20px;
   border-radius: 100px;
   margin-bottom: 28px;
@@ -38,7 +38,7 @@
   color: transparent;                 /* fallback */
   -webkit-text-fill-color: transparent;
 
-  filter: drop-shadow(0 0 40px #00f5ff55);
+  filter: drop-shadow(0 0 40px rgba(82, 139, 255, 0.3));
   animation: fadeUp 0.9s 0.1s ease both;
 }
 

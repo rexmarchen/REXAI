@@ -1,15 +1,17 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import AuthParticleBackground from '../../components/common/AuthParticleBackground'
+import { useAuth } from '../../context/AuthContext'
 import authApi from '../../services/authApi'
-import { getAuthErrorMessage, persistAuthSession } from '../../utils/authSession'
+import { getAuthErrorMessage, resolveAuthRedirectPath } from '../../utils/authSession'
 import styles from './Register.module.css'
-
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 const Register = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const { applyAuthResponse } = useAuth()
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -57,10 +59,19 @@ const Register = () => {
     return Object.keys(nextErrors).length === 0
   }
 
+  const nextPath = useMemo(
+    () =>
+      resolveAuthRedirectPath(
+        searchParams.get('next') || location.state?.from?.pathname,
+        '/dashboard'
+      ),
+    [location.state, searchParams]
+  )
+
   const completeGoogleAuth = (response) => {
-    persistAuthSession(response, true)
-    setSubmitMessage(response.message || 'Google sign-in successful. Redirecting to home...')
-    setTimeout(() => navigate('/'), 500)
+    applyAuthResponse(response, true)
+    setSubmitMessage(response.message || 'Google sign-in successful. Redirecting to your dashboard...')
+    setTimeout(() => navigate(nextPath, { replace: true }), 500)
   }
 
   const handleSubmit = async (event) => {
@@ -107,15 +118,16 @@ const Register = () => {
     <section className={styles.page}>
       <AuthParticleBackground
         particleCount={105}
-        particleColor="rgba(200, 230, 255, 0.6)"
-        particleSize={2}
-        repulsionForce={2.2}
+        particleColor="rgba(82, 139, 255, 0.42)"
+        particleSize={1.8}
+        repulsionForce={1.8}
       />
       <div className={styles.particlesLayer} aria-hidden="true"></div>
 
       <div className={styles.card}>
-        <h1 className={styles.title}>REGISTER</h1>
-        <p className={styles.subtitle}>Create your REXION AI account</p>
+        <p className={styles.kicker}>REXION AI</p>
+        <h1 className={styles.title}>Create your account.</h1>
+        <p className={styles.subtitle}>Start with the premium frontend, then move straight into the new dashboard workflow.</p>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.field}>
@@ -212,7 +224,6 @@ const Register = () => {
           </div>
 
           <GoogleSignInButton
-            clientId={googleClientId}
             text="signup_with"
             disabled={loading}
             onCredential={handleGoogleCredential}
@@ -223,7 +234,7 @@ const Register = () => {
         </form>
 
         <p className={styles.footerText}>
-          Already have an account? <Link to="/login">Login</Link>
+          Already have an account? <Link to="/login">Log in</Link>
         </p>
       </div>
     </section>

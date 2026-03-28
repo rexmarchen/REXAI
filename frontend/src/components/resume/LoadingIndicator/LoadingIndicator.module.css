@@ -1,3 +1,5 @@
+@import '../../../styles/variables.css';
+
 .loaderWrap {
   display: flex;
   flex-direction: column;
@@ -10,7 +12,7 @@
   width: 36px;
   height: 36px;
   border: 3px solid rgba(255, 255, 255, 0.2);
-  border-top-color: #00f5ff;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
 }

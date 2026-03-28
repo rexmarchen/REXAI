@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const backendRoot = path.resolve(__dirname, '../..')
+const runtimeWritableRoot = process.env.VERCEL
+  ? path.join('/tmp', 'rexion-runtime')
+  : backendRoot
 
 const LLM_PROVIDER = String(process.env.LLM_PROVIDER || 'local').trim().toLowerCase()
 const OPENAI_API_KEY = String(process.env.OPENAI_API_KEY || '').trim()
@@ -51,7 +54,7 @@ const DOMAIN_TECH_RECOMMENDATIONS = {
   ai: ['LLM Prompt Engineering', 'RAG Pipelines', 'LangChain', 'MLOps', 'Model Evaluation']
 }
 
-const llmModelsDirectory = path.join(backendRoot, 'llm-models')
+const llmModelsDirectory = path.join(runtimeWritableRoot, 'llm-models')
 mkdirSync(llmModelsDirectory, { recursive: true })
 
 const llmStorePath = path.join(llmModelsDirectory, 'resume-analysis-store.json')

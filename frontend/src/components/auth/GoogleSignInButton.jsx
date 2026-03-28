@@ -1,90 +1,85 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { loadGoogleIdentityScript } from '../../services/googleIdentity'
+import { GoogleLogin } from '@react-oauth/google'
+import { GOOGLE_CLIENT_ID } from '../../config/googleAuth'
 import styles from './GoogleSignInButton.module.css'
 
-const getUnavailableMessage = () => {
-  return 'Google sign-in is unavailable until VITE_GOOGLE_CLIENT_ID is configured.'
-}
-
-const GoogleSignInButton = ({ clientId, text = 'continue_with', disabled = false, onCredential }) => {
-  const buttonRef = useRef(null)
-  const onCredentialRef = useRef(onCredential)
+const GoogleSignInButton = ({ text = 'continue_with', disabled = false, onCredential }) => {
+  const mountRef = useRef(null)
   const [helperMessage, setHelperMessage] = useState('')
+  const [buttonWidth, setButtonWidth] = useState(320)
 
   useEffect(() => {
-    onCredentialRef.current = onCredential
-  }, [onCredential])
+    if (!mountRef.current) {
+      return undefined
+    }
 
-  useEffect(() => {
-    let isActive = true
+    const syncWidth = () => {
+      setButtonWidth(Math.min(mountRef.current?.offsetWidth || 320, 360))
+    }
 
-    const mountButton = async () => {
-      if (!clientId) {
-        setHelperMessage(getUnavailableMessage())
-        return
+    syncWidth()
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', syncWidth)
+
+      return () => {
+        window.removeEventListener('resize', syncWidth)
       }
+    }
 
-      try {
-        setHelperMessage('')
-        await loadGoogleIdentityScript()
+    const resizeObserver = new ResizeObserver(() => {
+      syncWidth()
+    })
 
-        if (!isActive || !buttonRef.current || !window.google?.accounts?.id) {
-          return
-        }
+    resizeObserver.observe(mountRef.current)
 
-        buttonRef.current.innerHTML = ''
-        const buttonWidth = Math.min(buttonRef.current.offsetWidth || 320, 360)
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [])
 
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (response) => {
+  if (!GOOGLE_CLIENT_ID) {
+    return (
+      <div className={styles.wrapper}>
+        <p className={styles.helper}>
+          Google sign-in is unavailable until `VITE_GOOGLE_CLIENT_ID` is configured.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.wrapper}>
+      <div ref={mountRef} className={`${styles.surface} ${disabled ? styles.disabled : ''}`}>
+        <GoogleLogin
+          onSuccess={(response) => {
             if (!response?.credential) {
               setHelperMessage('Google sign-in did not return a credential. Please try again.')
               return
             }
 
             setHelperMessage('')
-            onCredentialRef.current?.(response.credential)
-          },
-          ux_mode: 'popup',
-          context: text === 'signup_with' ? 'signup' : 'signin',
-          cancel_on_tap_outside: false,
-          auto_select: false
-        })
-
-        window.google.accounts.id.renderButton(buttonRef.current, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          text,
-          shape: 'pill',
-          width: buttonWidth,
-          logo_alignment: 'left'
-        })
-      } catch {
-        if (!isActive) {
-          return
-        }
-
-        setHelperMessage('Google sign-in could not load. Refresh the page after setting the client ID.')
-      }
-    }
-
-    mountButton()
-
-    return () => {
-      isActive = false
-
-      if (buttonRef.current) {
-        buttonRef.current.innerHTML = ''
-      }
-    }
-  }, [clientId, text])
-
-  return (
-    <div className={styles.wrapper}>
-      <div className={`${styles.surface} ${disabled ? styles.disabled : ''}`}>
-        <div ref={buttonRef} className={styles.mount} aria-live="polite" />
+            onCredential?.(response.credential)
+          }}
+          onError={() => {
+            setHelperMessage('Google sign-in could not load. Refresh the page and try again.')
+          }}
+          ux_mode="popup"
+          context={text === 'signup_with' ? 'signup' : 'signin'}
+          cancel_on_tap_outside={false}
+          auto_select={false}
+          type="standard"
+          theme="outline"
+          size="large"
+          text={text}
+          shape="pill"
+          width={buttonWidth}
+          logo_alignment="left"
+          containerProps={{
+            className: styles.mount,
+            'aria-live': 'polite'
+          }}
+        />
       </div>
       {helperMessage && <p className={styles.helper}>{helperMessage}</p>}
     </div>

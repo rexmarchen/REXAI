@@ -1,0 +1,288 @@
+.page {
+  display: grid;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.copy {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 760px;
+}
+
+.tabs,
+.filters,
+.toolbar,
+.cardActions,
+.inlineMeta,
+.statsRow,
+.listRow,
+.actionRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tab,
+.filterChip,
+.button,
+.buttonGhost,
+.buttonSubtle {
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+}
+
+.tab,
+.filterChip,
+.buttonGhost,
+.buttonSubtle {
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+}
+
+.button {
+  border: 0;
+  background: linear-gradient(135deg, #1a8c57, var(--emerald-bright));
+  color: #041208;
+}
+
+.button:disabled,
+.buttonGhost:disabled,
+.buttonSubtle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 18px;
+}
+
+.sidebar,
+.card,
+.detailLayout,
+.leaderboardCard,
+.heroPanel,
+.modal,
+.notice {
+  border-radius: 24px;
+  padding: 22px;
+  background: rgba(10, 16, 12, 0.78);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: grid;
+  gap: 14px;
+}
+
+.cardMeta,
+.detailHeader,
+.companyRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.skillRow,
+.tagRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.skillTag,
+.badge,
+.matchScore,
+.statusTag {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.skillTag {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.badge {
+  background: rgba(48, 212, 128, 0.12);
+  color: #c9f7dc;
+}
+
+.matchScore {
+  background: rgba(201, 171, 109, 0.12);
+  color: #f0ddb3;
+}
+
+.statusTag {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+}
+
+.urgentTag {
+  background: rgba(190, 125, 66, 0.14);
+  color: #ffd7b1;
+}
+
+.detailLayout {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap: 18px;
+}
+
+.detailBody,
+.detailTabs {
+  display: grid;
+  gap: 16px;
+}
+
+.detailTabs {
+  grid-auto-flow: column;
+  justify-content: flex-start;
+}
+
+.applyBox {
+  position: sticky;
+  top: 88px;
+  border-radius: 20px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 14px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: left;
+}
+
+.formGrid,
+.field,
+.emptyState {
+  display: grid;
+  gap: 14px;
+}
+
+.field {
+  gap: 8px;
+}
+
+.field input,
+.field textarea,
+.field select,
+.sidebar input,
+.sidebar select {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  padding: 14px 16px;
+}
+
+.field textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 5, 3, 0.74);
+  backdrop-filter: blur(14px);
+}
+
+.modal {
+  width: min(620px, 100%);
+  display: grid;
+  gap: 16px;
+}
+
+.emptyState {
+  border-radius: 22px;
+  padding: 28px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.skeleton {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  min-height: 120px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .grid,
+  .detailLayout,
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .header,
+  .cardMeta,
+  .detailHeader,
+  .companyRow {
+    flex-direction: column;
+  }
+
+  .applyBox {
+    position: static;
+  }
+}

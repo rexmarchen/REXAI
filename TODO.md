@@ -1,15 +1,18 @@
-# ResumePredictor Page Fix - TODO Steps
+# REXION AI Platform Build TODO
 
-## Plan Breakdown
-**Goal:** Fix "Failed to fetch dynamically imported module: src/pages/ResumePredictor/index.js"
+## Completed: 0/10
 
-**Step 1: [COMPLETE]** ✅ Edit `frontend/src/routes.jsx` - Updated ResumePredictor lazy import to `'./pages/ResumePredictor/ResumePredictor.jsx'`
+### Plan Steps (Approved):
+- [x] 1. Create 'rexion-platform/' Next.js 14 project, install deps (Next.js14, Tailwind, Shadcn, Framer Motion, Stripe, etc.), setup basics (tsconfig, globals.css). **Core files created. npm install next (run manually: cd rexion-platform && npm i)**
+- [ ] 2. Setup auth (NextAuth.js credentials/Google, middleware).
+- [ ] 3. Landing page (Hero with particles, Features bento, Pricing Stripe, Social, Footer).
+- [ ] 4. Dashboard shell (layout.tsx with Sidebar, Navbar).
+- [ ] 5. Dashboard home page (stats, activity).
+- [ ] 6. Outreach module (4-step UI, mock APIs).
+- [ ] 7. Micro-Internships module (browse, apply, leaderboard).
+- [ ] 8. Stripe integration (checkout, webhooks).
+- [ ] 9. Responsive polish, skeletons, toasts, animations.
+- [ ] 10. .env.example, final testing, run command.
 
-**Step 2: [COMPLETE]** ✅ JSX syntax validated - ResumePredictor.jsx fully parseable, no unclosed tags
-
-**Step 3: [PENDING]** Restart Vite: Run `cd frontend` then `npm run dev` (clears cache, applies import fix)
-
-**Step 4: [PENDING]** Test route: http://127.0.0.1:5173/resume-predictor - No "Failed to fetch", page renders upload form + stats
-
-**Status:** Code fixes complete. Restart dev server to verify.
+**Next step: 2 (Auth + Landing Hero)**
 

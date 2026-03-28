@@ -1411,7 +1411,8 @@ const InternHunt = () => {
         /network error|failed to fetch|load failed|ecconnrefused|err_network/i.test(
           String(requestError?.message || '')
         )
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+      const apiBaseUrl =
+        import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api')
       const mlBaseUrl = import.meta.env.VITE_ML_SERVICE_BASE_URL || 'http://127.0.0.1:8000'
 
       setResumeAnalysisError(

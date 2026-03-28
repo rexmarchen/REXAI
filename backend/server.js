@@ -1,12 +1,14 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import { spawn, spawnSync } from 'node:child_process'
 import { config as loadEnv } from 'dotenv'
+import express from 'express'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
-import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
 import { DatabaseSync } from 'node:sqlite'
+import pg from 'pg'
 import { fileURLToPath } from 'node:url'
+import { OAuth2Client } from 'google-auth-library'
 import {
   analyzeResumeContent,
   getConfidenceLevel,
@@ -26,8 +28,13 @@ import { resolveLinkedInDestination } from './intern-hub/src/services/apifyServi
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const workspaceRoot = path.dirname(__dirname)
+const { Pool } = pg
 
-const runtimeEnvPaths = [path.join(__dirname, 'legacy', 'rexion-backend', '.env'), path.join(__dirname, '.env')]
+const runtimeEnvPaths = [
+  path.join(__dirname, 'legacy', 'rexion-backend', '.env'),
+  path.join(__dirname, '.env'),
+  path.join(__dirname, '.env.local')
+]
 
 function loadRuntimeEnv() {
   for (const envPath of runtimeEnvPaths) {
@@ -72,7 +79,15 @@ loadRuntimeEnv()
 
 const PORT = Number(process.env.PORT || 5000)
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
+const DATABASE_URL = String(
+  process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.PRISMA_DATABASE_URL || ''
+).trim()
+const DEFAULT_GOOGLE_CLIENT_ID =
+  '384758871820-mlp81rh6vb22fhhcad4opoit20e7nc1p.apps.googleusercontent.com'
+const GOOGLE_CLIENT_ID = String(process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID).trim()
 const NODE_ENV = String(process.env.NODE_ENV || 'development').trim().toLowerCase()
+const USE_POSTGRES = DATABASE_URL.length > 0
+const IS_SERVERLESS = Boolean(process.env.VERCEL)
 const OPENROUTER_BASE_URL = String(process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1')
   .trim()
   .replace(/\/+$/, '')
@@ -89,6 +104,24 @@ const ML_SERVICE_URL = String(process.env.ML_SERVICE_URL || 'http://127.0.0.1:80
   .trim()
   .replace(/\/+$/, '')
 const ML_SERVICE_AUTOSTART = String(process.env.ML_SERVICE_AUTOSTART || 'true').trim().toLowerCase() !== 'false'
+const JSEARCH_API_KEY = String(
+  process.env.JSEARCH_API_KEY ||
+    process.env.RAPIDAPI_KEY ||
+    process.env.RAPID_API_KEY ||
+    process.env.X_RAPIDAPI_KEY ||
+    ''
+).trim()
+const JSEARCH_API_HOST = String(
+  process.env.JSEARCH_API_HOST || process.env.RAPIDAPI_HOST || process.env.RAPID_API_HOST || 'jsearch.p.rapidapi.com'
+).trim()
+const JSEARCH_DEFAULT_REMOTE = String(process.env.JSEARCH_DEFAULT_REMOTE || 'true').trim().toLowerCase() !== 'false'
+const JSEARCH_DEFAULT_LOCATION = String(process.env.JSEARCH_DEFAULT_LOCATION || '').trim()
+const JSEARCH_ENABLE_FALLBACK =
+  String(process.env.JSEARCH_ENABLE_FALLBACK || 'false').trim().toLowerCase() === 'true'
+const JSEARCH_TIMEOUT_MS = Math.max(
+  5000,
+  Math.round(Number(process.env.JSEARCH_TIMEOUT_SECONDS || 35) * 1000)
+)
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
   .split(',')
   .map((origin) => origin.trim())
@@ -101,39 +134,23 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const dataDirectory = path.join(__dirname, 'data')
 mkdirSync(dataDirectory, { recursive: true })
 const llmRuntimeInfo = getLlmRuntimeInfo()
-
 const dbPath = path.join(dataDirectory, 'rexion.sqlite')
-const db = new DatabaseSync(dbPath)
+let sqliteDb = null
+let postgresPool = null
+let createUserStatement = null
+let findUserByEmailStatement = null
+let findUserByIdStatement = null
+let findUserByGoogleSubStatement = null
+let createGoogleUserStatement = null
+let updateGoogleIdentityStatement = null
+let createResumePredictionStatement = null
+let findResumePredictionByIdStatement = null
+let createGeneratedSiteStatement = null
+let findGeneratedSiteByIdStatement = null
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    full_name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )
-`)
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS resume_predictions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    file_name TEXT NOT NULL,
-    file_path TEXT NOT NULL,
-    mime_type TEXT,
-    size_bytes INTEGER NOT NULL,
-    prediction TEXT NOT NULL,
-    confidence INTEGER NOT NULL,
-    confidence_level TEXT,
-    llm_model TEXT,
-    analysis_json TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )
-`)
-
-function ensureColumnExists(tableName, columnDefinition) {
+function ensureSqliteColumnExists(tableName, columnDefinition) {
   try {
-    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnDefinition}`)
+    sqliteDb.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnDefinition}`)
   } catch (error) {
     const message = String(error?.message || '').toLowerCase()
     if (!message.includes('duplicate column name')) {
@@ -142,53 +159,641 @@ function ensureColumnExists(tableName, columnDefinition) {
   }
 }
 
-ensureColumnExists('resume_predictions', 'confidence_level TEXT')
-ensureColumnExists('resume_predictions', 'llm_model TEXT')
-ensureColumnExists('resume_predictions', 'analysis_json TEXT')
+async function initializeDatabase() {
+  if (USE_POSTGRES) {
+    postgresPool = new Pool({
+      connectionString: DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    })
 
-const createUserStatement = db.prepare(
-  'INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)'
-)
-const findUserByEmailStatement = db.prepare(
-  'SELECT id, full_name AS fullName, email, password_hash AS passwordHash, created_at AS createdAt FROM users WHERE email = ? LIMIT 1'
-)
-const createResumePredictionStatement = db.prepare(
+    await postgresPool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id BIGSERIAL PRIMARY KEY,
+        full_name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL DEFAULT '',
+        google_sub TEXT,
+        google_picture TEXT,
+        auth_provider TEXT NOT NULL DEFAULT 'password',
+        role TEXT NOT NULL DEFAULT 'candidate',
+        plan TEXT NOT NULL DEFAULT 'free',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_unique
+      ON users (google_sub)
+      WHERE google_sub IS NOT NULL AND google_sub <> '';
+
+      CREATE TABLE IF NOT EXISTS resume_predictions (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+        file_name TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        mime_type TEXT,
+        size_bytes INTEGER NOT NULL,
+        prediction TEXT NOT NULL,
+        confidence INTEGER NOT NULL,
+        confidence_level TEXT,
+        llm_model TEXT,
+        analysis_json TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS generated_sites (
+        id BIGSERIAL PRIMARY KEY,
+        owner_user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        prompt TEXT NOT NULL,
+        mode TEXT NOT NULL,
+        provider TEXT,
+        model TEXT,
+        code TEXT,
+        site_url TEXT,
+        answer TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `)
+
+    return
+  }
+
+  sqliteDb = new DatabaseSync(dbPath)
+
+  sqliteDb.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      full_name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
+  sqliteDb.exec(`
+    CREATE TABLE IF NOT EXISTS resume_predictions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      file_name TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      mime_type TEXT,
+      size_bytes INTEGER NOT NULL,
+      prediction TEXT NOT NULL,
+      confidence INTEGER NOT NULL,
+      confidence_level TEXT,
+      llm_model TEXT,
+      analysis_json TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
+  sqliteDb.exec(`
+    CREATE TABLE IF NOT EXISTS generated_sites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_user_id INTEGER NOT NULL,
+      prompt TEXT NOT NULL,
+      mode TEXT NOT NULL,
+      provider TEXT,
+      model TEXT,
+      code TEXT,
+      site_url TEXT,
+      answer TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
+  ensureSqliteColumnExists('resume_predictions', 'confidence_level TEXT')
+  ensureSqliteColumnExists('resume_predictions', 'llm_model TEXT')
+  ensureSqliteColumnExists('resume_predictions', 'analysis_json TEXT')
+  ensureSqliteColumnExists('resume_predictions', 'user_id INTEGER')
+  ensureSqliteColumnExists('users', 'google_sub TEXT')
+  ensureSqliteColumnExists('users', 'google_picture TEXT')
+  ensureSqliteColumnExists('users', "auth_provider TEXT NOT NULL DEFAULT 'password'")
+  ensureSqliteColumnExists('users', "role TEXT NOT NULL DEFAULT 'candidate'")
+  ensureSqliteColumnExists('users', "plan TEXT NOT NULL DEFAULT 'free'")
+
+  sqliteDb.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_unique
+    ON users (google_sub)
+    WHERE google_sub IS NOT NULL AND google_sub <> ''
+  `)
+
+  createUserStatement = sqliteDb.prepare(
+    `
+    INSERT INTO users (full_name, email, password_hash, auth_provider, role, plan)
+    VALUES (?, ?, ?, ?, ?, ?)
   `
-  INSERT INTO resume_predictions (
-    file_name,
-    file_path,
-    mime_type,
-    size_bytes,
-    prediction,
-    confidence,
-    confidence_level,
-    llm_model,
-    analysis_json
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-`
-)
-const findResumePredictionByIdStatement = db.prepare(
+  findUserByEmailStatement = sqliteDb.prepare(
+    `
+    SELECT
+      id,
+      full_name AS fullName,
+      email,
+      password_hash AS passwordHash,
+      google_sub AS googleSub,
+      google_picture AS googlePicture,
+      auth_provider AS authProvider,
+      role,
+      plan,
+      created_at AS createdAt
+    FROM users
+    WHERE email = ?
+    LIMIT 1
   `
-  SELECT
-    id,
-    file_name AS fileName,
-    file_path AS filePath,
-    mime_type AS mimeType,
-    size_bytes AS sizeBytes,
-    prediction,
-    confidence,
-    confidence_level AS confidenceLevel,
-    llm_model AS llmModel,
-    analysis_json AS analysisJson,
-    created_at AS createdAt
-  FROM resume_predictions
-  WHERE id = ?
-  LIMIT 1
-`
-)
-const generatedSites = new Map()
-let nextGeneratedSiteId = 1
+  )
+  findUserByIdStatement = sqliteDb.prepare(
+    `
+    SELECT
+      id,
+      full_name AS fullName,
+      email,
+      password_hash AS passwordHash,
+      google_sub AS googleSub,
+      google_picture AS googlePicture,
+      auth_provider AS authProvider,
+      role,
+      plan,
+      created_at AS createdAt
+    FROM users
+    WHERE id = ?
+    LIMIT 1
+  `
+  )
+  findUserByGoogleSubStatement = sqliteDb.prepare(
+    `
+    SELECT
+      id,
+      full_name AS fullName,
+      email,
+      password_hash AS passwordHash,
+      google_sub AS googleSub,
+      google_picture AS googlePicture,
+      auth_provider AS authProvider,
+      role,
+      plan,
+      created_at AS createdAt
+    FROM users
+    WHERE google_sub = ?
+    LIMIT 1
+  `
+  )
+  createGoogleUserStatement = sqliteDb.prepare(
+    `
+    INSERT INTO users (
+      full_name,
+      email,
+      password_hash,
+      google_sub,
+      google_picture,
+      auth_provider,
+      role,
+      plan
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `
+  )
+  updateGoogleIdentityStatement = sqliteDb.prepare(
+    `
+    UPDATE users
+    SET
+      full_name = ?,
+      google_sub = ?,
+      google_picture = ?,
+      auth_provider = ?
+    WHERE id = ?
+  `
+  )
+  createResumePredictionStatement = sqliteDb.prepare(
+    `
+    INSERT INTO resume_predictions (
+      user_id,
+      file_name,
+      file_path,
+      mime_type,
+      size_bytes,
+      prediction,
+      confidence,
+      confidence_level,
+      llm_model,
+      analysis_json
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `
+  )
+  findResumePredictionByIdStatement = sqliteDb.prepare(
+    `
+    SELECT
+      id,
+      user_id AS userId,
+      file_name AS fileName,
+      file_path AS filePath,
+      mime_type AS mimeType,
+      size_bytes AS sizeBytes,
+      prediction,
+      confidence,
+      confidence_level AS confidenceLevel,
+      llm_model AS llmModel,
+      analysis_json AS analysisJson,
+      created_at AS createdAt
+    FROM resume_predictions
+    WHERE id = ?
+    LIMIT 1
+  `
+  )
+  createGeneratedSiteStatement = sqliteDb.prepare(
+    `
+    INSERT INTO generated_sites (
+      owner_user_id,
+      prompt,
+      mode,
+      provider,
+      model,
+      code,
+      site_url,
+      answer
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `
+  )
+  findGeneratedSiteByIdStatement = sqliteDb.prepare(
+    `
+    SELECT
+      id,
+      owner_user_id AS ownerUserId,
+      prompt,
+      mode,
+      provider,
+      model,
+      code,
+      site_url AS siteUrl,
+      answer,
+      created_at AS createdAt
+    FROM generated_sites
+    WHERE id = ?
+    LIMIT 1
+  `
+  )
+}
+
+const databaseReady = initializeDatabase()
+
+async function findUserByEmail(email) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    return findUserByEmailStatement.get(email) || null
+  }
+
+  const result = await postgresPool.query(
+    `
+      SELECT
+        id,
+        full_name AS "fullName",
+        email,
+        password_hash AS "passwordHash",
+        google_sub AS "googleSub",
+        google_picture AS "googlePicture",
+        auth_provider AS "authProvider",
+        role,
+        plan,
+        created_at AS "createdAt"
+      FROM users
+      WHERE email = $1
+      LIMIT 1
+    `,
+    [email]
+  )
+
+  return result.rows[0] || null
+}
+
+async function findUserById(userId) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    return findUserByIdStatement.get(userId) || null
+  }
+
+  const result = await postgresPool.query(
+    `
+      SELECT
+        id,
+        full_name AS "fullName",
+        email,
+        password_hash AS "passwordHash",
+        google_sub AS "googleSub",
+        google_picture AS "googlePicture",
+        auth_provider AS "authProvider",
+        role,
+        plan,
+        created_at AS "createdAt"
+      FROM users
+      WHERE id = $1
+      LIMIT 1
+    `,
+    [userId]
+  )
+
+  return result.rows[0] || null
+}
+
+async function findUserByGoogleSub(googleSub) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    return findUserByGoogleSubStatement.get(googleSub) || null
+  }
+
+  const result = await postgresPool.query(
+    `
+      SELECT
+        id,
+        full_name AS "fullName",
+        email,
+        password_hash AS "passwordHash",
+        google_sub AS "googleSub",
+        google_picture AS "googlePicture",
+        auth_provider AS "authProvider",
+        role,
+        plan,
+        created_at AS "createdAt"
+      FROM users
+      WHERE google_sub = $1
+      LIMIT 1
+    `,
+    [googleSub]
+  )
+
+  return result.rows[0] || null
+}
+
+async function createUserRecord({ fullName, email, passwordHash, authProvider, role, plan }) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    const result = createUserStatement.run(fullName, email, passwordHash, authProvider, role, plan)
+    return { id: Number(result.lastInsertRowid) }
+  }
+
+  const result = await postgresPool.query(
+    `
+      INSERT INTO users (full_name, email, password_hash, auth_provider, role, plan)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id
+    `,
+    [fullName, email, passwordHash, authProvider, role, plan]
+  )
+
+  return { id: Number(result.rows[0]?.id) }
+}
+
+async function updateGoogleIdentity({ id, fullName, googleSub, googlePicture, authProvider }) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    updateGoogleIdentityStatement.run(fullName, googleSub, googlePicture, authProvider, id)
+    return
+  }
+
+  await postgresPool.query(
+    `
+      UPDATE users
+      SET
+        full_name = $1,
+        google_sub = $2,
+        google_picture = $3,
+        auth_provider = $4
+      WHERE id = $5
+    `,
+    [fullName, googleSub, googlePicture, authProvider, id]
+  )
+}
+
+async function createGoogleUserRecord({
+  fullName,
+  email,
+  passwordHash,
+  googleSub,
+  googlePicture,
+  authProvider,
+  role,
+  plan
+}) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    const result = createGoogleUserStatement.run(
+      fullName,
+      email,
+      passwordHash,
+      googleSub,
+      googlePicture,
+      authProvider,
+      role,
+      plan
+    )
+    return { id: Number(result.lastInsertRowid) }
+  }
+
+  const result = await postgresPool.query(
+    `
+      INSERT INTO users (
+        full_name,
+        email,
+        password_hash,
+        google_sub,
+        google_picture,
+        auth_provider,
+        role,
+        plan
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id
+    `,
+    [fullName, email, passwordHash, googleSub, googlePicture, authProvider, role, plan]
+  )
+
+  return { id: Number(result.rows[0]?.id) }
+}
+
+async function createResumePrediction(record) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    const result = createResumePredictionStatement.run(
+      record.userId,
+      record.fileName,
+      record.filePath,
+      record.mimeType,
+      record.sizeBytes,
+      record.prediction,
+      record.confidence,
+      record.confidenceLevel,
+      record.llmModel,
+      record.analysisJson
+    )
+    return { id: Number(result.lastInsertRowid) }
+  }
+
+  const result = await postgresPool.query(
+    `
+      INSERT INTO resume_predictions (
+        user_id,
+        file_name,
+        file_path,
+        mime_type,
+        size_bytes,
+        prediction,
+        confidence,
+        confidence_level,
+        llm_model,
+        analysis_json
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id
+    `,
+    [
+      record.userId,
+      record.fileName,
+      record.filePath,
+      record.mimeType,
+      record.sizeBytes,
+      record.prediction,
+      record.confidence,
+      record.confidenceLevel,
+      record.llmModel,
+      record.analysisJson
+    ]
+  )
+
+  return { id: Number(result.rows[0]?.id) }
+}
+
+async function findResumePredictionById(predictionId) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    return findResumePredictionByIdStatement.get(predictionId) || null
+  }
+
+  const result = await postgresPool.query(
+    `
+      SELECT
+        id,
+        user_id AS "userId",
+        file_name AS "fileName",
+        file_path AS "filePath",
+        mime_type AS "mimeType",
+        size_bytes AS "sizeBytes",
+        prediction,
+        confidence,
+        confidence_level AS "confidenceLevel",
+        llm_model AS "llmModel",
+        analysis_json AS "analysisJson",
+        created_at AS "createdAt"
+      FROM resume_predictions
+      WHERE id = $1
+      LIMIT 1
+    `,
+    [predictionId]
+  )
+
+  return result.rows[0] || null
+}
+
+async function createGeneratedSite(record) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    const result = createGeneratedSiteStatement.run(
+      record.ownerUserId,
+      record.prompt,
+      record.mode,
+      record.provider,
+      record.model,
+      record.code || null,
+      record.siteUrl || null,
+      record.answer || null
+    )
+
+    return { id: Number(result.lastInsertRowid) }
+  }
+
+  const result = await postgresPool.query(
+    `
+      INSERT INTO generated_sites (
+        owner_user_id,
+        prompt,
+        mode,
+        provider,
+        model,
+        code,
+        site_url,
+        answer
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id
+    `,
+    [
+      record.ownerUserId,
+      record.prompt,
+      record.mode,
+      record.provider,
+      record.model,
+      record.code || null,
+      record.siteUrl || null,
+      record.answer || null
+    ]
+  )
+
+  return { id: Number(result.rows[0]?.id) }
+}
+
+async function findGeneratedSiteById(siteId) {
+  await databaseReady
+
+  if (!USE_POSTGRES) {
+    return findGeneratedSiteByIdStatement.get(siteId) || null
+  }
+
+  const result = await postgresPool.query(
+    `
+      SELECT
+        id,
+        owner_user_id AS "ownerUserId",
+        prompt,
+        mode,
+        provider,
+        model,
+        code,
+        site_url AS "siteUrl",
+        answer,
+        created_at AS "createdAt"
+      FROM generated_sites
+      WHERE id = $1
+      LIMIT 1
+    `,
+    [siteId]
+  )
+
+  return result.rows[0] || null
+}
+
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null
+
+function buildUserPayload(user) {
+  if (!user) {
+    return null
+  }
+
+  return {
+    id: Number(user.id),
+    fullName: user.fullName,
+    email: user.email,
+    role: String(user.role || 'candidate'),
+    plan: String(user.plan || 'free'),
+    authProvider: String(user.authProvider || 'password'),
+    avatarUrl: user.googlePicture || null
+  }
+}
 
 function resolveCorsOrigin(origin) {
   if (!origin) {
@@ -278,6 +883,142 @@ async function readFetchJsonOrText(fetchResponse) {
   const text = await fetchResponse.text()
   const parsed = parseJsonPayload(text)
   return parsed || { message: text }
+}
+
+function buildFallbackName(email) {
+  const localPart = String(email || '').split('@')[0]
+  const humanized = localPart.replace(/[._-]+/g, ' ').trim()
+
+  if (!humanized) {
+    return 'Google User'
+  }
+
+  return humanized.replace(/\b\w/g, (character) => character.toUpperCase())
+}
+
+function isVerifiedGoogleEmail(value) {
+  return value === true || value === 'true'
+}
+
+async function verifyGoogleCredential(credential) {
+  if (!googleClient || !GOOGLE_CLIENT_ID) {
+    throw new Error('Google sign-in is not configured on the server.')
+  }
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID
+    })
+
+    return ticket.getPayload()
+  } catch {
+    throw new Error('Invalid or expired Google credential.')
+  }
+}
+
+function encodeBase64UrlJson(value) {
+  return Buffer.from(JSON.stringify(value)).toString('base64url')
+}
+
+function decodeBase64UrlJson(value) {
+  try {
+    return JSON.parse(Buffer.from(String(value || ''), 'base64url').toString('utf8'))
+  } catch {
+    return null
+  }
+}
+
+function verifyToken(token) {
+  const [headerPart, payloadPart, signaturePart] = String(token || '').split('.')
+
+  if (!headerPart || !payloadPart || !signaturePart) {
+    throw new Error('Missing token sections.')
+  }
+
+  const expectedSignature = createHmac('sha256', JWT_SECRET)
+    .update(`${headerPart}.${payloadPart}`)
+    .digest('base64url')
+
+  const providedBuffer = Buffer.from(signaturePart)
+  const expectedBuffer = Buffer.from(expectedSignature)
+
+  if (
+    providedBuffer.length !== expectedBuffer.length ||
+    !timingSafeEqual(providedBuffer, expectedBuffer)
+  ) {
+    throw new Error('Token signature is invalid.')
+  }
+
+  const header = decodeBase64UrlJson(headerPart)
+  const payload = decodeBase64UrlJson(payloadPart)
+
+  if (!header || !payload || header.alg !== 'HS256' || header.typ !== 'JWT') {
+    throw new Error('Token payload is invalid.')
+  }
+
+  const now = Math.floor(Date.now() / 1000)
+  if (!Number.isFinite(payload.exp) || payload.exp <= now) {
+    throw new Error('Token has expired.')
+  }
+
+  return payload
+}
+
+function getTokenFromRequest(request) {
+  const authorizationHeader = String(request.headers.authorization || '').trim()
+
+  if (!authorizationHeader.startsWith('Bearer ')) {
+    return ''
+  }
+
+  return authorizationHeader.slice('Bearer '.length).trim()
+}
+
+async function authenticateRequest(request) {
+  const token = getTokenFromRequest(request)
+
+  if (!token) {
+    return { ok: false, statusCode: 401, message: 'Authentication required.' }
+  }
+
+  let payload
+  try {
+    payload = verifyToken(token)
+  } catch (error) {
+    return {
+      ok: false,
+      statusCode: 401,
+      message: String(error?.message || 'Invalid authentication token.')
+    }
+  }
+
+  const userId = Number(payload.sub)
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return { ok: false, statusCode: 401, message: 'Authentication token is malformed.' }
+  }
+
+  const userRecord = await findUserById(userId)
+  if (!userRecord) {
+    return { ok: false, statusCode: 401, message: 'The user for this session no longer exists.' }
+  }
+
+  return {
+    ok: true,
+    userRecord,
+    user: buildUserPayload(userRecord)
+  }
+}
+
+async function requireAuthenticatedUser(request, response, origin) {
+  const authResult = await authenticateRequest(request)
+
+  if (!authResult.ok) {
+    sendJson(response, authResult.statusCode, { message: authResult.message }, origin)
+    return null
+  }
+
+  return authResult
 }
 
 let mlServiceChild = null
@@ -549,6 +1290,295 @@ async function handleMlProxyGet(response, origin, targetPathWithQuery) {
   }
 }
 
+const remoteJobRegex = /\bremote\b|\bwork from home\b|\bwfh\b|\banywhere\b/i
+const indiaLocationRegex =
+  /\bindia\b|\bbengaluru\b|\bbangalore\b|\bhyderabad\b|\bpune\b|\bmumbai\b|\bchennai\b|\bgurgaon\b|\bgurugram\b|\bnoida\b|\bdelhi\b/i
+
+function parseJobPostedAt(value) {
+  const raw = String(value || '').trim()
+  if (!raw) {
+    return null
+  }
+
+  const parsed = new Date(raw)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function getPostedHoursAgo(value) {
+  const postedAt = parseJobPostedAt(value)
+  if (!postedAt) {
+    return null
+  }
+
+  const ageMs = Date.now() - postedAt.getTime()
+  if (ageMs <= 0) {
+    return 0
+  }
+
+  return Math.floor(ageMs / (1000 * 60 * 60))
+}
+
+function buildJSearchCorpus(job) {
+  return [
+    job?.job_title,
+    job?.job_description,
+    job?.job_employment_type,
+    job?.job_location,
+    job?.job_city,
+    job?.job_state,
+    job?.job_country
+  ]
+    .map((part) => String(part || '').trim())
+    .join(' ')
+}
+
+function isRemoteJSearchJob(job) {
+  if (job?.job_is_remote === true) {
+    return true
+  }
+
+  return remoteJobRegex.test(buildJSearchCorpus(job))
+}
+
+function matchesJSearchLocation(job, location) {
+  const normalizedLocation = String(location || '').trim().toLowerCase()
+  if (!normalizedLocation) {
+    return true
+  }
+
+  const corpus = buildJSearchCorpus(job).toLowerCase()
+  if (corpus.includes(normalizedLocation)) {
+    return true
+  }
+
+  if (normalizedLocation === 'india') {
+    return indiaLocationRegex.test(corpus)
+  }
+
+  return false
+}
+
+function formatJSearchJob(job) {
+  const postedDate = String(
+    job?.job_posted_at_datetime_utc || job?.job_posted_at || job?.posted_date || ''
+  ).trim()
+
+  return {
+    title: String(job?.job_title || 'Untitled role').trim(),
+    company: String(job?.employer_name || 'Unknown company').trim(),
+    location: String(job?.job_location || job?.job_country || 'Location not specified').trim(),
+    description: String(job?.job_description || '').trim(),
+    salary: String(job?.job_salary || '').trim(),
+    posted_date: postedDate,
+    posted_hours_ago: getPostedHoursAgo(postedDate),
+    apply_link: String(job?.job_apply_link || '').trim(),
+    employment_type: String(job?.job_employment_type || '').trim(),
+    is_remote: isRemoteJSearchJob(job),
+    source: String(job?.job_publisher || 'JSearch').trim(),
+    company_logo: String(job?.employer_logo || '').trim(),
+    required_skills: Array.isArray(job?.job_required_skills) ? job.job_required_skills : [],
+    required_experience: job?.job_required_experience || '',
+    required_education: job?.job_required_education || ''
+  }
+}
+
+async function searchJobsViaArbeitnow(params) {
+  const maxPages = Math.max(1, Math.min(Number(params.numPages || 1), 3))
+  const effectiveRemote = params.remote == null ? JSEARCH_DEFAULT_REMOTE : Boolean(params.remote)
+  const locationText = String(params.location || '').trim().toLowerCase()
+  const queryTerms = String(params.query || '')
+    .toLowerCase()
+    .split(/\s+/)
+    .map((term) => term.trim())
+    .filter((term) => term.length > 1)
+  const jobs = []
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const response = await fetchWithTimeout(
+      `https://www.arbeitnow.com/api/job-board-api?page=${page}`,
+      { method: 'GET' },
+      JSEARCH_TIMEOUT_MS
+    )
+
+    if (!response.ok) {
+      break
+    }
+
+    const payload = await response.json().catch(() => ({}))
+    const rows = Array.isArray(payload?.data) ? payload.data : []
+
+    for (const row of rows) {
+      const text = [row?.title, row?.description, row?.location, row?.company_name]
+        .map((part) => String(part || '').toLowerCase())
+        .join(' ')
+
+      const queryMatched = queryTerms.every((term) => text.includes(term))
+      if (!queryMatched) {
+        continue
+      }
+
+      if (effectiveRemote && !remoteJobRegex.test(text)) {
+        continue
+      }
+
+      if (locationText && locationText !== 'remote' && !text.includes(locationText)) {
+        continue
+      }
+
+      jobs.push({
+        title: String(row?.title || 'Untitled role').trim(),
+        company: String(row?.company_name || 'Unknown company').trim(),
+        location: String(row?.location || 'Location not specified').trim(),
+        description: String(row?.description || '').trim(),
+        salary: '',
+        posted_date: String(row?.created_at || '').trim(),
+        posted_hours_ago: getPostedHoursAgo(row?.created_at),
+        apply_link: String(row?.url || '').trim(),
+        employment_type: Array.isArray(row?.job_types)
+          ? row.job_types.join(' ')
+          : String(row?.job_types || '').trim(),
+        is_remote: true,
+        source: 'Arbeitnow',
+        company_logo: '',
+        required_skills: [],
+        required_experience: '',
+        required_education: ''
+      })
+    }
+  }
+
+  const filteredByRecency =
+    Number.isFinite(params.postedWithinHours) && params.postedWithinHours > 0
+      ? jobs.filter((job) => {
+          const hours = Number(job.posted_hours_ago)
+          return Number.isFinite(hours) && hours <= Number(params.postedWithinHours)
+        })
+      : jobs
+
+  return {
+    jobs: filteredByRecency.slice(0, Math.max(1, Math.min(Number(params.limit || 30), 50))),
+    meta: {
+      provider: 'arbeitnow',
+      fallback_enabled: true,
+      error: null
+    }
+  }
+}
+
+async function searchJobsViaJSearch(params) {
+  const effectiveRemote = params.remote == null ? JSEARCH_DEFAULT_REMOTE : Boolean(params.remote)
+  const effectiveLocation = String(params.location || JSEARCH_DEFAULT_LOCATION || '').trim()
+
+  if (!JSEARCH_API_KEY) {
+    if (JSEARCH_ENABLE_FALLBACK) {
+      return await searchJobsViaArbeitnow(params)
+    }
+
+    return {
+      jobs: [],
+      meta: {
+        provider: 'none',
+        jsearch_configured: false,
+        fallback_enabled: JSEARCH_ENABLE_FALLBACK,
+        error: 'JSearch API key is not configured.'
+      }
+    }
+  }
+
+  const endpoint = new URL(`https://${JSEARCH_API_HOST}/search`)
+  endpoint.searchParams.set('query', params.query)
+  endpoint.searchParams.set('page', String(Math.max(1, Number(params.page || 1))))
+  endpoint.searchParams.set('num_pages', String(Math.max(1, Number(params.numPages || 1))))
+
+  if (effectiveLocation) {
+    endpoint.searchParams.set('location', effectiveLocation)
+  }
+
+  if (effectiveRemote) {
+    endpoint.searchParams.set('remote_jobs_only', 'true')
+  }
+
+  const response = await fetchWithTimeout(
+    endpoint.toString(),
+    {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'X-RapidAPI-Key': JSEARCH_API_KEY,
+        'X-RapidAPI-Host': JSEARCH_API_HOST
+      }
+    },
+    JSEARCH_TIMEOUT_MS
+  )
+
+  const payload = await response.json().catch(() => ({}))
+
+  if (!response.ok || payload?.status !== 'OK') {
+    const detail =
+      String(payload?.message || payload?.error || '').trim() ||
+      `JSearch returned ${response.status}.`
+
+    if (JSEARCH_ENABLE_FALLBACK) {
+      const fallback = await searchJobsViaArbeitnow(params)
+      return {
+        ...fallback,
+        meta: {
+          ...fallback.meta,
+          error: detail
+        }
+      }
+    }
+
+    return {
+      jobs: [],
+      meta: {
+        provider: 'jsearch',
+        jsearch_configured: true,
+        fallback_enabled: JSEARCH_ENABLE_FALLBACK,
+        error: detail
+      }
+    }
+  }
+
+  let jobs = Array.isArray(payload?.data) ? payload.data : []
+
+  if (effectiveLocation) {
+    jobs = jobs.filter((job) => matchesJSearchLocation(job, effectiveLocation))
+  }
+
+  if (effectiveRemote) {
+    jobs = jobs.filter((job) => isRemoteJSearchJob(job))
+  }
+
+  let formattedJobs = jobs.map((job) => formatJSearchJob(job))
+  formattedJobs.sort((left, right) => {
+    const leftTime = parseJobPostedAt(left.posted_date)?.getTime() || 0
+    const rightTime = parseJobPostedAt(right.posted_date)?.getTime() || 0
+    return rightTime - leftTime
+  })
+
+  if (Number.isFinite(params.postedWithinHours) && params.postedWithinHours > 0) {
+    formattedJobs = formattedJobs.filter((job) => {
+      const hours = Number(job.posted_hours_ago)
+      return Number.isFinite(hours) && hours <= Number(params.postedWithinHours)
+    })
+  }
+
+  if (Number.isFinite(params.limit) && params.limit > 0) {
+    formattedJobs = formattedJobs.slice(0, Math.min(Number(params.limit), 50))
+  }
+
+  return {
+    jobs: formattedJobs,
+    meta: {
+      provider: 'jsearch',
+      jsearch_configured: true,
+      fallback_enabled: JSEARCH_ENABLE_FALLBACK,
+      error: null
+    }
+  }
+}
+
 function hashPassword(password) {
   const salt = randomBytes(16).toString('hex')
   const key = scryptSync(password, salt, 64).toString('hex')
@@ -571,22 +1601,16 @@ function verifyPassword(password, storedHash) {
   return timingSafeEqual(storedKey, derivedKey)
 }
 
-function base64Url(value) {
-  return Buffer.from(value).toString('base64url')
-}
-
 function createToken(user) {
   const now = Math.floor(Date.now() / 1000)
-  const header = base64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-  const payload = base64Url(
-    JSON.stringify({
-      sub: user.id,
-      email: user.email,
-      name: user.fullName,
-      iat: now,
-      exp: now + 60 * 60 * 24 * 7
-    })
-  )
+  const header = encodeBase64UrlJson({ alg: 'HS256', typ: 'JWT' })
+  const payload = encodeBase64UrlJson({
+    sub: user.id,
+    email: user.email,
+    name: user.fullName,
+    iat: now,
+    exp: now + 60 * 60 * 24 * 7
+  })
 
   const signature = createHmac('sha256', JWT_SECRET)
     .update(`${header}.${payload}`)
@@ -746,7 +1770,15 @@ function buildPipelinePredictPayload(resumeBuffer, analysis) {
     projects: safeProjects,
     experience_years: Number.isFinite(experienceYears) ? Math.max(0, experienceYears) : 0,
     predicted_role: String(extracted.predicted_role || '').trim() || 'Software Engineer',
-    confidence: normalizeConfidenceToUnit(analysis?.confidence)
+    confidence: normalizeConfidenceToUnit(analysis?.confidence),
+    ats_score: Number(analysis?.confidence || 0),
+    predicted_category: String(analysis?.confidenceLevel || '').trim(),
+    missing_skills: Array.isArray(analysis?.technologyRecommendations)
+      ? analysis.technologyRecommendations
+      : [],
+    weaknesses: Array.isArray(analysis?.weaknesses) ? analysis.weaknesses : [],
+    job_description_used: '',
+    jobs: []
   }
 }
 
@@ -1472,20 +2504,31 @@ async function handleRegister(request, response, origin) {
     return
   }
 
-  const existingUser = findUserByEmailStatement.get(email)
+  const existingUser = await findUserByEmail(email)
   if (existingUser) {
     sendJson(response, 409, { message: 'An account with this email already exists.' }, origin)
     return
   }
 
   const passwordHash = hashPassword(password)
-  const result = createUserStatement.run(fullName, email, passwordHash)
-
-  const user = {
-    id: Number(result.lastInsertRowid),
+  const result = await createUserRecord({
     fullName,
-    email
-  }
+    email,
+    passwordHash,
+    authProvider: 'password',
+    role: 'candidate',
+    plan: 'free'
+  })
+
+  const user = buildUserPayload({
+      id: Number(result.id),
+    fullName,
+    email,
+    role: 'candidate',
+    plan: 'free',
+    authProvider: 'password',
+    googlePicture: ''
+  })
 
   sendJson(
     response,
@@ -1522,18 +2565,24 @@ async function handleLogin(request, response, origin) {
     return
   }
 
-  const userRecord = findUserByEmailStatement.get(email)
+  const userRecord = await findUserByEmail(email)
 
-  if (!userRecord || !verifyPassword(password, userRecord.passwordHash)) {
+  if (!userRecord) {
     sendJson(response, 401, { message: 'Invalid email or password.' }, origin)
     return
   }
 
-  const user = {
-    id: userRecord.id,
-    fullName: userRecord.fullName,
-    email: userRecord.email
+  if (!userRecord.passwordHash && userRecord.googleSub) {
+    sendJson(response, 401, { message: 'This account uses Google sign-in. Continue with Google.' }, origin)
+    return
   }
+
+  if (!verifyPassword(password, userRecord.passwordHash)) {
+    sendJson(response, 401, { message: 'Invalid email or password.' }, origin)
+    return
+  }
+
+  const user = buildUserPayload(userRecord)
 
   sendJson(
     response,
@@ -1547,7 +2596,118 @@ async function handleLogin(request, response, origin) {
   )
 }
 
-async function handleResumePredict(request, response, origin, options = {}) {
+async function handleGoogleAuth(request, response, origin) {
+  let payload
+
+  try {
+    payload = await readJsonBody(request)
+  } catch (error) {
+    if (error.message === 'PAYLOAD_TOO_LARGE') {
+      sendJson(response, 413, { message: 'Request body is too large.' }, origin)
+      return
+    }
+
+    sendJson(response, 400, { message: 'Invalid JSON body.' }, origin)
+    return
+  }
+
+  const credential = String(payload.credential || '').trim()
+  if (!credential) {
+    sendJson(response, 400, { message: 'Google credential is required.' }, origin)
+    return
+  }
+
+  let googlePayload
+  try {
+    googlePayload = await verifyGoogleCredential(credential)
+  } catch (error) {
+    sendJson(response, 401, { message: String(error?.message || 'Google sign-in failed.') }, origin)
+    return
+  }
+
+  const email = String(googlePayload?.email || '').trim().toLowerCase()
+  const googleSub = String(googlePayload?.sub || '').trim()
+
+  if (!email || !googleSub) {
+    sendJson(response, 401, { message: 'Google sign-in did not return a valid account.' }, origin)
+    return
+  }
+
+  if (!isVerifiedGoogleEmail(googlePayload?.email_verified)) {
+    sendJson(response, 401, { message: 'Google account email must be verified to continue.' }, origin)
+    return
+  }
+
+  const googleName =
+    String(googlePayload?.name || '').trim() || buildFallbackName(email)
+  const googlePicture = String(googlePayload?.picture || '').trim()
+
+  let userRecord = await findUserByGoogleSub(googleSub)
+  let message = 'Google sign-in successful.'
+  let statusCode = 200
+
+  if (!userRecord) {
+    userRecord = await findUserByEmail(email)
+
+    if (userRecord) {
+      const resolvedFullName = String(userRecord.fullName || '').trim() || googleName
+      const authProvider = userRecord.passwordHash ? 'hybrid' : 'google'
+
+      await updateGoogleIdentity({
+        id: userRecord.id,
+        fullName: resolvedFullName,
+        googleSub,
+        googlePicture,
+        authProvider
+      })
+
+      userRecord = await findUserById(userRecord.id)
+      message = 'Google account linked. Login successful.'
+    } else {
+      const createResult = await createGoogleUserRecord({
+        fullName: googleName,
+        email,
+        passwordHash: '',
+        googleSub,
+        googlePicture,
+        authProvider: 'google',
+        role: 'candidate',
+        plan: 'free'
+      })
+
+      userRecord = await findUserById(Number(createResult.id))
+      message = 'Account created successfully with Google.'
+      statusCode = 201
+    }
+  }
+
+  const user = buildUserPayload(userRecord)
+
+  sendJson(
+    response,
+    statusCode,
+    {
+      message,
+      user,
+      token: createToken(user)
+    },
+    origin
+  )
+}
+
+function handleGetCurrentUser(response, origin, userRecord) {
+  sendJson(
+    response,
+    200,
+    {
+      message: 'Session active.',
+      user: buildUserPayload(userRecord)
+    },
+    origin
+  )
+}
+
+async function handleResumePredict(request, response, origin, authUser, options = {}) {
   const contentType = String(request.headers['content-type'] || '')
   const boundaryMatch = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType)
   const boundary = boundaryMatch?.[1] || boundaryMatch?.[2]
@@ -1593,7 +2753,7 @@ async function handleResumePredict(request, response, origin, options = {}) {
     return
   }
 
-  const uploadsDirectory = path.join(__dirname, 'uploads')
+  const uploadsDirectory = IS_SERVERLESS ? path.join('/tmp', 'rexion-uploads') : path.join(__dirname, 'uploads')
   mkdirSync(uploadsDirectory, { recursive: true })
 
   const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extension}`
@@ -1601,18 +2761,19 @@ async function handleResumePredict(request, response, origin, options = {}) {
   writeFileSync(savedPath, resume.data)
 
   const analysis = await analyzeResumeContent(resume.data, originalName)
-  const insertResult = createResumePredictionStatement.run(
-    originalName,
-    savedPath,
-    resume.contentType,
-    resume.data.length,
-    analysis.prediction,
-    analysis.confidence,
-    analysis.confidenceLevel,
-    analysis.llmModel,
-    serializeAnalysis(analysis)
-  )
-  const predictionId = Number(insertResult.lastInsertRowid)
+  const insertResult = await createResumePrediction({
+    userId: Number(authUser.id),
+    fileName: originalName,
+    filePath: savedPath,
+    mimeType: resume.contentType,
+    sizeBytes: resume.data.length,
+    prediction: analysis.prediction,
+    confidence: analysis.confidence,
+    confidenceLevel: analysis.confidenceLevel,
+    llmModel: analysis.llmModel,
+    analysisJson: serializeAnalysis(analysis)
+  })
+  const predictionId = Number(insertResult.id)
 
   if (options.pipelineShape === true) {
     sendJson(response, 201, buildPipelinePredictPayload(resume.data, analysis), origin)
@@ -1641,7 +2802,7 @@ async function handleResumePredict(request, response, origin, options = {}) {
   )
 }
 
-async function handleRexcodeGenerate(request, response, origin) {
+async function handleRexcodeGenerate(request, response, origin, authUser) {
   let payload
 
   try {
@@ -1691,13 +2852,12 @@ async function handleRexcodeGenerate(request, response, origin) {
     return
   }
 
-  const id = String(nextGeneratedSiteId++)
   const result = {
-    id,
     prompt,
     mode: resolvedMode,
     provider: generatedResult.provider,
     model: generatedResult.model,
+    ownerUserId: Number(authUser.id),
     createdAt: new Date().toISOString()
   }
 
@@ -1708,11 +2868,12 @@ async function handleRexcodeGenerate(request, response, origin) {
     result.answer = generatedResult.answer
   }
 
-  generatedSites.set(id, result)
+  const createdSite = await createGeneratedSite(result)
+  result.id = String(createdSite.id)
   sendJson(response, 201, result, origin)
 }
 
-function handleGetResumeResult(response, origin, resultId) {
+async function handleGetResumeResultForUser(response, origin, authUser, resultId) {
   const numericId = Number(resultId)
 
   if (!Number.isInteger(numericId) || numericId <= 0) {
@@ -1720,8 +2881,13 @@ function handleGetResumeResult(response, origin, resultId) {
     return
   }
 
-  const result = findResumePredictionByIdStatement.get(numericId)
+  const result = await findResumePredictionById(numericId)
   if (!result) {
+    sendJson(response, 404, { message: 'Prediction result not found.' }, origin)
+    return
+  }
+
+  if (Number.isInteger(Number(result.userId)) && Number(result.userId) !== Number(authUser.id)) {
     sendJson(response, 404, { message: 'Prediction result not found.' }, origin)
     return
   }
@@ -1729,9 +2895,20 @@ function handleGetResumeResult(response, origin, resultId) {
   sendJson(response, 200, buildResumeApiPayload(result), origin)
 }
 
-function handleGetGeneratedSite(response, origin, siteId) {
-  const result = generatedSites.get(String(siteId))
+async function handleGetGeneratedSite(response, origin, authUser, siteId) {
+  const numericId = Number(siteId)
+  if (!Number.isInteger(numericId) || numericId <= 0) {
+    sendJson(response, 400, { message: 'Generated site id is invalid.' }, origin)
+    return
+  }
+
+  const result = await findGeneratedSiteById(numericId)
   if (!result) {
+    sendJson(response, 404, { message: 'Generated site not found.' }, origin)
+    return
+  }
+
+  if (Number(result.ownerUserId || 0) !== Number(authUser.id)) {
     sendJson(response, 404, { message: 'Generated site not found.' }, origin)
     return
   }
@@ -1774,7 +2951,21 @@ async function handleInternHubHealth(response, origin) {
 async function handleInternHubSearch(response, origin, searchParams) {
   try {
     const params = validateInternshipSearch(searchParams)
-    const payload = await searchInternships(params)
+    let payload = null
+
+    if (internHubConfig.adzunaAppId && internHubConfig.adzunaAppKey) {
+      try {
+        payload = await searchInternships(params)
+      } catch (error) {
+        if (params.adzunaOnly) {
+          throw error
+        }
+      }
+    }
+
+    if (!payload) {
+      payload = await searchJobsViaJSearch(params)
+    }
 
     sendJson(
       response,
@@ -1813,7 +3004,24 @@ async function handleInternHubLinkedInRedirect(response, origin, searchParams) {
   }
 }
 
-const server = http.createServer(async (request, response) => {
+const protectedFeaturePathMatchers = [
+  (pathname) => pathname === '/api/auth/me',
+  (pathname) => pathname === '/api/resume/predict',
+  (pathname) => pathname === '/api/predict',
+  (pathname) => /^\/api\/resume\/result\/\d+$/.test(pathname),
+  (pathname) => pathname === '/api/rexcode/generate',
+  (pathname) => /^\/api\/rexcode\/site\/[\w-]+$/.test(pathname),
+  (pathname) => pathname.startsWith('/api/ml/'),
+  (pathname) => pathname.startsWith('/api/intern-hub/')
+]
+
+function isProtectedFeaturePath(pathname) {
+  return protectedFeaturePathMatchers.some((matcher) => matcher(pathname))
+}
+
+const app = express()
+
+app.use(async (request, response) => {
   const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`)
   const method = request.method || 'GET'
   const origin = request.headers.origin
@@ -1822,6 +3030,18 @@ const server = http.createServer(async (request, response) => {
     sendNoContent(response, origin)
     return
   }
+
+  const protectedFeaturePath = isProtectedFeaturePath(url.pathname)
+  const authResult = protectedFeaturePath
+    ? await requireAuthenticatedUser(request, response, origin)
+    : null
+
+  if (protectedFeaturePath && !authResult) {
+    return
+  }
+
+  const authenticatedUser = authResult?.user || null
+  const authenticatedUserRecord = authResult?.userRecord || null
 
   if (method === 'GET' && url.pathname === '/api/health') {
     sendJson(
@@ -1856,12 +3076,27 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (method === 'GET' && url.pathname === '/api/ml/health') {
-    await handleMlProxyGet(response, origin, '/health')
+    if (await isMlHealthy(1200)) {
+      await handleMlProxyGet(response, origin, '/health')
+      return
+    }
+
+    sendJson(
+      response,
+      200,
+      {
+        status: 'degraded',
+        service: 'ml-proxy',
+        fallback: 'local-node-backend',
+        timestamp: new Date().toISOString()
+      },
+      origin
+    )
     return
   }
 
   if (method === 'POST' && url.pathname === '/api/ml/predict') {
-    await handleMlProxyMultipart(request, response, origin, '/predict')
+    await handleResumePredict(request, response, origin, authenticatedUser, { pipelineShape: true })
     return
   }
 
@@ -1881,7 +3116,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (method === 'GET' && url.pathname === '/api/ml/jobs/search') {
-    await handleMlProxyGet(response, origin, `/jobs/search${url.search}`)
+    await handleInternHubSearch(response, origin, url.searchParams)
     return
   }
 
@@ -1895,47 +3130,67 @@ const server = http.createServer(async (request, response) => {
     return
   }
 
+  if (method === 'POST' && url.pathname === '/api/auth/google') {
+    await handleGoogleAuth(request, response, origin)
+    return
+  }
+
+  if (method === 'GET' && url.pathname === '/api/auth/me') {
+    handleGetCurrentUser(response, origin, authenticatedUserRecord)
+    return
+  }
+
   if (method === 'POST' && url.pathname === '/api/resume/predict') {
-    await handleResumePredict(request, response, origin)
+    await handleResumePredict(request, response, origin, authenticatedUser)
     return
   }
 
   if (method === 'POST' && url.pathname === '/api/predict') {
-    await handleMlProxyMultipart(request, response, origin, '/predict')
+    await handleResumePredict(request, response, origin, authenticatedUser, { pipelineShape: true })
     return
   }
 
   if (method === 'POST' && url.pathname === '/api/rexcode/generate') {
-    await handleRexcodeGenerate(request, response, origin)
+    await handleRexcodeGenerate(request, response, origin, authenticatedUser)
     return
   }
 
   const resumeResultMatch = /^\/api\/resume\/result\/(\d+)$/.exec(url.pathname)
   if (method === 'GET' && resumeResultMatch) {
-    handleGetResumeResult(response, origin, resumeResultMatch[1])
+    await handleGetResumeResultForUser(response, origin, authenticatedUser, resumeResultMatch[1])
     return
   }
 
   const generatedSiteMatch = /^\/api\/rexcode\/site\/([\w-]+)$/.exec(url.pathname)
   if (method === 'GET' && generatedSiteMatch) {
-    handleGetGeneratedSite(response, origin, generatedSiteMatch[1])
+    await handleGetGeneratedSite(response, origin, authenticatedUser, generatedSiteMatch[1])
     return
   }
 
   sendJson(response, 404, { message: 'Route not found.' }, origin)
 })
 
-server.listen(PORT, () => {
-  const openRouterApiKey = getOpenRouterApiKey()
-  const deepSeekApiKey = getDeepSeekApiKey()
-  const configuredRexcodeModel = getRexcodeModel()
-  const configuredRexcodeProvider = getRexcodeProvider()
-  console.log(`Rexion backend listening on http://localhost:${PORT}`)
-  console.log(`SQLite database: ${dbPath}`)
-  console.log(`LLM provider: ${llmRuntimeInfo.provider}`)
-  console.log(`LLM store path: ${llmRuntimeInfo.storePath}`)
-  console.log(`Rexcode provider target: ${configuredRexcodeProvider}`)
-  console.log(`Rexcode model target: ${configuredRexcodeModel}`)
-  console.log(`Rexcode API key loaded: ${hasUsableApiKey(openRouterApiKey) ? 'yes' : 'no'}`)
-  console.log(`DeepSeek API key loaded: ${hasUsableApiKey(deepSeekApiKey) ? 'yes' : 'no'}`)
-})
+const isDirectRun =
+  process.argv[1] && path.resolve(process.argv[1]) === __filename
+
+if (isDirectRun) {
+  app.listen(PORT, () => {
+    const openRouterApiKey = getOpenRouterApiKey()
+    const deepSeekApiKey = getDeepSeekApiKey()
+    const configuredRexcodeModel = getRexcodeModel()
+    const configuredRexcodeProvider = getRexcodeProvider()
+    console.log(`Rexion backend listening on http://localhost:${PORT}`)
+    console.log(`Database mode: ${USE_POSTGRES ? 'postgresql' : 'sqlite'}`)
+    if (!USE_POSTGRES) {
+      console.log(`SQLite database: ${dbPath}`)
+    }
+    console.log(`LLM provider: ${llmRuntimeInfo.provider}`)
+    console.log(`LLM store path: ${llmRuntimeInfo.storePath}`)
+    console.log(`Rexcode provider target: ${configuredRexcodeProvider}`)
+    console.log(`Rexcode model target: ${configuredRexcodeModel}`)
+    console.log(`Rexcode API key loaded: ${hasUsableApiKey(openRouterApiKey) ? 'yes' : 'no'}`)
+    console.log(`DeepSeek API key loaded: ${hasUsableApiKey(deepSeekApiKey) ? 'yes' : 'no'}`)
+  })
+}
+
+export default app

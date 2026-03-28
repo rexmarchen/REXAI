@@ -1,1 +1,0 @@
-import{j as n,a as e}from"./index-0ed2e5d7.js";const t=()=>n("div",{style:{padding:"4rem 1.5rem",textAlign:"center"},children:[e("h1",{children:"404"}),e("p",{children:"Page not found."})]});export{t as default};

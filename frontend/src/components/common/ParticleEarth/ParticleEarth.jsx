@@ -3,7 +3,24 @@ import * as THREE from 'three'
 import { createEarthParticles, updateEarthParticles } from './earthParticles'
 import styles from './ParticleEarth.module.css'
 
-const ParticleEarth = () => {
+const variantConfig = {
+  orbit: {
+    count: 2600,
+    depth: 0.45,
+    holdMs: 3000,
+    pointSize: 0.06,
+    radius: 5.2,
+    reformMs: 1700,
+    ringThickness: 0.26,
+    scatterMs: 1300,
+    scatterScaleMax: 4.1,
+    scatterScaleMin: 1.9,
+    shape: 'ring'
+  },
+  sphere: {}
+}
+
+const ParticleEarth = ({ variant = 'sphere' }) => {
   const mountRef = useRef(null)
   const sceneRef = useRef(null)
   const cameraRef = useRef(null)
@@ -28,9 +45,14 @@ const ParticleEarth = () => {
     mount.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
-    const particles = createEarthParticles()
+    const particles = createEarthParticles(variantConfig[variant] || variantConfig.sphere)
     scene.add(particles)
     particlesRef.current = particles
+
+    if (variant === 'orbit') {
+      particles.rotation.x = 0.14
+      particles.rotation.z = 0.05
+    }
 
     const clock = new THREE.Clock()
     const animate = () => {
@@ -45,7 +67,13 @@ const ParticleEarth = () => {
         pointerActiveRef.current
       )
 
-      particles.rotation.y += 0.0005
+      if (variant === 'orbit') {
+        particles.rotation.z += 0.0012
+        particles.rotation.y += 0.00028
+      } else {
+        particles.rotation.y += 0.0005
+      }
+
       renderer.render(scene, camera)
     }
     animate()
@@ -77,9 +105,14 @@ const ParticleEarth = () => {
       mount.removeChild(renderer.domElement)
       renderer.dispose()
     }
-  }, [])
+  }, [variant])
 
-  return <div ref={mountRef} className={styles.earthCanvas} />
+  return (
+    <div
+      ref={mountRef}
+      className={`${styles.earthCanvas} ${variant === 'orbit' ? styles.orbitCanvas : ''}`}
+    />
+  )
 }
 
 export default ParticleEarth
