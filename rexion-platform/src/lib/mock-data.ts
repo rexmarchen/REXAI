@@ -1,0 +1,240 @@
+import type {
+  ActivityItem,
+  CompanyProfile,
+  DashboardStat,
+  LeaderboardEntry,
+  MicroGigShape,
+  OutreachCampaignShape,
+  OutreachContactShape,
+  StoredUser,
+} from '@/types'
+import { createId, slugify } from '@/lib/utils'
+
+export const dashboardStats: DashboardStat[] = [
+  { id: 'jobs', label: 'Jobs Matched Today', value: '28', change: '+12% vs yesterday', tone: 'accent' },
+  { id: 'emails', label: 'Emails Sent', value: '41', change: '94% avg open rate', tone: 'positive' },
+  { id: 'applications', label: 'Applications Out', value: '16', change: '+5 this morning', tone: 'default' },
+  { id: 'interviews', label: 'Interviews Booked', value: '4', change: '2 scheduled this week', tone: 'positive' },
+]
+
+export const activityFeed: ActivityItem[] = [
+  { id: 'a1', title: 'Email sent to Ananya Sharma @ Google', timestamp: '10 minutes ago', category: 'outreach' },
+  { id: 'a2', title: 'Applied to Frontend Engineer @ Razorpay', timestamp: '35 minutes ago', category: 'job' },
+  { id: 'a3', title: 'Matched to micro-gig: Build growth page @ Zepto', timestamp: '1 hour ago', category: 'gig' },
+  { id: 'a4', title: 'Follow-up sequence scheduled for Swiggy campaign', timestamp: '3 hours ago', category: 'outreach' },
+]
+
+export const mockCompanies: CompanyProfile[] = [
+  {
+    name: 'Razorpay',
+    domain: 'razorpay.com',
+    logo: 'R',
+    industry: 'Fintech',
+    size: '5,000+',
+    location: 'Bengaluru',
+    linkedinUrl: 'https://www.linkedin.com/company/razorpay',
+    hiringStatus: 'Active Hiring',
+  },
+  {
+    name: 'Zepto',
+    domain: 'zeptonow.com',
+    logo: 'Z',
+    industry: 'Quick Commerce',
+    size: '2,000+',
+    location: 'Mumbai',
+    linkedinUrl: 'https://www.linkedin.com/company/zeptonow',
+    hiringStatus: 'Active Hiring',
+  },
+  {
+    name: 'Postman',
+    domain: 'postman.com',
+    logo: 'P',
+    industry: 'Developer Tools',
+    size: '1,500+',
+    location: 'Bengaluru',
+    linkedinUrl: 'https://www.linkedin.com/company/postman-platform',
+    hiringStatus: 'Unknown',
+  },
+]
+
+export const mockContacts: OutreachContactShape[] = [
+  {
+    id: createId('contact'),
+    name: 'Ananya Sharma',
+    role: 'Talent Acquisition Lead',
+    email: 'ananya.sharma@razorpay.com',
+    confidence: 'verified',
+    linkedinUrl: 'https://www.linkedin.com/in/ananyasharma',
+    status: 'sent',
+  },
+  {
+    id: createId('contact'),
+    name: 'Rahul Verma',
+    role: 'Engineering Recruiter',
+    email: 'rahul.verma@razorpay.com',
+    confidence: 'likely',
+    linkedinUrl: 'https://www.linkedin.com/in/rahulverma',
+    status: 'opened',
+  },
+  {
+    id: createId('contact'),
+    name: 'Nikita Iyer',
+    role: "Founder's Office",
+    email: 'nikita.iyer@zeptonow.com',
+    confidence: 'verified',
+    linkedinUrl: 'https://www.linkedin.com/in/nikitaiyer',
+    status: 'queued',
+  },
+]
+
+export const mockCampaigns: OutreachCampaignShape[] = [
+  {
+    id: createId('campaign'),
+    userId: 'user_demo',
+    company: mockCompanies[0],
+    subject: 'Quick question about frontend hiring at Razorpay',
+    body: 'Hi {Name}, I am a frontend engineer focused on product interfaces and performance. I would love to explore how I can contribute to Razorpay.',
+    tone: 'professional',
+    totalContacts: 3,
+    sentCount: 3,
+    failedCount: 0,
+    openCount: 2,
+    status: 'sent',
+    followUp: {
+      enabled: true,
+      days: 3,
+      message: 'Sharing a quick follow-up in case my earlier note got buried.',
+      scheduledAt: new Date(Date.now() + 3 * 86400000).toISOString(),
+    },
+    createdAt: new Date().toISOString(),
+  },
+]
+
+export const mockMicroGigs: MicroGigShape[] = [
+  {
+    id: slugify('Build responsive landing page @ Zepto'),
+    company: {
+      name: 'Zepto',
+      logo: 'Z',
+      rating: 4.8,
+      linkedinUrl: 'https://www.linkedin.com/company/zeptonow',
+      location: 'Mumbai',
+    },
+    title: 'Build responsive landing page with React + Framer Motion',
+    description: 'Create a campaign-ready growth landing page for a new membership launch with analytics-ready CTA instrumentation.',
+    skills: ['React', 'Next.js', 'Framer Motion', 'CSS Modules'],
+    domain: 'Frontend',
+    pay: 15000,
+    duration: 10,
+    location: 'remote',
+    spotsTotal: 5,
+    spotsFilled: 3,
+    isPreHiring: true,
+    closingDate: new Date(Date.now() + 2 * 86400000).toISOString(),
+    status: 'active',
+    activeRoles: 3,
+  },
+  {
+    id: slugify('Design conversion dashboard @ Postman'),
+    company: {
+      name: 'Postman',
+      logo: 'P',
+      rating: 4.7,
+      linkedinUrl: 'https://www.linkedin.com/company/postman-platform',
+      location: 'Bengaluru',
+    },
+    title: 'Design a conversion insights dashboard for onboarding',
+    description: 'Ship a polished dashboard surface for onboarding and activation metrics with lightweight component documentation.',
+    skills: ['Figma', 'Dashboard Design', 'Design Systems'],
+    domain: 'Design',
+    pay: 18000,
+    duration: 14,
+    location: 'hybrid',
+    spotsTotal: 3,
+    spotsFilled: 1,
+    isPreHiring: false,
+    closingDate: new Date(Date.now() + 5 * 86400000).toISOString(),
+    status: 'active',
+    activeRoles: 0,
+  },
+  {
+    id: slugify('Build ATS scoring experiments @ REXION'),
+    company: {
+      name: 'REXION AI',
+      logo: 'R',
+      rating: 4.9,
+      linkedinUrl: 'https://www.linkedin.com/company/rexion-ai',
+      location: 'Remote',
+    },
+    title: 'Build ATS scoring experiments and reporting workflows',
+    description: 'Implement experiment tracking and reporting around ATS scoring improvements using Python and product analytics.',
+    skills: ['Python', 'Analytics', 'Experimentation', 'APIs'],
+    domain: 'Data',
+    pay: 22000,
+    duration: 14,
+    location: 'remote',
+    spotsTotal: 4,
+    spotsFilled: 2,
+    isPreHiring: true,
+    closingDate: new Date(Date.now() + 6 * 86400000).toISOString(),
+    status: 'active',
+    activeRoles: 2,
+  },
+]
+
+export const mockLeaderboard: LeaderboardEntry[] = [
+  {
+    id: createId('leader'),
+    rank: 1,
+    name: 'Arjun Mehta',
+    college: 'IIT Bombay',
+    gig: 'Growth Landing Page Sprint',
+    company: 'Zepto',
+    daysToOffer: 11,
+    earnings: 18000,
+    domain: 'Frontend',
+  },
+  {
+    id: createId('leader'),
+    rank: 2,
+    name: 'Sneha Rao',
+    college: 'VIT Vellore',
+    gig: 'Analytics Ops Accelerator',
+    company: 'Razorpay',
+    daysToOffer: 13,
+    earnings: 22000,
+    domain: 'Data',
+  },
+  {
+    id: createId('leader'),
+    rank: 3,
+    name: 'Rohan Singh',
+    college: 'Delhi University',
+    gig: 'Activation Dashboard Buildout',
+    company: 'Postman',
+    daysToOffer: 15,
+    earnings: 20000,
+    domain: 'Design',
+  },
+]
+
+export const mockUsers: StoredUser[] = [
+  {
+    id: 'user_demo',
+    name: 'REXION Demo',
+    email: 'demo@rexion.ai',
+    role: 'candidate',
+    plan: 'elite',
+    status: 'active',
+    profile: {
+      headline: 'Frontend engineer building product-led interfaces',
+      resumeText:
+        'Frontend engineer with experience in Next.js, React, analytics instrumentation, and growth landing pages. Comfortable owning end-to-end UI execution and shipping production workflows.',
+      skills: ['React', 'Next.js', 'Framer Motion', 'TypeScript', 'CSS Modules', 'Python'],
+      targetRole: 'Frontend Engineer',
+      preferredDomain: 'Frontend',
+      location: 'Remote',
+      companyRole: 'candidate',
+    },
+  },
+]

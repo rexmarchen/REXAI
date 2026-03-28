@@ -1,7 +1,7 @@
 @import '../../../styles/variables.css';
 
 .dropzone {
-  border: 2px dashed rgba(0,245,255,0.3);
+  border: 2px dashed rgba(82, 139, 255, 0.28);
   border-radius: 20px;
   padding: 40px;
   text-align: center;
@@ -12,7 +12,7 @@
 
 .dropzone:hover, .dragActive {
   border-color: var(--color-primary);
-  background: rgba(0,245,255,0.1);
+  background: rgba(82, 139, 255, 0.1);
   transform: translateY(-2px);
   box-shadow: var(--glow);
 }

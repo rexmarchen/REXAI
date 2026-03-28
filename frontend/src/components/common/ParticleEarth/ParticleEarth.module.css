@@ -7,3 +7,7 @@
   z-index: 1;
   pointer-events: none; /* Allow clicks to pass through to UI */
 }
+
+.orbitCanvas {
+  opacity: 0.9;
+}

@@ -1,7 +1,9 @@
 import axios from 'axios'
+import { clearStoredAuth, redirectToLogin } from '../utils/authSession'
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+  baseURL:
+    import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api')
 })
 
 const readAuthToken = () => {
@@ -42,6 +44,20 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   response => response.data,
   error => {
+    const statusCode = Number(error.response?.status || 0)
+    const requestUrl = String(error.config?.url || '')
+    const isAuthRequest = ['/auth/login', '/auth/register', '/auth/google'].some((path) =>
+      requestUrl.includes(path)
+    )
+
+    if (statusCode === 401 && !isAuthRequest) {
+      clearStoredAuth()
+
+      if (!error.config?.__skipUnauthorizedRedirect) {
+        redirectToLogin()
+      }
+    }
+
     console.error('API Error:', error.response?.data || error.message)
     return Promise.reject(error)
   }

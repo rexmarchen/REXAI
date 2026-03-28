@@ -15,8 +15,8 @@
   inset: 0;
   z-index: 2;
   background:
-    radial-gradient(circle at 80% 25%, rgba(0, 245, 255, 0.15), transparent 44%),
-    radial-gradient(circle at 20% 80%, rgba(0, 102, 255, 0.15), transparent 46%);
+    radial-gradient(circle at 80% 25%, rgba(61, 220, 151, 0.12), transparent 44%),
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.08), transparent 46%);
   pointer-events: none;
 }
 
@@ -24,29 +24,36 @@
   position: relative;
   z-index: 12;
   width: 100%;
-  max-width: 460px;
-  background: rgba(0, 0, 0, 0.86);
-  border: 1px solid rgba(0, 245, 255, 0.34);
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow:
-    0 0 30px rgba(0, 245, 255, 0.2),
-    inset 0 0 18px rgba(0, 245, 255, 0.08);
+  max-width: 500px;
+  background:
+    linear-gradient(180deg, rgba(12, 17, 14, 0.96), rgba(8, 10, 8, 0.92)),
+    radial-gradient(circle at top right, rgba(61, 220, 151, 0.12), transparent 34%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 30px;
+  padding: 34px 32px;
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.34);
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(128, 242, 183, 0.88);
 }
 
 .title {
+  margin-top: 0.9rem;
   font-family: var(--font-display);
-  font-size: 1.7rem;
-  color: var(--color-primary);
-  text-align: center;
-  letter-spacing: 0.12em;
+  font-size: 2.4rem;
+  line-height: 1;
 }
 
 .subtitle {
-  color: rgba(255, 255, 255, 0.75);
-  text-align: center;
-  margin-top: 8px;
-  margin-bottom: 22px;
+  color: var(--color-text-muted);
+  margin-top: 0.9rem;
+  margin-bottom: 1.6rem;
+  line-height: 1.72;
 }
 
 .form {
@@ -62,23 +69,24 @@
 }
 
 .field label {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.86rem;
+  color: var(--color-secondary);
 }
 
 .field input {
-  background: rgba(8, 10, 14, 0.9);
-  border: 1px solid rgba(0, 245, 255, 0.25);
-  border-radius: 10px;
-  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 13px 14px;
   color: #fff;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .field input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.2);
+  border-color: rgba(61, 220, 151, 0.3);
+  box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.08);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .passwordWrap {
@@ -87,7 +95,7 @@
 
 .passwordWrap input {
   width: 100%;
-  padding-right: 68px;
+  padding-right: 76px;
 }
 
 .toggleButton {
@@ -95,10 +103,10 @@
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  border: 1px solid rgba(0, 245, 255, 0.3);
-  background: transparent;
-  color: var(--color-primary);
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text);
+  border-radius: 10px;
   padding: 4px 10px;
   font-size: 0.75rem;
   cursor: pointer;
@@ -108,7 +116,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--color-text-muted);
   font-size: 0.83rem;
 }
 
@@ -118,14 +126,14 @@
 
 .submitButton {
   margin-top: 6px;
-  border: 1px solid rgba(0, 245, 255, 0.45);
-  background: linear-gradient(180deg, rgba(0, 245, 255, 0.16), rgba(0, 102, 255, 0.1));
-  color: #dffcff;
-  border-radius: 12px;
-  padding: 12px 16px;
-  font-family: var(--font-display);
-  letter-spacing: 0.08em;
+  border: 1px solid rgba(61, 220, 151, 0.24);
+  background: linear-gradient(135deg, rgba(61, 220, 151, 0.96), rgba(25, 179, 109, 0.88));
+  color: #04130b;
+  border-radius: 999px;
+  padding: 13px 16px;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 18px 30px rgba(61, 220, 151, 0.18);
 }
 
 .submitButton:disabled {
@@ -138,7 +146,7 @@
   align-items: center;
   gap: 12px;
   margin-top: 4px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--color-text-subtle);
   font-size: 0.72rem;
   letter-spacing: 0.18em;
 }
@@ -148,7 +156,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(0, 245, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .authDivider span {
@@ -156,12 +164,12 @@
 }
 
 .error {
-  color: #ff8f8f;
+  color: var(--color-danger);
   font-size: 0.78rem;
 }
 
 .success {
-  color: #7fffb5;
+  color: var(--color-success);
   font-size: 0.85rem;
   margin-top: 2px;
 }
@@ -169,8 +177,8 @@
 .footerText {
   margin-top: 18px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
 }
 
 .footerText a {
@@ -184,6 +192,7 @@
 
 @media (max-width: 480px) {
   .card {
-    padding: 24px 18px;
+    padding: 26px 20px;
+    border-radius: 24px;
   }
 }

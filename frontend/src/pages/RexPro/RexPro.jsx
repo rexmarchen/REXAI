@@ -3,7 +3,9 @@ import rexProHtml from './rex-pro.html?raw'
 import styles from './RexPro.module.css'
 
 const RexPro = () => {
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/+$/, '')
+  const apiBaseUrl = (
+    import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api')
+  ).replace(/\/+$/, '')
   const renderedHtml = rexProHtml.replaceAll('__REXION_API_BASE_URL__', encodeURIComponent(apiBaseUrl))
 
   useEffect(() => {

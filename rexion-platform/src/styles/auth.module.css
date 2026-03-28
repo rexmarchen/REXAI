@@ -1,0 +1,101 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(circle at top left, rgba(48, 212, 128, 0.14), transparent 26%),
+    linear-gradient(180deg, #050805 0%, #090d0a 100%);
+}
+
+.card {
+  width: min(100%, 460px);
+  border-radius: 28px;
+  padding: 32px;
+  background: rgba(10, 16, 12, 0.82);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-glow);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+}
+
+.brandMark {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--emerald-bright);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  letter-spacing: -0.04em;
+}
+
+.copy {
+  margin-top: 12px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.form {
+  margin-top: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field label {
+  color: var(--text-secondary);
+  font-size: 0.94rem;
+}
+
+.field input {
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  padding: 14px 16px;
+}
+
+.primaryButton {
+  border-radius: 999px;
+  border: 0;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #1a8c57, var(--emerald-bright));
+  color: #041208;
+  font-weight: 700;
+}
+
+.secondaryButton {
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
+}
+
+.error {
+  color: #ffb3b3;
+  font-size: 0.9rem;
+}
+
+.meta {
+  margin-top: 18px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
