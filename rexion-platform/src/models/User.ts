@@ -5,16 +5,23 @@ const userSchema = new Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     image: { type: String, trim: true },
+    avatar: { type: String, trim: true },
     password: { type: String, minlength: 8, select: false },
     role: {
       type: String,
-      enum: ['candidate', 'company', 'admin'],
-      default: 'candidate',
+      enum: ['user', 'candidate', 'company', 'admin'],
+      default: 'user',
+    },
+    plan: {
+      type: String,
+      enum: ['free', 'pro', 'elite'],
+      default: 'free',
     },
     authProviders: {
       google: {
         sub: String,
         email: String,
+        picture: String,
       },
     },
     subscription: {
@@ -33,6 +40,10 @@ const userSchema = new Schema(
       currentPeriodEnd: Date,
     },
     profile: {
+      phone: String,
+      college: String,
+      degree: String,
+      graduationYear: Number,
       headline: String,
       resumeText: String,
       skills: {
@@ -42,7 +53,24 @@ const userSchema = new Schema(
       targetRole: String,
       preferredDomain: String,
       location: String,
+      linkedinUrl: String,
+      githubUrl: String,
+      portfolioUrl: String,
+      resumeUrl: String,
       companyRole: String,
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    lastLogin: Date,
+    loginCount: {
+      type: Number,
+      default: 0,
     },
   },
   {

@@ -1,5 +1,7 @@
 import sgMail from '@sendgrid/mail'
 import nodemailer from 'nodemailer'
+import { getAppUrl } from '@/lib/runtime'
+import { createUnsubscribeToken } from '@/lib/unsubscribe'
 
 export interface EmailPayload {
   to: string
@@ -28,8 +30,8 @@ function createSmtpTransport() {
 }
 
 export function buildUnsubscribeFooter(email: string) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const token = Buffer.from(email).toString('base64url')
+  const appUrl = getAppUrl()
+  const token = createUnsubscribeToken(email)
   return `<p style="margin-top:24px;color:#7f8b83;font-size:12px;">Unsubscribe from REXION outreach emails: <a href="${appUrl}/api/unsubscribe?token=${token}" style="color:#30d480;">unsubscribe</a></p>`
 }
 

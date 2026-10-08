@@ -1,28 +1,60 @@
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
+import fs from 'fs/promises'
+import mammoth from 'mammoth' // for .docx
+import { PDFParse } from 'pdf-parse' // for .pdf
+import AppError from '../utils/AppError.js'
 
-const normalizeText = (rawText) =>
-  String(rawText || '')
-    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-export const extractText = async (filePath, mimetype = '') => {
+export const extractTextFromPDF = async (filePath) => {
   try {
-    const extension = path.extname(String(filePath || '')).toLowerCase()
-    const isTextFirst = extension === '.txt' || String(mimetype || '').startsWith('text/')
-    const fileBuffer = readFileSync(filePath)
-
-    if (isTextFirst) {
-      return normalizeText(fileBuffer.toString('utf8'))
+    const dataBuffer = await fs.readFile(filePath)
+    const parser = new PDFParse({ data: dataBuffer })
+    try {
+      const data = await parser.getText()
+      return data.text
+    } finally {
+      await parser.destroy()
     }
-
-    const utf8Text = normalizeText(fileBuffer.toString('utf8'))
-    const latinText = normalizeText(fileBuffer.toString('latin1'))
-    return utf8Text.length >= latinText.length ? utf8Text : latinText
   } catch (error) {
-    throw new Error('Unable to parse resume')
+    throw new AppError('Failed to parse PDF', 500)
   }
 }
 
-export const parseResume = extractText
+export const extractTextFromDocx = async (filePath) => {
+  try {
+    const result = await mammoth.extractRawText({ path: filePath })
+    return result.value
+  } catch (error) {
+    throw new AppError('Failed to parse DOCX', 500)
+  }
+}
+
+export const extractText = async (filePath, mimetype = '') => {
+  const isPdf = mimetype === 'application/pdf' || filePath.toLowerCase().endsWith('.pdf')
+  const isDocx =
+    mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mimetype === 'application/msword' ||
+    filePath.toLowerCase().endsWith('.docx') ||
+    filePath.toLowerCase().endsWith('.doc')
+  const isText =
+    mimetype.startsWith('text/') ||
+    filePath.toLowerCase().endsWith('.txt') ||
+    filePath.toLowerCase().endsWith('.md')
+
+  if (isPdf) {
+    return await extractTextFromPDF(filePath)
+  } else if (isDocx) {
+    return await extractTextFromDocx(filePath)
+  } else if (isText) {
+    return await fs.readFile(filePath, 'utf8')
+  } else {
+    // Attempt PDF parse then docx then raw utf8 as best-effort fallback
+    try {
+      return await extractTextFromPDF(filePath)
+    } catch {
+      try {
+        return await extractTextFromDocx(filePath)
+      } catch {
+        return await fs.readFile(filePath, 'utf8')
+      }
+    }
+  }
+}

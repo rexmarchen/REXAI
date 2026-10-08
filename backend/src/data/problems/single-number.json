@@ -1,0 +1,226 @@
+{
+ "slug": "single-number",
+ "title": "Single Number",
+ "difficulty": "EASY",
+ "topics": [
+  "Array",
+  "Bit Manipulation"
+ ],
+ "companies": [],
+ "functionName": "singleNumber",
+ "checker": "EXACT",
+ "xp": 30,
+ "statement": "Every element in `nums` appears twice except for one that appears once. Return that single element. Use linear time and constant extra space.\n\nExample 1:\nInput: nums = [2,2,1]\nOutput: 1\n\nExample 2:\nInput: nums = [4,1,2,1,2]\nOutput: 4",
+ "constraints": "1 <= nums.length <= 3 * 10^4\nEvery element appears twice except one.",
+ "starterCode": {
+  "python": "def singleNumber(nums):\n    # Write your solution here\n    pass\n",
+  "javascript": "function singleNumber(nums) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def singleNumber(nums):\n    x = 0\n    for n in nums: x ^= n\n    return x\n"
+ },
+ "tests": [
+  {
+   "input": [
+    [
+     2,
+     2,
+     1
+    ]
+   ],
+   "expected": 1,
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     4,
+     1,
+     2,
+     1,
+     2
+    ]
+   ],
+   "expected": 4,
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     1
+    ]
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     -3,
+     -3,
+     0
+    ]
+   ],
+   "expected": 0,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     10,
+     10,
+     2,
+     2,
+     -19
+    ]
+   ],
+   "expected": -19,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     12
+    ]
+   ],
+   "expected": 12,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     16,
+     -10,
+     16,
+     5,
+     -10,
+     8,
+     5
+    ]
+   ],
+   "expected": 8,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     15,
+     8,
+     8
+    ]
+   ],
+   "expected": 15,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     -18,
+     -1,
+     2,
+     2,
+     -4,
+     -4,
+     -13,
+     -18,
+     -13
+    ]
+   ],
+   "expected": -1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     1,
+     1,
+     -18
+    ]
+   ],
+   "expected": -18,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     -12,
+     12,
+     5,
+     -19,
+     12,
+     5,
+     -7,
+     -12,
+     -19
+    ]
+   ],
+   "expected": -7,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     -2,
+     18,
+     18
+    ]
+   ],
+   "expected": -2,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     6
+    ]
+   ],
+   "expected": 6,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     -9
+    ]
+   ],
+   "expected": -9,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     6,
+     7,
+     8,
+     6,
+     -15,
+     -15,
+     7,
+     8,
+     -4
+    ]
+   ],
+   "expected": -4,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     18,
+     18,
+     -13,
+     1,
+     -11,
+     10,
+     -16,
+     -11,
+     1,
+     -13,
+     10
+    ]
+   ],
+   "expected": -16,
+   "isSample": false
+  }
+ ]
+}

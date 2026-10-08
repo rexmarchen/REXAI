@@ -1,0 +1,122 @@
+{
+ "slug": "climbing-stairs",
+ "title": "Climbing Stairs",
+ "difficulty": "EASY",
+ "topics": [
+  "Dynamic Programming",
+  "Math"
+ ],
+ "companies": [],
+ "functionName": "climbStairs",
+ "checker": "EXACT",
+ "xp": 30,
+ "statement": "You are climbing a staircase with `n` steps. Each time you can climb 1 or 2 steps. Return the number of distinct ways to reach the top.\n\nExample 1:\nInput: n = 2\nOutput: 2\n\nExample 2:\nInput: n = 3\nOutput: 3",
+ "constraints": "1 <= n <= 45",
+ "starterCode": {
+  "python": "def climbStairs(n):\n    # Write your solution here\n    pass\n",
+  "javascript": "function climbStairs(n) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def climbStairs(n):\n    a, b = 1, 1\n    for _ in range(n - 1): a, b = b, a + b\n    return b\n"
+ },
+ "tests": [
+  {
+   "input": [
+    2
+   ],
+   "expected": 2,
+   "isSample": true
+  },
+  {
+   "input": [
+    3
+   ],
+   "expected": 3,
+   "isSample": true
+  },
+  {
+   "input": [
+    1
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    45
+   ],
+   "expected": 1836311903,
+   "isSample": false
+  },
+  {
+   "input": [
+    14
+   ],
+   "expected": 610,
+   "isSample": false
+  },
+  {
+   "input": [
+    29
+   ],
+   "expected": 832040,
+   "isSample": false
+  },
+  {
+   "input": [
+    19
+   ],
+   "expected": 6765,
+   "isSample": false
+  },
+  {
+   "input": [
+    5
+   ],
+   "expected": 8,
+   "isSample": false
+  },
+  {
+   "input": [
+    40
+   ],
+   "expected": 165580141,
+   "isSample": false
+  },
+  {
+   "input": [
+    8
+   ],
+   "expected": 34,
+   "isSample": false
+  },
+  {
+   "input": [
+    25
+   ],
+   "expected": 121393,
+   "isSample": false
+  },
+  {
+   "input": [
+    16
+   ],
+   "expected": 1597,
+   "isSample": false
+  },
+  {
+   "input": [
+    23
+   ],
+   "expected": 46368,
+   "isSample": false
+  },
+  {
+   "input": [
+    27
+   ],
+   "expected": 317811,
+   "isSample": false
+  }
+ ]
+}

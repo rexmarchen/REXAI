@@ -1,21 +1,28 @@
 import mongoose from 'mongoose'
 
 const generatedSiteSchema = new mongoose.Schema({
-  userId: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  prompt: String,
-  htmlCode: String,
-  cssCode: String,
-  jsCode: String,
-  previewUrl: String,
+  prompt: {
+    type: String,
+    required: true
+  },
+  code: {
+    type: String,
+    required: true
+  },
+  previewUrl: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
-}, { timestamps: true })
+})
 
 const GeneratedSite = mongoose.model('GeneratedSite', generatedSiteSchema)
 export default GeneratedSite

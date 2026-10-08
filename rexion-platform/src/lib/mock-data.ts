@@ -223,9 +223,12 @@ export const mockUsers: StoredUser[] = [
     id: 'user_demo',
     name: 'REXION Demo',
     email: 'demo@rexion.ai',
-    role: 'candidate',
+    role: 'user',
     plan: 'elite',
     status: 'active',
+    emailVerified: true,
+    isActive: true,
+    loginCount: 24,
     profile: {
       headline: 'Frontend engineer building product-led interfaces',
       resumeText:

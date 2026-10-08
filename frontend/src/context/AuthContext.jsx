@@ -22,7 +22,7 @@ export const useAuth = () => {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => getStoredUser())
+  const [user, setUser] = useState(null)
   const [isReady, setIsReady] = useState(false)
 
   const syncFromStorage = () => {

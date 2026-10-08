@@ -121,8 +121,8 @@ const HomeSection = () => {
 
       <h3 className={styles.sectionDividerTitle}>Recent Activity</h3>
       <div className={styles.activityList}>
-        {ACTIVITIES.map((activity) => (
-          <div key={activity.title} className={styles.activityItem}>
+        {ACTIVITIES.map((activity, index) => (
+          <div key={activity.id || `${activity.title}-${index}`} className={styles.activityItem}>
             <span className={`${styles.activityDot} ${activity.dotClass}`}></span>
             <div>
               <p className={styles.activityTitle}>{activity.title}</p>

@@ -1,0 +1,881 @@
+/* =========================================================================
+   REXION – MY SKILLS SECTION (PRODUCTION THEME)
+   Warm cream / Sand / Terracotta palette matching user UI design
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --sand-bg: #F8F4EE;
+  --sand-card: #FFFFFF;
+  --sand-border: #EAE3D9;
+  --sand-border-light: #F2ECE4;
+  --sand-text-title: #221B16;
+  --sand-text-body: #574B40;
+  --sand-text-muted: #8F8174;
+  --sand-terracotta: #D96B43;
+  --sand-terracotta-dark: #BA542E;
+  --sand-terracotta-light: #FBEFE9;
+  --sand-green: #10B981;
+  --sand-green-light: #E6F9F0;
+  --sand-amber: #F59E0B;
+  --sand-amber-light: #FEF3C7;
+  --sand-salmon: #EF4444;
+  --sand-salmon-light: #FEE2E2;
+  --sand-slate: #64748B;
+  --sand-slate-light: #F1F5F9;
+}
+
+.skillsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding-bottom: 60px;
+}
+
+/* ── HEADER BANNER ────────────────────────────────────────── */
+.headerBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  position: relative;
+  background: transparent;
+  padding: 8px 0 4px;
+}
+
+.headerLeft {
+  flex: 1;
+  max-width: 680px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--sand-text-muted);
+  margin-bottom: 8px;
+}
+
+.breadcrumbCurrent {
+  color: var(--sand-text-title);
+  font-weight: 600;
+}
+
+.breadcrumbLink {
+  color: var(--sand-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.breadcrumbLink:hover {
+  color: var(--sand-terracotta);
+}
+
+.pageTitle {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--sand-text-title);
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.pageSubtitle {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--sand-text-body);
+  margin: 0;
+  max-width: 580px;
+}
+
+.headerIllustrationWrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.headerIllustrationText {
+  font-family: 'Caveat', cursive;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #C05B35;
+  line-height: 1.15;
+  transform: rotate(-6deg);
+  text-align: right;
+  max-width: 170px;
+  user-select: none;
+}
+
+.headerIllustrationImg {
+  width: 220px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(192, 91, 53, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 2px solid #FFFFFF;
+}
+
+/* ── 4 KPI SUMMARY CARDS ──────────────────────────────────── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  width: 100%;
+}
+
+.kpiCard {
+  background: var(--sand-card);
+  border: 1px solid var(--sand-border);
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(35, 28, 22, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.kpiCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(35, 28, 22, 0.05);
+  border-color: #DCCEC0;
+}
+
+.kpiCardActive {
+  border-color: var(--sand-terracotta);
+  background: #FFFDFB;
+  box-shadow: 0 4px 14px rgba(217, 107, 67, 0.12);
+}
+
+.kpiIconBox {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpiNumber {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--sand-text-title);
+  line-height: 1.1;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.kpiLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sand-text-muted);
+  margin-top: 3px;
+  line-height: 1.25;
+}
+
+/* ── CATEGORY FILTER PILLS ────────────────────────────────── */
+.categoryPillsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  position: relative;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 4px 0;
+}
+
+.categoryPillsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.categoryPill {
+  background: var(--sand-card);
+  color: var(--sand-text-body);
+  border: 1px solid var(--sand-border);
+  padding: 9px 20px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.categoryPill:hover {
+  border-color: var(--sand-terracotta);
+  color: var(--sand-terracotta-dark);
+  background: #FFFDFC;
+}
+
+.categoryPillActive {
+  background: #18181B !important;
+  color: #FFFFFF !important;
+  border-color: #18181B !important;
+  box-shadow: 0 4px 12px rgba(24, 24, 27, 0.18);
+}
+
+.categoryScrollArrow {
+  background: var(--sand-card);
+  border: 1px solid var(--sand-border);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sand-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 4px;
+  transition: all 0.15s ease;
+}
+
+.categoryScrollArrow:hover {
+  background: #F2ECE4;
+  color: var(--sand-text-title);
+}
+
+/* ── 2-COLUMN MAIN CONTENT (CARDS + RIGHT WIDGETS) ────────── */
+.mainLayout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ── SKILL OVERVIEW SECTION ───────────────────────────────── */
+.skillsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.skillsHeaderBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sectionHeading {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--sand-text-title);
+  margin: 0;
+}
+
+.skillsControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sortSelectWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sand-card);
+  border: 1px solid var(--sand-border);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sand-text-body);
+}
+
+.sortSelect {
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sand-text-title);
+  cursor: pointer;
+  outline: none;
+  padding-right: 4px;
+}
+
+.searchBoxWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--sand-card);
+  border: 1px solid var(--sand-border);
+  border-radius: 10px;
+  padding: 6px 14px;
+  width: 200px;
+  transition: border-color 0.2s ease, width 0.2s ease;
+}
+
+.searchBoxWrap:focus-within {
+  border-color: var(--sand-terracotta);
+  width: 240px;
+}
+
+.searchBoxInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.82rem;
+  color: var(--sand-text-title);
+  width: 100%;
+}
+
+.searchBoxInput::placeholder {
+  color: var(--sand-text-muted);
+}
+
+/* ── 3-COLUMN SKILL CARDS GRID ────────────────────────────── */
+.skillGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.skillCard {
+  background: var(--sand-card);
+  border: 1px solid var(--sand-border);
+  border-radius: 16px;
+  padding: 18px 20px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 2px 6px rgba(35, 28, 22, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.skillCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(35, 28, 22, 0.06);
+  border-color: #DCCEC0;
+}
+
+.skillCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.skillInfoWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skillIconBox {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.skillTitle {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--sand-text-title);
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.skillCategory {
+  font-size: 0.77rem;
+  color: var(--sand-text-muted);
+  font-weight: 500;
+}
+
+.skillStatsRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.skillPercent {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--sand-text-title);
+}
+
+.skillStatusPill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.statusStrong {
+  background: var(--sand-green-light);
+  color: #059669;
+}
+
+.statusInProgress {
+  background: var(--sand-amber-light);
+  color: #D97706;
+}
+
+.statusNeedsPractice {
+  background: var(--sand-salmon-light);
+  color: #DC2626;
+}
+
+.statusNotStarted {
+  background: var(--sand-slate-light);
+  color: #64748B;
+}
+
+/* ── PROGRESS BAR ─────────────────────────────────────────── */
+.progressBarTrack {
+  width: 100%;
+  height: 5px;
+  background: #F1EAE2;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── SUB-TOPIC TAGS ───────────────────────────────────────── */
+.tagsRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.subTag {
+  background: #FAF7F2;
+  border: 1px solid #ECE4DA;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6A5B4D;
+}
+
+.subTagMore {
+  background: transparent;
+  border: 1px dashed #D5C8B9;
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--sand-text-muted);
+}
+
+/* ── CARD FOOTER ACTION LINK ──────────────────────────────── */
+.cardFooterAction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid #F4EFEA;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6B5B4E;
+  transition: color 0.15s ease;
+}
+
+.cardFooterLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skillCard:hover .cardFooterAction {
+  color: var(--sand-terracotta);
+}
+
+.cardFooterAction svg {
+  transition: transform 0.15s ease;
+}
+
+.skillCard:hover .cardFooterAction svg {
+  transform: translateX(3px);
+}
+
+/* ── RIGHT WIDGETS COLUMN ─────────────────────────────────── */
+.rightWidgetsCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.widgetCard {
+  background: var(--sand-card);
+  border: 1px solid var(--sand-border);
+  border-radius: 18px;
+  padding: 22px 20px;
+  box-shadow: 0 2px 8px rgba(35, 28, 22, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.widgetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.widgetTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.96rem;
+  color: var(--sand-text-title);
+}
+
+.widgetActionLink {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--sand-terracotta);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: opacity 0.15s ease;
+}
+
+.widgetActionLink:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ── WIDGET 1: SKILL GRAPH & DONUT ────────────────────────── */
+.donutSection {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 4px 0;
+}
+
+.donutSvgWrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+}
+
+.donutCenterText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.donutCenterPercent {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--sand-text-title);
+  line-height: 1;
+}
+
+.donutCenterSub {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--sand-text-muted);
+  margin-top: 2px;
+}
+
+.donutLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.donutLegendRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.legendDotLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sand-text-body);
+  font-weight: 600;
+}
+
+.legendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.legendCount {
+  font-weight: 700;
+  color: var(--sand-text-title);
+}
+
+/* ── MINI NETWORK GRAPH SVG ───────────────────────────────── */
+.miniNetworkWrap {
+  width: 100%;
+  height: 160px;
+  border-radius: 12px;
+  background: #FAF7F2;
+  border: 1px solid #ECE4DA;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.miniNetworkWrap:hover {
+  border-color: var(--sand-terracotta);
+}
+
+.miniNetworkSvg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── WIDGET 2: YOUR CAREER PATH ───────────────────────────── */
+.careerPathCardRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.careerPathIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #3B2A22;
+  color: #F8F4EE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.careerPathDetails {
+  flex: 1;
+}
+
+.careerPathTitle {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--sand-text-title);
+  line-height: 1.2;
+}
+
+.careerPathProgressText {
+  font-size: 0.78rem;
+  color: var(--sand-text-muted);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.careerPathBarTrack {
+  width: 100%;
+  height: 6px;
+  background: #EFE6DC;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.careerPathBarFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #D96B43 0%, #E28C68 100%);
+  transition: width 0.6s ease;
+}
+
+.keySkillsLabel {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--sand-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+.keySkillsPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.keySkillPill {
+  background: #FAF7F2;
+  border: 1px solid #ECE4DA;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #55473B;
+}
+
+/* ── WIDGET 3: SKILL INSIGHTS ─────────────────────────────── */
+.insightAlertBox {
+  background: #FEF3EB;
+  border: 1px solid #FCDDCF;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+}
+
+.insightAlertIcon {
+  color: #D96B43;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.insightAlertText {
+  font-size: 0.81rem;
+  line-height: 1.45;
+  color: #633621;
+}
+
+.insightAlertText strong {
+  font-weight: 700;
+  color: #421D0E;
+}
+
+.insightBtn {
+  background: var(--sand-terracotta);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s ease, transform 0.15s ease;
+  width: 100%;
+}
+
+.insightBtn:hover {
+  background: var(--sand-terracotta-dark);
+  transform: translateY(-1px);
+}
+
+/* ── SKILL DETAIL MODAL ───────────────────────────────────── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 20, 16, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.modalCard {
+  background: #FFFFFF;
+  border: 1px solid var(--sand-border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.14);
+  position: relative;
+}
+
+.modalCloseBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #F4EFEA;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sand-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modalCloseBtn:hover {
+  background: #EAE3D9;
+  color: var(--sand-text-title);
+}
+
+/* ── RESPONSIVE BREAKPOINTS ───────────────────────────────── */
+@media (max-width: 1360px) {
+  .skillGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .mainLayout {
+    grid-template-columns: 1fr;
+  }
+  .rightWidgetsCol {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .headerBanner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .headerIllustrationWrap {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .skillGrid {
+    grid-template-columns: 1fr;
+  }
+  .rightWidgetsCol {
+    grid-template-columns: 1fr;
+  }
+}

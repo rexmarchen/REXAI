@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { ok, apiError } from '@/lib/api'
-import { searchApolloPeople } from '@/lib/apollo'
+import { searchSnovContacts } from '@/lib/snov'
 import { searchHunterDomain } from '@/lib/hunter'
 import { mergeContacts } from '@/lib/outreach/contacts'
 
@@ -17,10 +17,10 @@ export async function POST(request: Request) {
     return apiError('Please provide a valid company name and domain.', 400)
   }
 
-  const [hunterContacts, apolloContacts] = await Promise.all([
+  const [hunterContacts, snovContacts] = await Promise.all([
     searchHunterDomain(parsed.data.domain),
-    searchApolloPeople(parsed.data.domain),
+    searchSnovContacts({ company: parsed.data.domain }),
   ])
 
-  return ok(mergeContacts([hunterContacts, apolloContacts]))
+  return ok(mergeContacts([hunterContacts, snovContacts as any]))
 }

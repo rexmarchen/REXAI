@@ -3,7 +3,7 @@ import mongoose from 'mongoose'
 import { OAuth2Client } from 'google-auth-library'
 import User from '../models/User.js'
 import AppError from '../utils/AppError.js'
-import { JWT_SECRET, JWT_EXPIRE, GOOGLE_CLIENT_ID } from '../config/env.js'
+import { JWT_SECRET, JWT_EXPIRE, GOOGLE_CLIENT_ID, MONGO_URI } from '../config/env.js'
 
 const signToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRE })
@@ -11,13 +11,67 @@ const signToken = (id) => {
 
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null
 
-const getDatabaseConnectionError = () => {
+const ensureDatabaseConnection = async () => {
+  if (mongoose.connection.readyState === 1) {
+    return null
+  }
+
+  const mongoUri =
+    MONGO_URI ||
+    process.env.MONGO_URI ||
+    process.env.MONGODB_URI ||
+    process.env.DATABASE_URL ||
+    'mongodb+srv://anshuar9065_db_user:Anshu_90-@cluster0.ytzioe4.mongodb.net/rexion?appName=Cluster0'
+
+  if (!mongoUri) {
+    return new AppError('Database configuration missing on server.', 500)
+  }
+
+  // If disconnected or in error state, trigger connection
+  if (mongoose.connection.readyState === 0 || mongoose.connection.readyState === 3) {
+    try {
+      console.log('[Auth] Attempting on-demand MongoDB connection...')
+      await mongoose.connect(mongoUri, {
+        serverSelectionTimeoutMS: 15000,
+        socketTimeoutMS: 45000
+      })
+      if (mongoose.connection.readyState === 1) {
+        return null
+      }
+    } catch (err) {
+      console.error('[Auth] MongoDB connection error:', err.message)
+    }
+  }
+
+  // If currently connecting, wait up to 15 seconds for TLS/replica set handshake
+  if (mongoose.connection.readyState === 2) {
+    for (let i = 0; i < 75; i++) {
+      await new Promise((r) => setTimeout(r, 200))
+      if (mongoose.connection.readyState === 1) return null
+    }
+  }
+
+  // Quick check if ready now
+  if (mongoose.connection.readyState === 1) {
+    return null
+  }
+
+  // Final retry if still disconnected
+  if (mongoose.connection.readyState === 0 || mongoose.connection.readyState === 3) {
+    try {
+      await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 10000 })
+      if (mongoose.connection.readyState === 1) return null
+    } catch (err) {
+      console.error('[Auth] Final retry MongoDB connection error:', err.message)
+    }
+  }
+
   if (mongoose.connection.readyState === 1) {
     return null
   }
 
   return new AppError(
-    'MongoDB is not connected. If you need the Atlas-backed auth server, check Atlas Network Access, cluster status, outbound TCP 27017, and DB credentials. Otherwise use the default SQLite backend with npm run dev.',
+    'Authentication service is temporarily unavailable. Please try again shortly.',
     503
   )
 }
@@ -26,7 +80,8 @@ const buildUserPayload = (user) => ({
   id: String(user._id),
   fullName: user.name,
   email: user.email,
-  role: user.role
+  role: user.role,
+  plan: user.role === 'admin' ? 'elite' : (user.plan || 'free')
 })
 
 const isVerifiedGoogleEmail = (value) => value === true || value === 'true'
@@ -76,7 +131,7 @@ const applyGoogleProfile = (user, profile) => {
 
 export const register = async (req, res, next) => {
   try {
-    const databaseError = getDatabaseConnectionError()
+    const databaseError = await ensureDatabaseConnection()
     if (databaseError) {
       return next(databaseError)
     }
@@ -109,13 +164,17 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const databaseError = getDatabaseConnectionError()
+    const databaseError = await ensureDatabaseConnection()
     if (databaseError) {
       return next(databaseError)
     }
 
     const email = String(req.body.email || '').trim().toLowerCase()
     const password = String(req.body.password || '')
+
+    if (!email || !password) {
+      return next(new AppError('Please provide both email and password.', 400))
+    }
 
     const user = await User.findOne({ email }).select('+password')
     if (!user) {
@@ -126,7 +185,12 @@ export const login = async (req, res, next) => {
       return next(new AppError('This account uses Google sign-in. Continue with Google.', 401))
     }
 
-    if (!(await user.comparePassword(password))) {
+    if (!user.password) {
+      return next(new AppError('Invalid email or password.', 401))
+    }
+
+    const isMatch = await user.comparePassword(password)
+    if (!isMatch) {
       return next(new AppError('Invalid email or password.', 401))
     }
 
@@ -144,7 +208,7 @@ export const login = async (req, res, next) => {
 
 export const googleAuth = async (req, res, next) => {
   try {
-    const databaseError = getDatabaseConnectionError()
+    const databaseError = await ensureDatabaseConnection()
     if (databaseError) {
       return next(databaseError)
     }
@@ -205,7 +269,7 @@ export const googleAuth = async (req, res, next) => {
 
 export const getMe = async (req, res, next) => {
   try {
-    const databaseError = getDatabaseConnectionError()
+    const databaseError = await ensureDatabaseConnection()
     if (databaseError) {
       return next(databaseError)
     }
@@ -214,6 +278,13 @@ export const getMe = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
+      user: user
+        ? {
+            ...buildUserPayload(user),
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+          }
+        : null,
       data: user
         ? {
             ...buildUserPayload(user),

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { ok, apiError, requireSessionUser } from '@/lib/api'
 import { hasRequiredPlan } from '@/lib/plan'
-import { createGigApplicationRecord, getGigById } from '@/lib/server-data'
+import { createGigApplicationRecord, findExistingGigApplication, getGigById } from '@/lib/server-data'
 
 const schema = z.object({
   resumeUrl: z.string().optional(),
@@ -27,6 +27,14 @@ export async function POST(
   const gig = await getGigById(context.params.id)
   if (!gig) {
     return apiError('Gig not found.', 404)
+  }
+
+  const existingApplication = await findExistingGigApplication({
+    gigId: context.params.id,
+    userId: sessionUser.id,
+  })
+  if (existingApplication) {
+    return apiError('You already applied to this gig.', 409)
   }
 
   const payload = await request.json()

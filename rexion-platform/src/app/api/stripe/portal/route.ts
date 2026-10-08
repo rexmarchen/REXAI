@@ -1,4 +1,5 @@
 import { ok, apiError, requireSessionUser } from '@/lib/api'
+import { getAppUrl, isDemoModeEnabled } from '@/lib/runtime'
 import { getStripe } from '@/lib/stripe'
 import { ensureSessionUser } from '@/lib/server-data'
 
@@ -14,9 +15,13 @@ export async function POST(request: Request) {
   }
 
   const stripe = getStripe()
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin
+  const appUrl = getAppUrl(request.url)
 
   if (!stripe || !storedUser.stripeCustomerId) {
+    if (!isDemoModeEnabled()) {
+      return apiError('The billing portal is unavailable until Stripe is configured.', 503)
+    }
+
     return ok({
       url: `${appUrl}/dashboard/billing?mockPortal=true`,
     })

@@ -24,6 +24,15 @@ const config = {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        base: "var(--bg-base)",
+        surface: "var(--bg-surface)",
+        elevated: "var(--bg-elevated)",
+        "border-bright": "var(--border-bright)",
+        "accent-green": "var(--accent-green)",
+        "accent-blue": "var(--accent-blue)",
+        danger: "var(--danger)",
+        warning: "var(--warning)",
+        gold: "var(--gold)",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -55,6 +64,14 @@ const config = {
         violet: '#7C3AED',
         cyan: '#06B6D4',
         black: '#080808',
+        // REXION design tokens
+        bg: "var(--bg)",
+        panel: "var(--panel)",
+        "panel-2": "var(--panel-2)",
+        emerald: "var(--emerald)",
+        blue: "var(--blue)",
+        text: "var(--text)",
+        "text-dim": "var(--text-dim)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -62,7 +79,13 @@ const config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Inter", "Geist", "sans-serif"],
+        sans: ["var(--font-sans)", "sans-serif"],
+        display: ["var(--font-display)", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
+      },
+      boxShadow: {
+        soft: "var(--shadow-soft)",
+        glow: "var(--shadow-glow)",
       },
       keyframes: {
         "accordion-down": {

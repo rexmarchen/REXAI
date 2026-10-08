@@ -1,10 +1,8 @@
-from typing import List, Optional
-
 from pydantic import BaseModel, Field
+from typing import List, Optional, Dict
 
 
-class JobListing(BaseModel):
-    """Job listing schema"""
+class JobSchema(BaseModel):
     title: Optional[str] = None
     company: Optional[str] = None
     location: Optional[str] = None
@@ -16,29 +14,10 @@ class JobListing(BaseModel):
     is_remote: Optional[bool] = None
     source: Optional[str] = None
     company_logo: Optional[str] = None
-    required_skills: Optional[List[str]] = None
-    required_experience: Optional[str] = None
-    required_education: Optional[str] = None
 
 
 class PredictionResponse(BaseModel):
-    """Resume prediction response schema"""
-    prediction_id: str
-    name: str = ""
-    education: str = ""
-    certifications: List[str] = Field(default_factory=list)
-    projects: List[str] = Field(default_factory=list)
-    experience_years: int = 0
     career_path: str
     confidence: float
     ats_score: float
-    predicted_category: str
-    job_description_used: str
-    extracted_skills: List[str] = Field(default_factory=list)
-    missing_skills: List[str] = Field(default_factory=list)
-    jobs: List[JobListing] = Field(default_factory=list)
-
-
-class MatchRequest(BaseModel):
-    job_description: str = Field(..., min_length=10)
-    resume_ids: Optional[List[str]] = None
+    jobs: List[JobSchema] = Field(default_factory=list)

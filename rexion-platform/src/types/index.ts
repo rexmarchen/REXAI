@@ -1,10 +1,12 @@
+export * from './profile'
+
 export type SubscriptionPlan = 'free' | 'pro' | 'elite'
 export type SubscriptionStatus = 'active' | 'past_due' | 'inactive'
-export type UserRole = 'candidate' | 'company' | 'admin'
+export type UserRole = 'user' | 'candidate' | 'company' | 'admin'
 export type ContactConfidence = 'verified' | 'likely' | 'guessed'
 export type OutreachTone = 'professional' | 'bold' | 'friendly'
 export type OutreachStatus = 'queued' | 'sending' | 'sent' | 'partial_failed' | 'failed'
-export type OutreachContactStatus = 'queued' | 'sent' | 'failed' | 'opened'
+export type OutreachContactStatus = 'queued' | 'sent' | 'failed' | 'opened' | 'replied'
 export type GigLocation = 'remote' | 'hybrid' | 'onsite'
 export type GigStatus = 'pending' | 'active' | 'closed' | 'rejected'
 
@@ -20,12 +22,20 @@ export interface CompanyProfile {
 }
 
 export interface UserProfile {
+  phone?: string
+  college?: string
+  degree?: string
+  graduationYear?: number
   headline?: string
   resumeText?: string
   skills: string[]
   targetRole?: string
   preferredDomain?: string
   location?: string
+  linkedinUrl?: string
+  githubUrl?: string
+  portfolioUrl?: string
+  resumeUrl?: string
   companyRole?: string
 }
 
@@ -114,6 +124,32 @@ export interface GigApplicationShape {
   appliedAt: string
 }
 
+export type ApplicationBatchSource = 'micro-gigs'
+export type ApplicationBatchStatus = 'completed' | 'failed'
+export type ApplicationBatchItemStatus = 'applied' | 'skipped' | 'failed'
+
+export interface ApplicationBatchItemShape {
+  targetId: string
+  title: string
+  companyName: string
+  status: ApplicationBatchItemStatus
+  note?: string
+}
+
+export interface ApplicationBatchShape {
+  id: string
+  userId: string
+  source: ApplicationBatchSource
+  totalJobsProcessed: number
+  successfulApplications: number
+  skippedApplications: number
+  failedApplications: number
+  status: ApplicationBatchStatus
+  results: ApplicationBatchItemShape[]
+  createdAt: string
+  completedAt?: string
+}
+
 export interface MicroGigMatchShape {
   gig: MicroGigShape
   score: number
@@ -152,10 +188,15 @@ export interface StoredUser {
   name: string
   email: string
   image?: string | null
+  avatar?: string | null
   passwordHash?: string
   role: UserRole
   plan: SubscriptionPlan
   status: SubscriptionStatus
+  emailVerified?: boolean
+  isActive?: boolean
+  lastLogin?: string
+  loginCount?: number
   stripeCustomerId?: string
   stripeSubscriptionId?: string
   currentPeriodEnd?: string

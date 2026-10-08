@@ -1,0 +1,20 @@
+SARAH CONNER
+sarah@conner.com | 555-019-2834 | linkedin.com/in/sarah-conner
+
+SUMMARY
+Experienced DevOps Engineer with focus on Kubernetes and Terraform automation.
+
+WORK EXPERIENCE
+DevOps Engineer | CloudCorp (Feb 2022 – Present)
+• Automated deployment pipelines utilizing Terraform and AWS, decreasing incident resolution time by 30%.
+• Deployed 15 multi-region Kubernetes clusters supporting 200,000 monthly active users.
+
+Systems Administrator | OldTech Inc (Jan 2018 – Jan 2020)
+• Managed on-premises Linux server infrastructure and automated backup workflows.
+• Maintained 99.9% server uptime across 50 dedicated physical nodes.
+
+EDUCATION
+BS in Information Technology | State University (2014 – 2018)
+
+SKILLS
+AWS, Docker, Kubernetes, Linux, Terraform, Python

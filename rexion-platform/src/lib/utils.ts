@@ -5,6 +5,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case '&':
+        return '&amp;'
+      case '<':
+        return '&lt;'
+      case '>':
+        return '&gt;'
+      case '"':
+        return '&quot;'
+      case "'":
+        return '&#39;'
+      default:
+        return character
+    }
+  })
+}
+
 export function formatCurrency(value: number) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -37,6 +56,6 @@ export function slugify(value: string) {
 }
 
 export function createId(prefix: string) {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`
+  return `${prefix}_${crypto.randomUUID().replace(/-/g, '')}`
 }
 

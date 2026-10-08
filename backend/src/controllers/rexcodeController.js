@@ -31,3 +31,11 @@ export const getGeneratedSites = catchAsync(async (req, res, next) => {
     data: sites
   })
 })
+
+export const generateSite = generateCode
+
+export const getSite = catchAsync(async (req, res, next) => {
+  const site = await GeneratedSite.findOne({ _id: req.params.siteId, userId: req.user.id })
+  if (!site) return next(new AppError('Site not found', 404))
+  res.status(200).json({ success: true, data: site })
+})

@@ -127,9 +127,28 @@ class ErrorBoundary extends React.Component {
 function App() {
   const location = useLocation()
   const isStandalonePage =
+    location.pathname === '/' ||
     location.pathname.startsWith('/rex-pro') ||
     location.pathname.startsWith('/dashboard') ||
-    location.pathname.startsWith('/workspace')
+    location.pathname.startsWith('/workspace') ||
+    location.pathname.startsWith('/connections') ||
+    location.pathname.startsWith('/internships') ||
+    location.pathname.startsWith('/career') ||
+    location.pathname.startsWith('/quizzes') ||
+    location.pathname.startsWith('/skill-graph') ||
+    location.pathname.startsWith('/skill_graph') ||
+    location.pathname.startsWith('/my-skills') ||
+    location.pathname.startsWith('/skills') ||
+    location.pathname.startsWith('/challenges') ||
+    location.pathname.startsWith('/ai-tutor') ||
+    location.pathname.startsWith('/code-arena') ||
+    location.pathname.startsWith('/profile') ||
+    location.pathname.startsWith('/profile-setup') ||
+    location.pathname.startsWith('/resume') ||
+    location.pathname.startsWith('/interview-support') ||
+    location.pathname.startsWith('/intern-hunt') ||
+    location.pathname.startsWith('/rexcode') ||
+    location.pathname.startsWith('/admin')
 
   return (
     <ErrorBoundary>

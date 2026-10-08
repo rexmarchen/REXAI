@@ -5,3 +5,5 @@ export * as rexcodeApi from './rexcodeApi'
 export * as atsApi from './atsApi'
 export * as mlServiceApi from './mlServiceApi'
 export * as internHubApi from './internHubApi'
+export { default as outreachApi } from './outreachApi'
+

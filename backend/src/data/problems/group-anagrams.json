@@ -1,0 +1,401 @@
+{
+ "slug": "group-anagrams",
+ "title": "Group Anagrams",
+ "difficulty": "MEDIUM",
+ "topics": [
+  "Array",
+  "Hash Table",
+  "String",
+  "Sorting"
+ ],
+ "companies": [],
+ "functionName": "groupAnagrams",
+ "checker": "UNORDERED_DEEP",
+ "xp": 60,
+ "statement": "Given an array of strings `strs`, group the anagrams together. Return the groups in any order, and the strings inside each group in any order.\n\nExample 1:\nInput: strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]\nOutput: [[\"eat\",\"tea\",\"ate\"],[\"tan\",\"nat\"],[\"bat\"]]\n\nExample 2:\nInput: strs = [\"a\"]\nOutput: [[\"a\"]]",
+ "constraints": "1 <= strs.length <= 10^4\n1 <= strs[i].length <= 100\nstrs[i] consists of lowercase English letters.",
+ "starterCode": {
+  "python": "def groupAnagrams(strs):\n    # Write your solution here\n    pass\n",
+  "javascript": "function groupAnagrams(strs) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def groupAnagrams(strs):\n    d = {}\n    for w in strs:\n        d.setdefault(''.join(sorted(w)), []).append(w)\n    return list(d.values())\n"
+ },
+ "tests": [
+  {
+   "input": [
+    [
+     "eat",
+     "tea",
+     "tan",
+     "ate",
+     "nat",
+     "bat"
+    ]
+   ],
+   "expected": [
+    [
+     "eat",
+     "tea",
+     "ate"
+    ],
+    [
+     "tan",
+     "nat"
+    ],
+    [
+     "bat"
+    ]
+   ],
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     "a"
+    ]
+   ],
+   "expected": [
+    [
+     "a"
+    ]
+   ],
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     "ab",
+     "ba",
+     "abc",
+     "cba",
+     "bca"
+    ]
+   ],
+   "expected": [
+    [
+     "ab",
+     "ba"
+    ],
+    [
+     "abc",
+     "cba",
+     "bca"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "caa",
+     "cc",
+     "cc",
+     "bac",
+     "ba",
+     "ac",
+     "cb",
+     "cc"
+    ]
+   ],
+   "expected": [
+    [
+     "caa"
+    ],
+    [
+     "cc",
+     "cc",
+     "cc"
+    ],
+    [
+     "bac"
+    ],
+    [
+     "ba"
+    ],
+    [
+     "ac"
+    ],
+    [
+     "cb"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "bba",
+     "c",
+     "a",
+     "ccb"
+    ]
+   ],
+   "expected": [
+    [
+     "bba"
+    ],
+    [
+     "c"
+    ],
+    [
+     "a"
+    ],
+    [
+     "ccb"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "bcc"
+    ]
+   ],
+   "expected": [
+    [
+     "bcc"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "cca",
+     "ac",
+     "c",
+     "c"
+    ]
+   ],
+   "expected": [
+    [
+     "cca"
+    ],
+    [
+     "ac"
+    ],
+    [
+     "c",
+     "c"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "bc",
+     "aab",
+     "ba",
+     "c",
+     "c",
+     "cc",
+     "abc",
+     "cba"
+    ]
+   ],
+   "expected": [
+    [
+     "bc"
+    ],
+    [
+     "aab"
+    ],
+    [
+     "ba"
+    ],
+    [
+     "c",
+     "c"
+    ],
+    [
+     "cc"
+    ],
+    [
+     "abc",
+     "cba"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "cc",
+     "a",
+     "cab",
+     "ccb",
+     "a",
+     "ac",
+     "c"
+    ]
+   ],
+   "expected": [
+    [
+     "cc"
+    ],
+    [
+     "a",
+     "a"
+    ],
+    [
+     "cab"
+    ],
+    [
+     "ccb"
+    ],
+    [
+     "ac"
+    ],
+    [
+     "c"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "bc",
+     "cb"
+    ]
+   ],
+   "expected": [
+    [
+     "bc",
+     "cb"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "cc",
+     "c",
+     "bcb",
+     "ba"
+    ]
+   ],
+   "expected": [
+    [
+     "cc"
+    ],
+    [
+     "c"
+    ],
+    [
+     "bcb"
+    ],
+    [
+     "ba"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "b",
+     "cac",
+     "ba",
+     "a",
+     "c",
+     "a",
+     "cbc",
+     "cc"
+    ]
+   ],
+   "expected": [
+    [
+     "b"
+    ],
+    [
+     "cac"
+    ],
+    [
+     "ba"
+    ],
+    [
+     "a",
+     "a"
+    ],
+    [
+     "c"
+    ],
+    [
+     "cbc"
+    ],
+    [
+     "cc"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "b",
+     "cc",
+     "bcb"
+    ]
+   ],
+   "expected": [
+    [
+     "b"
+    ],
+    [
+     "cc"
+    ],
+    [
+     "bcb"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "aaa"
+    ]
+   ],
+   "expected": [
+    [
+     "aaa"
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "b",
+     "bcc",
+     "ba",
+     "abc",
+     "aa"
+    ]
+   ],
+   "expected": [
+    [
+     "b"
+    ],
+    [
+     "bcc"
+    ],
+    [
+     "ba"
+    ],
+    [
+     "abc"
+    ],
+    [
+     "aa"
+    ]
+   ],
+   "isSample": false
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+ALEX CHEN
+San Francisco, CA | alex.chen@example.com | (555) 234-5678 | linkedin.com/in/alexchen-dev | github.com/alexchen
+
+PROFESSIONAL SUMMARY
+Results-focused Lead Software Engineer with 8+ years architecting high-scale distributed systems and cloud platforms. Proven track record boosting system throughput by 45% and reducing infrastructure overhead by $120,000 annually.
+
+WORK EXPERIENCE
+Staff Software Engineer | Acme Corp (Jan 2022 – Present)
+• Architected a high-throughput microservices backend in Go and Kubernetes, scaling to 45,000 requests per second with 99.99% uptime.
+• Spearheaded the cloud migration from monolithic architecture to AWS ECS, reducing AWS infrastructure expenditure by $140,000 annually.
+• Mentored 12 junior and mid-level engineers, leading weekly design reviews and improving sprint velocity by 28%.
+• Optimized PostgreSQL query performance and caching strategies with Redis, decreasing P99 latency by 35%.
+
+Senior Software Engineer | FinTech Systems (Mar 2018 – Dec 2021)
+• Engineered automated fraud detection pipeline processing $40M daily transactional volume in real time.
+• Deployed real-time payment reconciliation service in Python and FastAPI, reducing payment discrepancies by 62%.
+• Built automated CI/CD deployment pipelines using GitHub Actions and Docker, reducing release deployment cycle time from 4 hours to 8 minutes.
+• Authored comprehensive API documentation and developer SDKs adopted by over 200 partner engineering teams.
+
+KEY PROJECTS
+Distributed Task Queue | github.com/alexchen/dist-queue
+• Designed fault-tolerant distributed queue processing 10,000 messages per second with Kafka and Go.
+
+EDUCATION
+Bachelor of Science in Computer Science | Stanford University (2014 – 2018)
+• GPA: 3.8 / 4.0
+
+TECHNICAL SKILLS
+Languages: Python, Go, TypeScript, SQL, Bash
+Frameworks & Platforms: FastAPI, React, Node.js, Docker, Kubernetes, AWS, PostgreSQL, Redis, Kafka
+Practices: Microservices, System Architecture, CI/CD, Agile Scrum

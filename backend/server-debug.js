@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import app from './src/app.js'
+import User from './src/models/User.js'
 import { NODE_ENV, PORT, MONGO_URI, JWT_SECRET } from './src/config/env.js'
 
 console.log('Starting Rexion Backend...')
@@ -16,6 +17,13 @@ const DEFAULT_MONGO_CONNECT_OPTIONS = {
 }
 
 const configuredMongoFamily = Number(process.env.MONGO_FAMILY || 0)
+const ADMIN_DEFAULT_NAME = String(process.env.ADMIN_DEFAULT_NAME || 'REXION Admin').trim()
+const ADMIN_DEFAULT_EMAIL = String(process.env.ADMIN_DEFAULT_EMAIL || 'admin@rexion.ai')
+  .trim()
+  .toLowerCase()
+const ADMIN_DEFAULT_PASSWORD = String(process.env.ADMIN_DEFAULT_PASSWORD || '').trim()
+const ADMIN_FORCE_PASSWORD_RESET =
+  String(process.env.ADMIN_FORCE_PASSWORD_RESET || 'false').trim().toLowerCase() === 'true'
 
 const startServer = () => {
   if (serverStarted) {
@@ -129,6 +137,7 @@ async function connectToMongo() {
 
     try {
       await mongoose.connect(MONGO_URI, attempt.options)
+      await ensureMongoAdminUser()
       return
     } catch (err) {
       lastError = err
@@ -141,6 +150,40 @@ async function connectToMongo() {
     console.warn('MongoDB-backed features are unavailable until the Atlas connection succeeds.')
     logMongoTroubleshooting(lastError)
   }
+}
+
+async function ensureMongoAdminUser() {
+  if (!ADMIN_DEFAULT_EMAIL || !ADMIN_DEFAULT_PASSWORD) {
+    console.warn('Mongo admin bootstrap skipped because ADMIN_DEFAULT_EMAIL or ADMIN_DEFAULT_PASSWORD is missing.')
+    return
+  }
+
+  let adminUser = await User.findOne({ email: ADMIN_DEFAULT_EMAIL }).select('+password')
+
+  if (!adminUser) {
+    adminUser = new User({
+      name: ADMIN_DEFAULT_NAME,
+      email: ADMIN_DEFAULT_EMAIL,
+      password: ADMIN_DEFAULT_PASSWORD,
+      role: 'admin',
+      plan: 'elite'
+    })
+
+    await adminUser.save()
+    console.log(`Seeded Mongo admin account: ${ADMIN_DEFAULT_EMAIL}`)
+    return
+  }
+
+  adminUser.name = ADMIN_DEFAULT_NAME
+  adminUser.role = 'admin'
+  adminUser.plan = 'elite'
+
+  if (!adminUser.password || ADMIN_FORCE_PASSWORD_RESET) {
+    adminUser.password = ADMIN_DEFAULT_PASSWORD
+  }
+
+  await adminUser.save()
+  console.log(`Mongo admin account ready: ${ADMIN_DEFAULT_EMAIL}`)
 }
 
 startServer()

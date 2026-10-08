@@ -1,33 +1,27 @@
 'use client'
 
-import { Check } from 'lucide-react'
-import styles from '@/styles/outreach.module.css'
-
-const steps = [
-  { label: 'Search Company', copy: 'Pick a company with active hiring signals.' },
-  { label: 'Select Contacts', copy: 'Choose the people worth reaching first.' },
-  { label: 'Compose Email', copy: 'Generate and refine the cold email.' },
-  { label: 'Send & Track', copy: 'Review, queue, and monitor the campaign.' },
-]
-
-export function OutreachStepper({ step }: { step: number }) {
+// OutreachStepper — step indicator component
+// Used in /dashboard/outreach/new and /dashboard/outreach/review pages
+// Exported here for backward compatibility; the actual step indicator is inline in those pages.
+export function OutreachStepper({ currentStep }: { currentStep: 1 | 2 | 3 }) {
+  const steps = ['People', 'Compose', 'Review']
   return (
-    <div className={styles.stepper}>
-      {steps.map((item, index) => {
-        const current = index + 1
-        const isActive = current === step
-        const isComplete = current < step
-
+    <div className="flex items-center gap-2 text-xs">
+      {steps.map((label, i) => {
+        const step = i + 1
+        const isDone = step < currentStep
+        const isCurrent = step === currentStep
         return (
-          <div
-            key={item.label}
-            className={`${styles.stepCard} ${isActive ? styles.stepActive : ''} ${
-              isComplete ? styles.stepComplete : ''
-            }`}
-          >
-            <span className={styles.stepBadge}>{isComplete ? <Check size={16} /> : current}</span>
-            <strong className={styles.stepLabel}>{item.label}</strong>
-            <span className={styles.stepCopy}>{item.copy}</span>
+          <div key={label} className="flex items-center gap-2">
+            <span
+              className={`inline-flex h-5 w-5 items-center justify-center rounded-full font-semibold ${
+                isDone ? 'bg-emerald-500 text-white' : isCurrent ? 'bg-[var(--blue)] text-white' : 'bg-white/10 text-[var(--text-dim)]'
+              }`}
+            >
+              {step}
+            </span>
+            <span className={isCurrent ? 'text-white' : 'text-[var(--text-dim)]'}>{label}</span>
+            {i < steps.length - 1 && <span className="text-white/20">›</span>}
           </div>
         )
       })}

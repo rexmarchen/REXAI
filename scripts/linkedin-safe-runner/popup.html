@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RexionAI Safe Outreach Runner</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-box">🛡️</div>
+        <div>
+          <h1 class="brand-title">RexionAI Safe Runner</h1>
+          <p class="brand-subtitle">100% Ban-Proof Local Execution</p>
+        </div>
+      </div>
+      <div id="statusBadge" class="status-pill status-idle">
+        <span class="dot"></span>
+        <span id="statusText">Idle</span>
+      </div>
+    </header>
+
+    <!-- LinkedIn Account Connection Status Bar -->
+    <div id="accountBanner" class="account-banner">
+      <div class="account-info">
+        <span id="accountDot" class="account-dot dot-green"></span>
+        <span id="accountLabel">LinkedIn: Detecting session...</span>
+      </div>
+      <span id="accountTag" class="account-tag">Residential IP</span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="tab-monitor">Monitor</button>
+      <button class="tab-btn" data-tab="tab-queue">Queue (<span id="queueCount">0</span>)</button>
+      <button class="tab-btn" data-tab="tab-settings">Safety Shields</button>
+    </nav>
+
+    <!-- Tab 1: Monitor -->
+    <section id="tab-monitor" class="tab-content active">
+      <!-- Daily Cap Progress Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-label">Daily Safety Budget</span>
+          <span id="budgetPill" class="pill pill-green">0 / 8 Used</span>
+        </div>
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+        <div class="card-meta">
+          <span id="remainingActions">8 actions remaining today</span>
+          <span class="safe-tag">Shield Active</span>
+        </div>
+      </div>
+
+      <!-- Human Pacing Status Card -->
+      <div class="card pacing-card">
+        <div class="pacing-row">
+          <span class="pacing-label">Next Action Countdown:</span>
+          <span id="countdownTimer" class="countdown">--:--</span>
+        </div>
+        <p id="actionDetailText" class="pacing-detail">15–35m randomized human delay between invites.</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="btn-group">
+        <button id="startBtn" class="btn btn-primary">
+          <span>🚀</span> Start Safe Queue
+        </button>
+        <button id="pauseBtn" class="btn btn-danger" style="display: none;">
+          <span>⏸️</span> Pause Runner
+        </button>
+        <button id="syncBtn" class="btn btn-secondary">
+          <span>🔄</span> Sync from Rexion App
+        </button>
+      </div>
+
+      <!-- Operating Hours Indicator -->
+      <div class="info-strip">
+        <span>🕒 Working Hours: <strong>10:00 AM – 05:30 PM (Mon–Fri)</strong></span>
+      </div>
+    </section>
+
+    <!-- Tab 2: Queue -->
+    <section id="tab-queue" class="tab-content">
+      <div class="queue-header">
+        <span>Queued Candidates</span>
+        <button id="clearQueueBtn" class="btn-text">Clear Completed</button>
+      </div>
+      <div id="queueList" class="queue-list">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+
+    <!-- Tab 3: Settings -->
+    <section id="tab-settings" class="tab-content">
+      <div class="settings-group">
+        <div class="setting-item">
+          <div>
+            <strong>Daily Action Limit</strong>
+            <p>Maximum connection requests per 24 hours.</p>
+          </div>
+          <span class="setting-val">8 Max</span>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <strong>Human Delay Range</strong>
+            <p>Randomized triangular jitter between dispatches.</p>
+          </div>
+          <span class="setting-val">15 – 35 Mins</span>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <strong>Working Hours Lock</strong>
+            <p>Restricts outreach to 10:00 AM – 5:30 PM.</p>
+          </div>
+          <span class="setting-val text-green">Enabled</span>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <strong>Weekend Blackout</strong>
+            <p>Completely pauses automation on Sat & Sun.</p>
+          </div>
+          <span class="setting-val text-green">Enabled</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>🛡️ Zero Datacenter IP flags · Runs in your authentic Chrome session</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

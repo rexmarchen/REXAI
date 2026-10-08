@@ -1,9 +1,18 @@
 import axios from 'axios'
 import { clearStoredAuth, redirectToLogin } from '../utils/authSession'
 
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return '/api'
+    }
+  }
+  return import.meta.env.VITE_API_BASE_URL || '/api'
+}
+
 const apiClient = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api')
+  baseURL: getBaseURL()
 })
 
 const readAuthToken = () => {
@@ -16,6 +25,21 @@ const readAuthToken = () => {
     window.sessionStorage.getItem('rexionAuthToken') ||
     null
   )
+}
+
+const buildApiErrorLog = (error) => {
+  const statusCode = Number(error.response?.status || 0)
+  const baseURL = String(error.config?.baseURL || '')
+  const requestUrl = String(error.config?.url || '')
+  const requestPath = requestUrl.startsWith('http') ? requestUrl : `${baseURL}${requestUrl}`
+
+  return {
+    method: String(error.config?.method || 'GET').toUpperCase(),
+    url: requestPath || requestUrl || null,
+    status: statusCode || null,
+    message: error.response?.data?.message || error.message,
+    data: error.response?.data || null
+  }
 }
 
 apiClient.interceptors.request.use(
@@ -46,19 +70,22 @@ apiClient.interceptors.response.use(
   error => {
     const statusCode = Number(error.response?.status || 0)
     const requestUrl = String(error.config?.url || '')
+    const shouldPreserveAuth = Boolean(error.config?.__preserveAuthOnUnauthorized)
     const isAuthRequest = ['/auth/login', '/auth/register', '/auth/google'].some((path) =>
       requestUrl.includes(path)
     )
 
     if (statusCode === 401 && !isAuthRequest) {
-      clearStoredAuth()
+      if (!shouldPreserveAuth) {
+        clearStoredAuth()
+      }
 
-      if (!error.config?.__skipUnauthorizedRedirect) {
+      if (!shouldPreserveAuth && !error.config?.__skipUnauthorizedRedirect) {
         redirectToLogin()
       }
     }
 
-    console.error('API Error:', error.response?.data || error.message)
+    console.error('API Error:', buildApiErrorLog(error))
     return Promise.reject(error)
   }
 )

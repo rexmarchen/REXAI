@@ -1,0 +1,946 @@
+/* ==========================================================================
+   24 RESUME ATELIER TEMPLATES
+   Shared clean markup architecture with distinct typography, palettes & layout
+   ========================================================================== */
+
+/* ===== RESUME BASE (all 24 templates share this markup) ===== */
+.resume {
+  width: 794px;
+  min-width: 794px;
+  max-width: 794px;
+  min-height: 1123px;
+  background: var(--bg, #ffffff);
+  color: #222222;
+  font-family: var(--ft, Georgia, serif);
+  font-size: 14px;
+  line-height: 1.5;
+  display: flex;
+  box-shadow: 0 12px 36px rgba(45, 40, 36, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+  text-align: left;
+  transition: all 0.2s ease;
+  --c: #1f3a5f;
+  --bg: #ffffff;
+  --side: #f1f1f1;
+  --sidetx: #222222;
+  --ft: Georgia, serif;
+}
+
+.resume aside {
+  width: 250px;
+  background: var(--side);
+  color: var(--sidetx);
+  padding: 32px 24px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.resume main {
+  flex: 1;
+  padding: 32px 34px;
+  box-sizing: border-box;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.resume h1 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--c);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.resume .role {
+  margin: 4px 0 16px;
+  font-size: 14.5px;
+  opacity: 0.85;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.resume h2 {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--c);
+  border-bottom: 2px solid var(--c);
+  padding-bottom: 4px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.resume aside h2 {
+  color: inherit;
+  border-color: currentColor;
+}
+
+.resume p,
+.resume ul {
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.resume ul {
+  list-style: none;
+}
+
+.resume li {
+  margin-bottom: 6px;
+  line-height: 1.45;
+}
+
+.resume .job {
+  margin-bottom: 14px;
+}
+
+.resume .job b {
+  display: block;
+  font-size: 13.5px;
+  color: inherit;
+  font-weight: 700;
+}
+
+.resume .job small {
+  opacity: 0.75;
+  font-size: 12px;
+  display: block;
+  margin: 2px 0 4px;
+}
+
+.resume .tag {
+  display: inline-block;
+  background: var(--c);
+  color: #ffffff;
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin: 0 4px 5px 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.resume .contact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resume .contact li {
+  font-size: 12.5px;
+  word-break: break-word;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resume .contact li span {
+  opacity: 0.8;
+  font-size: 11px;
+}
+
+/* ===== 24 TEMPLATES (SPECIFIC OVERRIDES & PALETTES) ===== */
+
+/* 1. Classic Navy */
+.resume.t1 {
+  --c: #1f3a5f;
+  --bg: #ffffff;
+  --side: #f1f1f1;
+  --sidetx: #222222;
+  --ft: Georgia, serif;
+}
+
+/* 2. Teal Sidebar */
+.resume.t2 {
+  --c: #0f766e;
+  --side: #0f766e;
+  --sidetx: #ffffff;
+  --ft: system-ui, -apple-system, sans-serif;
+}
+
+/* 3. Black Executive */
+.resume.t3 {
+  --c: #111111;
+  --side: #111111;
+  --sidetx: #ffffff;
+  --ft: 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* 4. Crimson Serif */
+.resume.t4 {
+  --c: #b91c1c;
+  --side: #ffffff;
+  --sidetx: #222222;
+  --ft: Georgia, serif;
+}
+.resume.t4 aside {
+  border-right: 1px solid #e5e5e5;
+}
+
+/* 5. Violet Soft */
+.resume.t5 {
+  --c: #7c3aed;
+  --side: #f5f3ff;
+  --sidetx: #222222;
+  --ft: system-ui, -apple-system, sans-serif;
+}
+
+/* 6. Slate Banner */
+.resume.t6 {
+  flex-direction: column;
+  --c: #334155;
+  --bg: #ffffff;
+  --ft: Georgia, serif;
+}
+.resume.t6 aside {
+  width: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  background: #334155;
+  color: #ffffff;
+  padding: 30px 34px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.resume.t6 aside h1 {
+  color: #ffffff;
+}
+.resume.t6 aside .role {
+  color: #cbd5e1;
+}
+.resume.t6 aside .contact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.resume.t6 aside .contact li {
+  color: #e2e8f0;
+}
+.resume.t6 aside .skillsWrap {
+  display: none;
+}
+
+/* 7. Orange Top */
+.resume.t7 {
+  flex-direction: column;
+  --c: #ea580c;
+  --bg: #ffffff;
+  --ft: system-ui, -apple-system, sans-serif;
+}
+.resume.t7 aside {
+  width: auto;
+  background: #ffffff;
+  border-top: 12px solid #ea580c;
+  padding: 28px 34px 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid #f1f1f1;
+}
+.resume.t7 aside .contact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.resume.t7 aside .skillsWrap {
+  display: none;
+}
+
+/* 8. Typewriter */
+.resume.t8 {
+  --c: #000000;
+  --side: #ffffff;
+  --sidetx: #111111;
+  --ft: 'Courier New', Courier, monospace;
+}
+.resume.t8 aside {
+  border-right: 2px dashed #000000;
+}
+.resume.t8 h2 {
+  border-bottom-style: dashed;
+}
+
+/* 9. Rose Italic */
+.resume.t9 {
+  --c: #be185d;
+  --side: #fdf2f8;
+  --sidetx: #222222;
+  --ft: Georgia, serif;
+}
+.resume.t9 h1 {
+  font-style: italic;
+}
+
+/* 10. Forest Sidebar */
+.resume.t10 {
+  --c: #15803d;
+  --side: #15803d;
+  --sidetx: #f0fdf4;
+  --ft: system-ui, -apple-system, sans-serif;
+}
+.resume.t10 aside h1 {
+  color: #ffffff;
+}
+
+/* 11. Block Headings */
+.resume.t11 {
+  --c: #1e293b;
+  --side: #ffffff;
+  --sidetx: #222222;
+  --ft: 'Trebuchet MS', sans-serif;
+}
+.resume.t11 aside {
+  border-right: 1px solid #e2e8f0;
+}
+.resume.t11 h2 {
+  border: 0;
+  background: #1e293b;
+  color: #ffffff;
+  padding: 5px 12px;
+  border-radius: 4px;
+}
+
+/* 12. Sky Blue */
+.resume.t12 {
+  --c: #0369a1;
+  --side: #e0f2fe;
+  --sidetx: #0c4a6e;
+  --ft: Verdana, Geneva, sans-serif;
+  font-size: 13px;
+}
+
+/* 13. Centered Formal */
+.resume.t13 {
+  flex-direction: column;
+  --c: #111111;
+  --bg: #ffffff;
+  --ft: Georgia, serif;
+  text-align: center;
+}
+.resume.t13 aside {
+  width: auto;
+  background: #ffffff;
+  padding: 36px 34px 14px;
+  align-items: center;
+  border-bottom: 1px solid #e5e5e5;
+}
+.resume.t13 h2 {
+  text-align: center;
+  border-bottom: 1px solid #111111;
+  letter-spacing: 0.2em;
+}
+.resume.t13 .contact {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.resume.t13 main {
+  text-align: left;
+}
+.resume.t13 aside .skillsWrap {
+  display: none;
+}
+
+/* 14. Gold on Black */
+.resume.t14 {
+  --c: #facc15;
+  --side: #18181b;
+  --sidetx: #fafafa;
+  --ft: system-ui, -apple-system, sans-serif;
+}
+.resume.t14 h1 {
+  color: #a16207;
+}
+.resume.t14 h2 {
+  color: #a16207;
+  border-color: #a16207;
+}
+.resume.t14 aside h1 {
+  color: #facc15;
+}
+.resume.t14 aside h2 {
+  color: #facc15;
+  border-color: #facc15;
+}
+.resume.t14 .tag {
+  background: #facc15;
+  color: #18181b;
+  font-weight: 700;
+}
+
+/* 15. Indigo Right Bar */
+.resume.t15 {
+  --c: #4338ca;
+  --side: #ffffff;
+  --sidetx: #222222;
+  --ft: system-ui, -apple-system, sans-serif;
+}
+.resume.t15 aside {
+  border-left: 8px solid #4338ca;
+  order: 2;
+  border-right: 0;
+}
+.resume.t15 main {
+  order: 1;
+}
+
+/* 16. Parchment */
+.resume.t16 {
+  --c: #9a3412;
+  --bg: #fffbeb;
+  --side: #fef3c7;
+  --sidetx: #451a03;
+  --ft: Georgia, serif;
+}
+
+/* 17. Ocean Deep */
+.resume.t17 {
+  --c: #0891b2;
+  --side: #164e63;
+  --sidetx: #ecfeff;
+  --ft: 'Trebuchet MS', sans-serif;
+}
+.resume.t17 aside h1 {
+  color: #a5f3fc;
+}
+
+/* 18. Light Minimal */
+.resume.t18 {
+  --c: #525252;
+  --side: #ffffff;
+  --sidetx: #222222;
+  --ft: 'Helvetica Neue', Arial, sans-serif;
+}
+.resume.t18 aside {
+  border-right: 1px solid #f1f1f1;
+}
+.resume.t18 h1 {
+  font-weight: 200;
+  font-size: 40px;
+  letter-spacing: -0.02em;
+}
+.resume.t18 h2 {
+  border: 0;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  color: #888888;
+}
+
+/* 19. Sunset Gradient */
+.resume.t19 {
+  flex-direction: column;
+  --c: #db2777;
+  --bg: #ffffff;
+  --ft: system-ui, -apple-system, sans-serif;
+}
+.resume.t19 aside {
+  width: auto;
+  background: linear-gradient(90deg, #db2777, #f97316);
+  color: #ffffff;
+  padding: 30px 34px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.resume.t19 aside h1 {
+  color: #ffffff;
+}
+.resume.t19 aside .role {
+  color: #fef08a;
+}
+.resume.t19 aside .contact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.resume.t19 aside .contact li {
+  color: #ffffff;
+}
+.resume.t19 aside .skillsWrap {
+  display: none;
+}
+
+/* 20. Mint Paper */
+.resume.t20 {
+  --c: #065f46;
+  --bg: #f0fdf4;
+  --side: #d1fae5;
+  --sidetx: #064e3b;
+  --ft: Georgia, serif;
+}
+
+/* 21. Royal Blue Curve */
+.resume.t21 {
+  --c: #1d4ed8;
+  --side: #1d4ed8;
+  --sidetx: #ffffff;
+  --ft: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.resume.t21 aside {
+  border-radius: 0 40px 0 0;
+}
+.resume.t21 aside h1 {
+  color: #ffffff;
+}
+
+/* 22. Code Red */
+.resume.t22 {
+  --c: #ef4444;
+  --side: #ffffff;
+  --sidetx: #18181b;
+  --ft: 'Courier New', Courier, monospace;
+}
+.resume.t22 aside {
+  border-right: 1px solid #f1f1f1;
+}
+.resume.t22 h2 {
+  border: 0;
+  border-left: 6px solid #ef4444;
+  padding-left: 8px;
+}
+
+/* 23. Plum Editorial */
+.resume.t23 {
+  --c: #6b21a8;
+  --side: #faf5ff;
+  --sidetx: #3b0764;
+  --ft: Georgia, serif;
+}
+.resume.t23 h1 {
+  font-size: 38px;
+  letter-spacing: -0.02em;
+}
+.resume.t23 h2 {
+  border: 0;
+  border-top: 1px solid var(--c);
+  padding-top: 6px;
+}
+
+/* 24. Steel Pills */
+.resume.t24 {
+  --c: #0f172a;
+  --side: #e2e8f0;
+  --sidetx: #0f172a;
+  --ft: Arial, Helvetica, sans-serif;
+}
+.resume.t24 .tag {
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+/* Legacy aliases fallback */
+.resume.modern {
+  --c: #1f3a5f;
+  --bg: #ffffff;
+  --side: #f1f1f1;
+  --sidetx: #222222;
+  --ft: Georgia, serif;
+}
+.resume.professional {
+  --c: #0f766e;
+  --side: #0f766e;
+  --sidetx: #ffffff;
+  --ft: system-ui, sans-serif;
+}
+.resume.creative {
+  --c: #7c3aed;
+  --side: #f5f3ff;
+  --sidetx: #222222;
+  --ft: system-ui, sans-serif;
+}
+
+/* ===== MINI PREVIEW THUMBNAIL CONTAINER ===== */
+.templateThumbBox {
+  height: 240px;
+  overflow: hidden;
+  position: relative;
+  background: #f7f7f7;
+  border-radius: 8px;
+  border: 1px solid #ECE3D7;
+}
+
+.templateThumbBox .resume,
+.templateThumbBox .r {
+  transform: scale(0.3);
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   TOP RECOMMENDED PROFESSIONAL TEMPLATES (.r L1..L5 H1..H6)
+   Modular A4 Grid with Timelines, Skill Bars, Pills, Avatars & Centered Layouts
+   ========================================================================== */
+.r {
+  width: 794px;
+  min-width: 794px;
+  max-width: 794px;
+  min-height: 1123px;
+  display: grid;
+  background: #ffffff;
+  color: #1c1c1c;
+  font-family: var(--f, 'Segoe UI', Calibri, Arial, sans-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: 0 12px 36px rgba(45, 40, 36, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+  text-align: left;
+  transition: all 0.2s ease;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.r h1 {
+  margin: 0;
+  font-size: 31px;
+  line-height: 1.1;
+  font-family: var(--hf, var(--f));
+  font-weight: 700;
+  color: inherit;
+}
+
+.r.thin h1 {
+  font-weight: 300;
+  letter-spacing: 0.04em;
+}
+
+.r header {
+  grid-area: h;
+  background: var(--hb, #1e3a5f);
+  color: var(--ht, #ffffff);
+  padding: 30px 32px 22px;
+  box-sizing: border-box;
+}
+
+.r aside {
+  grid-area: s;
+  background: var(--sb, #1e3a5f);
+  color: var(--st, #ffffff);
+  padding: 16px 24px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.r main {
+  grid-area: m;
+  padding: 16px 32px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.r .role {
+  margin-top: 5px;
+  font-size: 15px;
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.r .ct {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 16px;
+  font-size: 12.5px;
+}
+
+.r .av {
+  display: none;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--hf, inherit);
+  margin-bottom: 12px;
+  opacity: 0.9;
+}
+
+.r.ph .av {
+  display: grid;
+}
+
+.r.ctr header {
+  text-align: center;
+}
+
+.r.ctr .ct {
+  justify-content: center;
+}
+
+.r.ctr .av {
+  margin-inline: auto;
+}
+
+/* Grid Layouts L1..L5 */
+.r.L1 {
+  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "h m" "s m";
+}
+
+.r.L2 {
+  grid-template-columns: minmax(0, 1fr) 240px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "m h" "m s";
+}
+
+.r.L3 {
+  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "h h" "s m";
+}
+
+.r.L4 {
+  grid-template-columns: minmax(0, 1fr) 240px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "h h" "m s";
+}
+
+.r.L5 {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas: "h" "m" "s";
+}
+
+.r.L1 .ct,
+.r.L2 .ct {
+  flex-direction: column;
+}
+
+.r.L1 header,
+.r.L2 header {
+  padding: 30px 24px 10px;
+}
+
+.r.L5 aside {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 24px;
+  padding: 16px 32px 28px;
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
+  flex-direction: row;
+}
+
+/* Headings H1..H6 */
+.r h2 {
+  margin: 14px 0 8px;
+  font-size: 12px;
+  line-height: 1.3;
+  font-family: var(--hf, inherit);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c);
+  font-weight: 700;
+}
+
+.r aside h2 {
+  color: var(--st, inherit);
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.35);
+}
+
+.r.H1 main h2 {
+  border-bottom: 2px solid var(--c);
+  padding-bottom: 3px;
+}
+
+.r.H2 main h2 {
+  background: var(--c);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+
+.r.H3 main h2 {
+  border-left: 4px solid var(--c);
+  padding-left: 9px;
+}
+
+.r.H4 main h2 {
+  color: #222222;
+  letter-spacing: 0.22em;
+  border-top: 1px solid #bbbbbb;
+  padding-top: 7px;
+}
+
+.r.H5 main h2 {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 16px;
+  border-bottom: 1px solid #d6d6d6;
+  padding-bottom: 2px;
+}
+
+.r.H6 main h2::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--c);
+  margin-right: 8px;
+}
+
+.r p {
+  margin: 0 0 6px;
+}
+
+.r .job {
+  margin-bottom: 12px;
+}
+
+.r .jh {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.r .jh em {
+  font-weight: 400;
+  font-style: normal;
+  font-size: 12px;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.r .jc {
+  color: var(--c);
+  font-weight: 600;
+  font-size: 12.5px;
+  margin: 1px 0 4px;
+}
+
+.r .job ul {
+  margin: 4px 0 0;
+  padding-left: 17px;
+}
+
+.r .job li {
+  margin-bottom: 2px;
+  line-height: 1.45;
+}
+
+/* Timeline style (tl flag) */
+.r.tl main .job {
+  border-left: 2px solid var(--c);
+  padding-left: 15px;
+  margin-left: 4px;
+  position: relative;
+}
+
+.r.tl main .job::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+/* Skills, Languages, Certifications */
+.r .sk,
+.r .lg,
+.r .cert {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.r .sk li {
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+
+.r .sk i {
+  display: none;
+}
+
+.r.bars .sk i {
+  display: block;
+  height: 4px;
+  margin-top: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--c) var(--p, 80%), rgba(128, 128, 128, 0.3) var(--p, 80%));
+}
+
+.r.pill .sk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.r.pill .sk li {
+  border: 1px solid currentColor;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 11.5px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.r .lg li,
+.r .cert li {
+  margin-bottom: 5px;
+  font-size: 12.5px;
+}
+
+.r .cert small {
+  display: block;
+  opacity: 0.7;
+  font-size: 11px;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+  .resume,
+  .r {
+    width: 794px !important;
+    min-height: 1120px !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    page-break-after: avoid;
+  }
+}
+

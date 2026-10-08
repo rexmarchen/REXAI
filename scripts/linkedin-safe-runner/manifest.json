@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "RexionAI - Safe LinkedIn Outreach Runner",
+  "version": "1.2.0",
+  "description": "100% Ban-Proof LinkedIn outreach runner. Runs locally in your browser to eliminate datacenter IP flags, with human DOM and keystroke emulation.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "alarms",
+    "tabs",
+    "cookies"
+  ],
+  "host_permissions": [
+    "https://*.linkedin.com/*",
+    "http://localhost:5000/*",
+    "http://localhost:5173/*",
+    "http://127.0.0.1:5000/*",
+    "http://127.0.0.1:5173/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "RexionAI Safe Outreach Runner"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/in/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

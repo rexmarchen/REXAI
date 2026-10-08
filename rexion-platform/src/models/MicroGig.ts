@@ -3,6 +3,7 @@ import { Schema, model, models } from 'mongoose'
 const microGigSchema = new Schema(
   {
     companyId: { type: Schema.Types.ObjectId, ref: 'User' },
+    postedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     company: {
       name: String,
       logo: String,
@@ -10,10 +11,19 @@ const microGigSchema = new Schema(
       linkedinUrl: String,
       location: String,
     },
-    title: String,
+    title: { type: String, required: true },
     description: String,
+    category: {
+      type: String,
+      enum: ['frontend', 'backend', 'design', 'marketing', 'data', 'mobile', 'content'],
+    },
     skills: [String],
     domain: String,
+    timeRequired: String,
+    difficulty: {
+      type: String,
+      enum: ['beginner', 'intermediate', 'advanced'],
+    },
     pay: Number,
     duration: Number,
     location: {

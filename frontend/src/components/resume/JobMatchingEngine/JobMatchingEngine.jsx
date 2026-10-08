@@ -1,878 +1,537 @@
-import { useEffect, useMemo, useState } from 'react'
-import { searchJobs } from '../../../services/mlServiceApi'
+import React, { useEffect, useMemo, useState } from 'react'
+import {
+  Sparkles,
+  ShieldCheck,
+  Clock,
+  Briefcase,
+  MapPin,
+  ExternalLink,
+  Cpu,
+  Search,
+  Check,
+  Zap,
+  RefreshCw,
+  X,
+  AlertCircle,
+  Flame,
+  CheckCircle2
+} from 'lucide-react'
+import {
+  discoverFreshJobs,
+  applyOneClick,
+  getApplicationMetrics
+} from '../../../services/applicationApi'
+import styles from './JobMatchingEngine.module.css'
 
-const DEFAULT_RESUME = {
-  name: 'Candidate',
-  skills: [],
-  education: '',
-  certifications: [],
-  projects: [],
-  experience_years: 0,
-  role_target: 'Software Engineer'
-}
-
-const TARGET_JOB_COUNT = 20
-const MIN_LIVE_JOBS = 15
-const MIN_DISPLAY_JOBS = 15
-const INDIA_IT_HUBS = ['Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Chennai', 'Gurugram', 'Noida']
-const INDIA_LOCATION_KEYWORDS = [
-  'india',
-  'bengaluru',
-  'bangalore',
-  'hyderabad',
-  'pune',
-  'mumbai',
-  'chennai',
-  'gurugram',
-  'gurgaon',
-  'noida',
-  'delhi',
-  'ncr',
-  'new delhi'
+const CAREER_DOMAINS = [
+  'All Domains',
+  'AI / ML',
+  'Cybersecurity',
+  'Full Stack',
+  'Backend',
+  'Frontend',
+  'DevOps & Cloud',
+  'Data Engineering',
+  'Mobile Development'
 ]
 
-const JOB_BANK = [
-  {
-    id: 'ml-1',
-    title: 'Machine Learning Engineer',
-    company: 'Antal International',
-    location: 'Hyderabad',
-    salary: 'INR 15-20 LPA',
-    exp: '2-5 yrs',
-    keywords: ['machine learning', 'python', 'tensorflow', 'nlp', 'deep learning'],
-    platform: 'naukri',
-    naukriUrl: 'https://www.naukri.com/machine-learning-engineer-jobs-in-hyderabad',
-    linkedinUrl:
-      'https://www.linkedin.com/jobs/search/?keywords=Machine+Learning+Engineer&location=Hyderabad%2C+Telangana%2C+India',
-    glassdoorUrl:
-      'https://www.glassdoor.co.in/Job/hyderabad-machine-learning-engineer-jobs-SRCH_IL.0,9_IC2937408_KO10,35.htm'
-  },
-  {
-    id: 'ds-1',
-    title: 'Data Scientist (NLP)',
-    company: 'Jio Platforms',
-    location: 'Mumbai',
-    salary: 'INR 12-18 LPA',
-    exp: '2-5 yrs',
-    keywords: ['data science', 'python', 'nlp', 'sql', 'scikit-learn'],
-    platform: 'linkedin',
-    naukriUrl: 'https://www.naukri.com/data-scientist-jobs-in-mumbai?k=data+scientist+nlp',
-    linkedinUrl:
-      'https://www.linkedin.com/jobs/search/?keywords=Data+Scientist+NLP&location=Mumbai%2C+Maharashtra%2C+India',
-    glassdoorUrl:
-      'https://www.glassdoor.co.in/Job/mumbai-data-scientist-jobs-SRCH_IL.0,6_IC2940912_KO7,21.htm'
-  },
-  {
-    id: 'fs-1',
-    title: 'Full Stack Developer',
-    company: 'Razorpay',
-    location: 'Bengaluru',
-    salary: 'INR 16-25 LPA',
-    exp: '2-5 yrs',
-    keywords: ['react', 'node.js', 'javascript', 'typescript', 'sql'],
-    platform: 'naukri',
-    naukriUrl:
-      'https://www.naukri.com/full-stack-developer-jobs-in-bengaluru-bangalore?k=full+stack+developer',
-    linkedinUrl:
-      'https://www.linkedin.com/jobs/search/?keywords=Full+Stack+Developer&location=Bengaluru%2C+Karnataka%2C+India',
-    glassdoorUrl:
-      'https://www.glassdoor.co.in/Job/bengaluru-full-stack-developer-jobs-SRCH_IL.0,9_IC2940587_KO10,30.htm'
-  },
-  {
-    id: 'be-1',
-    title: 'Backend Developer',
-    company: 'PhonePe',
-    location: 'Bengaluru',
-    salary: 'INR 14-22 LPA',
-    exp: '2-6 yrs',
-    keywords: ['node.js', 'express.js', 'mongodb', 'api', 'sql'],
-    platform: 'naukri',
-    naukriUrl:
-      'https://www.naukri.com/backend-developer-jobs-in-bengaluru-bangalore?k=backend+developer',
-    linkedinUrl:
-      'https://www.linkedin.com/jobs/search/?keywords=Backend+Developer&location=Bengaluru%2C+Karnataka%2C+India',
-    glassdoorUrl:
-      'https://www.glassdoor.co.in/Job/bengaluru-backend-developer-jobs-SRCH_IL.0,9_IC2940587_KO10,27.htm'
-  },
-  {
-    id: 'devops-1',
-    title: 'DevOps Engineer',
-    company: 'Infosys',
-    location: 'Pune',
-    salary: 'INR 11-18 LPA',
-    exp: '3-6 yrs',
-    keywords: ['aws', 'docker', 'kubernetes', 'ci/cd', 'linux'],
-    platform: 'linkedin',
-    naukriUrl: 'https://www.naukri.com/devops-engineer-jobs-in-pune',
-    linkedinUrl:
-      'https://www.linkedin.com/jobs/search/?keywords=DevOps+Engineer&location=Pune%2C+Maharashtra%2C+India',
-    glassdoorUrl:
-      'https://www.glassdoor.co.in/Job/pune-devops-engineer-jobs-SRCH_IL.0,4_IC2856202_KO5,21.htm'
-  },
-  {
-    id: 'an-1',
-    title: 'Senior Data Analyst',
-    company: 'Ola Electric',
-    location: 'Bengaluru',
-    salary: 'INR 12-18 LPA',
-    exp: '3-6 yrs',
-    keywords: ['data analysis', 'sql', 'python', 'tableau', 'reporting'],
-    platform: 'naukri',
-    naukriUrl:
-      'https://www.naukri.com/senior-data-analyst-jobs-in-bengaluru-bangalore?k=senior+data+analyst',
-    linkedinUrl:
-      'https://www.linkedin.com/jobs/search/?keywords=Senior+Data+Analyst&location=Bengaluru%2C+Karnataka%2C+India',
-    glassdoorUrl:
-      'https://www.glassdoor.co.in/Job/bengaluru-senior-data-analyst-jobs-SRCH_IL.0,9_IC2940587_KO10,29.htm'
-  }
+const ORCHESTRATOR_STEPS = [
+  { key: 'PRE_APPLY_FRESHNESS_CHECK', label: '12h/24h/48h Freshness Check', desc: 'Validating posting timestamp against strict freshness threshold' },
+  { key: 'BROWSER_SPAWNED', label: 'Browser Worker', desc: 'Launching isolated automation runtime' },
+  { key: 'FORM_ANALYZED', label: 'Field Safety Analysis', desc: 'Classifying fields into Safe Autofill vs Sensitive constraints' },
+  { key: 'SCREENING_ANSWERED', label: 'RAG Grounded Answers', desc: 'Synthesizing verified answers backed by resume chunk evidence' },
+  { key: 'VALIDATION_READY', label: 'Validation & Staging', desc: 'Verifying completed form inputs and attachments' },
+  { key: 'SUBMITTED', label: 'Submitted to ATS', desc: 'Application securely submitted with append-only audit event' }
 ]
 
-const PLATFORM_META = {
-  naukri: { label: 'Naukri', color: '#f05537' },
-  linkedin: { label: 'LinkedIn', color: '#0a66c2' },
-  glassdoor: { label: 'Glassdoor', color: '#0f9b57' }
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value))
-}
-
-function sanitizeList(value) {
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  return value
-    .map((item) => String(item || '').trim())
-    .filter(Boolean)
-}
-
-function sanitizeResume(rawResume) {
-  const merged = { ...DEFAULT_RESUME, ...(rawResume || {}) }
-  const experienceYears = Number(merged.experience_years)
-
-  return {
-    ...merged,
-    name: String(merged.name || DEFAULT_RESUME.name).trim() || DEFAULT_RESUME.name,
-    role_target:
-      String(merged.role_target || DEFAULT_RESUME.role_target).trim() || DEFAULT_RESUME.role_target,
-    skills: sanitizeList(merged.skills),
-    certifications: sanitizeList(merged.certifications),
-    projects: sanitizeList(merged.projects),
-    education: String(merged.education || '').trim(),
-    experience_years: Number.isFinite(experienceYears) ? Math.max(0, experienceYears) : 0
-  }
-}
-
-function inferPlatformFromUrl(url) {
-  const value = String(url || '').toLowerCase()
-  if (value.includes('linkedin')) {
-    return 'linkedin'
-  }
-  if (value.includes('glassdoor')) {
-    return 'glassdoor'
-  }
-  return 'naukri'
-}
-
-function toKeywordList(job) {
-  const skills = Array.isArray(job.required_skills) ? job.required_skills : []
-  const title = String(job.title || '')
-  const description = String(job.description || '')
-  return sanitizeList([...skills, ...title.split(/\s+/), ...description.split(/\s+/)]).slice(0, 30)
-}
-
-function normalizeLiveJobs(rawJobs, resume) {
-  if (!Array.isArray(rawJobs)) {
-    return []
-  }
-
-  return rawJobs
-    .map((job, index) => {
-      const applyLink = String(job.apply_link || '').trim()
-      const platform = inferPlatformFromUrl(applyLink)
-      const keywords = toKeywordList(job)
-      const normalized = {
-        id: String(job.id || applyLink || `${index}`),
-        title: String(job.title || 'Software Engineer').trim(),
-        company: String(job.company || 'Unknown Company').trim(),
-        location: String(job.location || 'Remote/Hybrid').trim(),
-        description: String(job.description || '').trim(),
-        salary: String(job.salary || 'Not disclosed').trim(),
-        exp: String(job.required_experience || 'Experience not specified').trim(),
-        keywords,
-        platform,
-        naukriUrl: applyLink,
-        linkedinUrl: applyLink,
-        glassdoorUrl: applyLink,
-        primaryUrl: applyLink
-      }
-
-      return {
-        ...normalized,
-        matchScore: computeMatchScore(normalized, resume)
-      }
-    })
-    .filter((job) => job.title)
-}
-
-function dedupeJobs(jobs) {
-  const seen = new Set()
-  const deduped = []
-  for (const job of jobs) {
-    const key = `${String(job.title || '').toLowerCase()}-${String(job.company || '').toLowerCase()}-${String(job.location || '').toLowerCase()}`
-    if (!key.trim() || seen.has(key)) {
-      continue
-    }
-    seen.add(key)
-    deduped.push(job)
-  }
-  return deduped
-}
-
-function buildSearchQueries(resume) {
-  const role = String(resume.role_target || DEFAULT_RESUME.role_target).trim()
-  const firstSkills = sanitizeList(resume.skills).slice(0, 3)
-  return Array.from(
-    new Set([
-      role,
-      ...firstSkills.map((skill) => `${role} ${skill}`.trim())
-    ])
-  ).filter(Boolean)
-}
-
-function getPreferredIndiaLocations(resume) {
-  const role = String(resume.role_target || '').toLowerCase()
-  let preferred = [...INDIA_IT_HUBS]
-
-  if (role.includes('data') || role.includes('ai') || role.includes('ml')) {
-    preferred = ['Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Chennai']
-  } else if (
-    role.includes('frontend') ||
-    role.includes('web') ||
-    role.includes('full stack') ||
-    role.includes('backend')
-  ) {
-    preferred = ['Bengaluru', 'Hyderabad', 'Pune', 'Gurugram', 'Noida', 'Chennai']
-  } else if (role.includes('devops') || role.includes('cloud')) {
-    preferred = ['Bengaluru', 'Pune', 'Hyderabad', 'Chennai', 'Gurugram']
-  }
-
-  return Array.from(new Set(preferred)).slice(0, 6)
-}
-
-function isIndianLocation(value) {
-  const location = String(value || '').toLowerCase()
-  if (!location) {
-    return false
-  }
-  return INDIA_LOCATION_KEYWORDS.some((keyword) => location.includes(keyword))
-}
-
-function isRelevantToResume(job, resume) {
-  const roleTokens = String(resume.role_target || '')
-    .toLowerCase()
-    .split(/\s+/)
-    .map((item) => item.trim())
-    .filter((item) => item.length > 2)
-  const skillTokens = sanitizeList(resume.skills)
-    .map((item) => item.toLowerCase())
-    .filter((item) => item.length > 2)
-    .slice(0, 12)
-
-  const corpus = `${job.title} ${job.description || ''} ${job.keywords.join(' ')}`.toLowerCase()
-  const roleHits = roleTokens.filter((token) => corpus.includes(token)).length
-  const skillHits = skillTokens.filter((token) => corpus.includes(token)).length
-
-  return roleHits > 0 || skillHits > 0
-}
-
-function computeMatchScore(job, resume) {
-  const roleLower = resume.role_target.toLowerCase()
-  const resumeSkills = resume.skills.map((item) => item.toLowerCase())
-  const certWords = resume.certifications.map((item) => item.toLowerCase())
-  const projectWords = resume.projects.map((item) => item.toLowerCase())
-  const corpus = `${job.title} ${job.keywords.join(' ')}`.toLowerCase()
-
-  let score = 35
-
-  for (const skill of resumeSkills) {
-    if (skill && corpus.includes(skill)) {
-      score += 6
-    }
-  }
-
-  for (const cert of certWords) {
-    const short = cert.split(/\s+/)[0]
-    if (short && corpus.includes(short)) {
-      score += 2
-    }
-  }
-
-  for (const project of projectWords) {
-    const short = project.split(/\s+/)[0]
-    if (short && corpus.includes(short)) {
-      score += 1
-    }
-  }
-
-  if (roleLower && corpus.includes(roleLower.split(/\s+/)[0])) {
-    score += 8
-  }
-
-  score += clamp(resume.experience_years, 0, 8)
-
-  return clamp(Math.round(score), 20, 98)
-}
-
-function readiness(score) {
-  if (score >= 75) {
-    return { label: 'Highly Ready', color: '#00e5a0' }
-  }
-
-  if (score >= 50) {
-    return { label: 'Moderately Ready', color: '#f5c518' }
-  }
-
-  return { label: 'Needs Prep', color: '#ff4e6a' }
-}
-
-function buildJobsForResume(resume) {
-  return JOB_BANK.map((job) => ({
-    ...job,
-    matchScore: computeMatchScore(job, resume),
-    primaryUrl:
-      job.platform === 'linkedin'
-        ? job.linkedinUrl
-        : job.platform === 'glassdoor'
-          ? job.glassdoorUrl
-          : job.naukriUrl
-  })).sort((left, right) => right.matchScore - left.matchScore)
-}
-
-function expandFallbackJobs(baseJobs, targetCount) {
-  if (baseJobs.length === 0) {
-    return []
-  }
-
-  const locationPool = ['Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Chennai', 'Gurugram', 'Noida']
-  const expanded = []
-  let index = 0
-
-  while (expanded.length < targetCount) {
-    const template = baseJobs[index % baseJobs.length]
-    const loop = Math.floor(index / baseJobs.length)
-    const location =
-      loop === 0 ? template.location : locationPool[(index + loop) % locationPool.length]
-    const company =
-      loop === 0 ? template.company : `${template.company} ${loop + 1}`
-    const id = `${template.id}-v${loop}-${index}`
-
-    expanded.push({
-      ...template,
-      id,
-      company,
-      location,
-      exp: template.exp,
-      matchScore: clamp(template.matchScore - loop * 2, 20, 98)
-    })
-    index += 1
-  }
-
-  return expanded
-}
-
-function scoreBand(score) {
-  if (score >= 75) {
-    return 'high'
-  }
-  if (score >= 50) {
-    return 'mid'
-  }
-  return 'low'
-}
-
-function meterColor(score) {
-  if (score >= 75) {
-    return '#00e5a0'
-  }
-  if (score >= 50) {
-    return '#f5c518'
-  }
-  return '#ff4e6a'
-}
-
-function MatchMeter({ score }) {
-  const color = meterColor(score)
-
-  return (
-    <div style={styles.meterWrap}>
-      <div style={styles.meterTrack}>
-        <div style={{ ...styles.meterFill, width: `${score}%`, backgroundColor: color }} />
-      </div>
-      <p style={{ ...styles.meterLabel, color }}>{score}% match</p>
-    </div>
-  )
-}
-
-function JobCard({ job }) {
-  const status = readiness(job.matchScore)
-  const platform = PLATFORM_META[job.platform] || PLATFORM_META.naukri
-
-  return (
-    <article style={styles.card}>
-      <div style={styles.cardTopRow}>
-        <span style={{ ...styles.platformBadge, borderColor: `${platform.color}66`, color: platform.color }}>
-          {platform.label}
-        </span>
-        <span style={styles.scoreBadge}>{job.matchScore}%</span>
-      </div>
-
-      <h3 style={styles.cardTitle}>{job.title}</h3>
-      <p style={styles.cardCompany}>{job.company}</p>
-      <p style={styles.cardMeta}>
-        {job.location} | {job.exp}
-      </p>
-      <p style={styles.cardSalary}>{job.salary}</p>
-
-      <MatchMeter score={job.matchScore} />
-
-      <div style={{ ...styles.readyBadge, color: status.color, borderColor: `${status.color}4d` }}>
-        {status.label}
-      </div>
-
-      <div style={styles.linkGrid}>
-        <a href={job.naukriUrl} target="_blank" rel="noreferrer" style={styles.linkBtn}>
-          Naukri Apply
-        </a>
-        <a href={job.linkedinUrl} target="_blank" rel="noreferrer" style={styles.linkBtn}>
-          LinkedIn Apply
-        </a>
-        <a href={job.glassdoorUrl} target="_blank" rel="noreferrer" style={styles.linkBtn}>
-          Glassdoor Apply
-        </a>
-      </div>
-
-      <a href={job.primaryUrl} target="_blank" rel="noreferrer" style={styles.primaryApply}>
-        Apply Now
-      </a>
-    </article>
-  )
-}
-
-export default function JobMatchingEngine({ resume = DEFAULT_RESUME }) {
-  const normalizedResume = useMemo(() => sanitizeResume(resume), [resume])
+export default function JobMatchingEngine({ resume }) {
   const [jobs, setJobs] = useState([])
-  const [query, setQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState('all')
-  const [loadingJobs, setLoadingJobs] = useState(false)
-  const [jobLoadError, setJobLoadError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedDomain, setSelectedDomain] = useState('All Domains')
+  const [remoteOnly, setRemoteOnly] = useState(false)
+  const [sourceFilter, setSourceFilter] = useState('all') // 'all', 'linkedin', 'tier1'
+  const [freshnessFilter, setFreshnessFilter] = useState('all') // 'all' (<=48h), '24h' (<=24h), '12h' (<=12h)
+  const [metrics, setMetrics] = useState(null)
+
+  // 1-Click Apply Modal State
+  const [activeJob, setActiveJob] = useState(null)
+  const [applying, setApplying] = useState(false)
+  const [applicationResult, setApplicationResult] = useState(null)
+  const [currentStepIndex, setCurrentStepIndex] = useState(0)
+
+  // Fetch metrics on mount
+  useEffect(() => {
+    async function loadMetrics() {
+      try {
+        const res = await getApplicationMetrics()
+        if (res.success && res.data) {
+          setMetrics(res.data)
+        }
+      } catch (err) {
+        console.debug('Failed to load metrics:', err.message)
+      }
+    }
+    loadMetrics()
+  }, [])
+
+  // Fetch fresh jobs from backend orchestrator (including scraped LinkedIn jobs)
+  const fetchJobs = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const targetRole = resume?.predicted_role || resume?.role_target || resume?.name ? `${resume?.skills?.[0] || 'Software'} Engineer` : 'Software Engineer'
+      const query = searchQuery.trim() || targetRole
+
+      const res = await discoverFreshJobs({
+        query,
+        domain: selectedDomain === 'All Domains' ? undefined : selectedDomain,
+        limit: 40
+      })
+
+      if (res.success && Array.isArray(res.data)) {
+        setJobs(res.data)
+      } else {
+        setJobs([])
+      }
+    } catch (err) {
+      console.error('Job discovery failed:', err)
+      setError('Unable to fetch fresh jobs from ATS providers. Please retry.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    let isCancelled = false
+    fetchJobs()
+  }, [selectedDomain, resume])
 
-    const loadJobs = async () => {
-      setLoadingJobs(true)
-      setJobLoadError('')
-
-      try {
-        const queries = buildSearchQueries(normalizedResume)
-        const locations = getPreferredIndiaLocations(normalizedResume)
-        const requestMatrix = queries.flatMap((query) =>
-          locations.map((location) => ({ query, location }))
-        )
-
-        const responses = await Promise.all(
-          requestMatrix.map(({ query, location }) =>
-            searchJobs(query, {
-              location,
-              remote: false
-            })
-          )
-        )
-
-        const combinedLive = responses.flatMap((payload) => payload?.jobs || [])
-        const normalizedLive = normalizeLiveJobs(combinedLive, normalizedResume).sort(
-          (left, right) => right.matchScore - left.matchScore
-        )
-
-        const strictIndiaJobs = normalizedLive.filter(
-          (job) => isIndianLocation(job.location) && isRelevantToResume(job, normalizedResume)
-        )
-        const relaxedIndiaJobs = normalizedLive.filter((job) => isIndianLocation(job.location))
-        const liveJobs = dedupeJobs([...strictIndiaJobs, ...relaxedIndiaJobs]).slice(0, TARGET_JOB_COUNT)
-
-        const fallbackBase = buildJobsForResume(normalizedResume)
-        const fallbackJobs = expandFallbackJobs(fallbackBase, TARGET_JOB_COUNT)
-        const merged = [...liveJobs.slice(0, TARGET_JOB_COUNT)]
-
-        if (merged.length < MIN_LIVE_JOBS) {
-          const used = new Set(
-            merged.map(
-              (item) =>
-                `${String(item.title).toLowerCase()}-${String(item.company).toLowerCase()}-${String(item.location).toLowerCase()}`
-            )
-          )
-          for (const fallback of fallbackJobs) {
-            const key = `${String(fallback.title).toLowerCase()}-${String(fallback.company).toLowerCase()}-${String(fallback.location).toLowerCase()}`
-            if (used.has(key)) {
-              continue
-            }
-            merged.push(fallback)
-            used.add(key)
-            if (merged.length >= TARGET_JOB_COUNT) {
-              break
-            }
-          }
-        }
-
-        if (merged.length < MIN_DISPLAY_JOBS) {
-          merged.push(...fallbackJobs.slice(0, MIN_DISPLAY_JOBS - merged.length))
-        }
-
-        const finalJobs = dedupeJobs(merged).slice(0, TARGET_JOB_COUNT)
-        finalJobs.sort((left, right) => right.matchScore - left.matchScore)
-        if (!isCancelled) {
-          setJobs(finalJobs)
-        }
-      } catch (error) {
-        if (!isCancelled) {
-          setJobLoadError('Live India IT jobs could not be loaded, showing India fallback results.')
-          const fallback = expandFallbackJobs(buildJobsForResume(normalizedResume), TARGET_JOB_COUNT)
-          setJobs(fallback)
-        }
-      } finally {
-        if (!isCancelled) {
-          setLoadingJobs(false)
-        }
-      }
-    }
-
-    loadJobs()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [normalizedResume])
-
+  // Filtered jobs with 12h, 24h, LinkedIn, and remote toggles
   const filteredJobs = useMemo(() => {
-    const term = query.toLowerCase().trim()
-
     return jobs.filter((job) => {
-      const byBand = activeFilter === 'all' ? true : scoreBand(job.matchScore) === activeFilter
-      const byQuery =
-        term.length === 0
-          ? true
-          : `${job.title} ${job.company} ${job.location}`.toLowerCase().includes(term)
-      return byBand && byQuery
-    })
-  }, [jobs, query, activeFilter])
+      // Remote filter
+      if (remoteOnly && !job.isRemote) return false
 
-  const averageScore =
-    jobs.length === 0
-      ? 0
-      : Math.round(jobs.reduce((sum, item) => sum + item.matchScore, 0) / jobs.length)
+      // Source filter
+      const isLinkedIn = job.provider === 'linkedin' || job.publisher === 'LinkedIn'
+      if (sourceFilter === 'linkedin' && !isLinkedIn) return false
+      if (sourceFilter === 'tier1' && job.tier !== 1) return false
+
+      // Freshness filter: <=12 hours or <=24 hours
+      const ageHours = job.freshness?.ageHours ?? (
+        job.postedAt ? Math.max(0, (Date.now() - new Date(job.postedAt).getTime()) / (1000 * 60 * 60)) : 999
+      )
+
+      if (freshnessFilter === '12h' && ageHours > 12) return false
+      if (freshnessFilter === '24h' && ageHours > 24) return false
+
+      // Search keyword filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase()
+        const titleMatch = (job.title || '').toLowerCase().includes(q)
+        const compMatch = (job.company || '').toLowerCase().includes(q)
+        const descMatch = (job.description || '').toLowerCase().includes(q)
+        if (!titleMatch && !compMatch && !descMatch) return false
+      }
+
+      return true
+    })
+  }, [jobs, remoteOnly, sourceFilter, freshnessFilter, searchQuery])
+
+  // Handle 1-Click Apply
+  const handleStartApply = async (job) => {
+    setActiveJob(job)
+    setApplying(true)
+    setApplicationResult(null)
+    setCurrentStepIndex(0)
+
+    // Simulate animated step progression while backend orchestrates
+    const stepInterval = setInterval(() => {
+      setCurrentStepIndex((prev) => {
+        if (prev < ORCHESTRATOR_STEPS.length - 2) {
+          return prev + 1
+        }
+        return prev
+      })
+    }, 900)
+
+    try {
+      const res = await applyOneClick(job, { useLiveBrowser: true, liveSubmit: true })
+      clearInterval(stepInterval)
+      setCurrentStepIndex(ORCHESTRATOR_STEPS.length - 1)
+      setApplicationResult(res.data || res)
+      window.dispatchEvent(new CustomEvent('rexion:application-updated'))
+    } catch (err) {
+      clearInterval(stepInterval)
+      setApplicationResult({
+        state: 'FAILED',
+        error: err.response?.data?.message || err.message || 'Execution error during 1-Click Apply'
+      })
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  // Count helper metrics
+  const fresh12Count = useMemo(() => {
+    return jobs.filter(j => (j.freshness?.ageHours ?? 999) <= 12).length
+  }, [jobs])
+
+  const fresh24Count = useMemo(() => {
+    return jobs.filter(j => (j.freshness?.ageHours ?? 999) <= 24).length
+  }, [jobs])
+
+  const linkedInCount = useMemo(() => {
+    return jobs.filter(j => j.provider === 'linkedin' || j.publisher === 'LinkedIn').length
+  }, [jobs])
 
   return (
-    <section style={styles.root}>
-      <style>{globalCss}</style>
+    <div className={styles.engineContainer}>
+      {/* Top Banner Overview */}
+      <div className={styles.bannerCard}>
+        <div className={styles.bannerBadgeRow}>
+          <span className={styles.bannerBadgePrimary}>
+            <Zap style={{ width: 14, height: 14 }} /> Agentic 1-Click Automation
+          </span>
+          <span className={styles.bannerBadgeSecondary}>
+            <Clock style={{ width: 14, height: 14 }} /> Strict 12h / 24h / 48h Freshness
+          </span>
+          <span className={styles.bannerBadgeLinkedIn}>
+            <svg style={{ width: 14, height: 14, fill: '#0077b5' }} viewBox="0 0 24 24">
+              <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.64 1.64 0 1 0 0-3.28 1.64 1.64 0 0 0 0 3.28m1.4 9.74v-8.37H5.06v8.37h2.8z" />
+            </svg>
+            Live LinkedIn Scraping Active
+          </span>
+        </div>
 
-      <header style={styles.header}>
-        <p style={styles.kicker}>AI JOB MATCHING</p>
-        <h2 style={styles.heading}>Matched Opportunities</h2>
-        <p style={styles.subheading}>
-          Showing role-fit jobs for <strong>{normalizedResume.name}</strong> targeting{' '}
-          <strong>{normalizedResume.role_target}</strong>.
+        <h2 className={styles.bannerTitle}>Live Job Matching & Application Hub</h2>
+        <p className={styles.bannerSubtitle}>
+          Real-time jobs scraped from LinkedIn and top ATS platforms. Ranked by verified skills overlap and filtered by your exact posting age window.
         </p>
-      </header>
+      </div>
 
-      <div style={styles.summaryRow}>
-        <div style={styles.summaryItem}>
-          <span style={styles.summaryValue}>{jobs.length}</span>
-          <span style={styles.summaryLabel}>Jobs Found</span>
+      {/* Control Bar: Search & Filters */}
+      <div className={styles.controlsBar}>
+        <div className={styles.searchRow}>
+          <div className={styles.searchInputWrapper}>
+            <Search className={styles.searchIcon} />
+            <input
+              type="text"
+              placeholder="Search by role, company, or tech stack (e.g. Python, React)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
+
+          <select
+            value={selectedDomain}
+            onChange={(e) => setSelectedDomain(e.target.value)}
+            className={styles.selectInput}
+          >
+            {CAREER_DOMAINS.map((domain) => (
+              <option key={domain} value={domain}>
+                {domain}
+              </option>
+            ))}
+          </select>
         </div>
-        <div style={styles.summaryItem}>
-          <span style={styles.summaryValue}>{averageScore}%</span>
-          <span style={styles.summaryLabel}>Avg Match</span>
-        </div>
-        <div style={styles.summaryItem}>
-          <span style={styles.summaryValue}>{normalizedResume.experience_years}</span>
-          <span style={styles.summaryLabel}>Years Exp</span>
+
+        {/* Filter Chips & Freshness Selectors */}
+        <div className={styles.filterChipsRow}>
+          <span className={styles.filterChipLabel}>Post Age:</span>
+
+          <button
+            onClick={() => setFreshnessFilter('all')}
+            className={`${styles.filterChip} ${freshnessFilter === 'all' ? styles.filterChipActive : ''}`}
+          >
+            All Fresh (≤ 48h)
+          </button>
+
+          <button
+            onClick={() => setFreshnessFilter('24h')}
+            className={`${styles.filterChip} ${freshnessFilter === '24h' ? styles.filterChipActiveFresh : ''}`}
+          >
+            <Clock style={{ width: 14, height: 14 }} />
+            ⚡ Under 24h ({fresh24Count})
+          </button>
+
+          <button
+            onClick={() => setFreshnessFilter('12h')}
+            className={`${styles.filterChip} ${freshnessFilter === '12h' ? styles.filterChipActiveFresh : ''}`}
+          >
+            <Flame style={{ width: 14, height: 14 }} />
+            🔥 Under 12h ({fresh12Count})
+          </button>
+
+          <span className={styles.filterChipLabel} style={{ marginLeft: 10 }}>Source:</span>
+
+          <button
+            onClick={() => setSourceFilter(sourceFilter === 'linkedin' ? 'all' : 'linkedin')}
+            className={`${styles.filterChip} ${sourceFilter === 'linkedin' ? styles.filterChipActiveLinkedIn : ''}`}
+          >
+            <svg style={{ width: 13, height: 13, fill: 'currentColor' }} viewBox="0 0 24 24">
+              <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.64 1.64 0 1 0 0-3.28 1.64 1.64 0 0 0 0 3.28m1.4 9.74v-8.37H5.06v8.37h2.8z" />
+            </svg>
+            LinkedIn Only ({linkedInCount})
+          </button>
+
+          <button
+            onClick={() => setRemoteOnly(!remoteOnly)}
+            className={`${styles.filterChip} ${remoteOnly ? styles.filterChipActive : ''}`}
+          >
+            <MapPin style={{ width: 13, height: 13 }} /> Remote Only
+          </button>
+
+          <button
+            onClick={fetchJobs}
+            disabled={loading}
+            className={styles.refreshButton}
+          >
+            <RefreshCw style={{ width: 14, height: 14, animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+            Refresh Live
+          </button>
         </div>
       </div>
 
-      <div style={styles.controls}>
-        <input
-          type="text"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search role, company, city"
-          style={styles.searchInput}
-        />
-        <div style={styles.filterRow}>
-          {[
-            ['all', 'All'],
-            ['high', '75%+'],
-            ['mid', '50-74%'],
-            ['low', '<50%']
-          ].map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setActiveFilter(key)}
-              style={{
-                ...styles.filterBtn,
-                ...(activeFilter === key ? styles.filterBtnActive : {})
-              }}
-            >
-              {label}
-            </button>
-          ))}
+      {/* Grid of Live Jobs */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <RefreshCw style={{ width: 36, height: 36, color: '#38bdf8', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Scraping Live LinkedIn & ATS Postings...</h3>
+          <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Filtering under 12h/24h/48h timestamps and matching against your profile.</p>
         </div>
-      </div>
-
-      {loadingJobs && <div style={styles.infoText}>Loading live job vacancies...</div>}
-      {jobLoadError && <div style={styles.warnText}>{jobLoadError}</div>}
-
-      {filteredJobs.length === 0 ? (
-        <div style={styles.emptyState}>No jobs matched this filter. Try changing search or score band.</div>
+      ) : error ? (
+        <div style={{ textAlign: 'center', padding: '40px 20px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 12 }}>
+          <AlertCircle style={{ width: 32, height: 32, color: '#f87171', margin: '0 auto 10px' }} />
+          <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>{error}</h3>
+          <button onClick={fetchJobs} style={{ marginTop: 12, padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+            Retry Discovery
+          </button>
+        </div>
+      ) : filteredJobs.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 14 }}>
+          <Briefcase style={{ width: 40, height: 40, color: '#475569', margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>No live postings matched your current filter</h3>
+          <p style={{ fontSize: '0.85rem', color: '#94a3b8', maxWidth: 460, margin: '6px auto 0' }}>
+            Try expanding your filter from {freshnessFilter === '12h' ? 'Under 12h' : 'Under 24h'} to "All Fresh (≤ 48h)" or clearing search keywords.
+          </p>
+        </div>
       ) : (
-        <div style={styles.grid}>
-          {filteredJobs.map((job) => (
-            <JobCard key={job.id} job={job} />
-          ))}
+        <div className={styles.jobsGrid}>
+          {filteredJobs.map((job) => {
+            const ageHours = Math.round(
+              job.freshness?.ageHours ?? (
+                job.postedAt ? Math.max(0, (Date.now() - new Date(job.postedAt).getTime()) / (1000 * 60 * 60)) : 0
+              )
+            )
+
+            const is12h = ageHours <= 12
+            const is24h = ageHours <= 24
+            const isLinkedIn = job.provider === 'linkedin' || job.publisher === 'LinkedIn'
+
+            return (
+              <div key={job.canonicalHash || job.id || job.url} className={styles.jobCard}>
+                <div>
+                  <div className={styles.cardHeader}>
+                    <div className={styles.employerBrandRow}>
+                      {job.employerLogo ? (
+                        <img
+                          src={job.employerLogo}
+                          alt={job.company}
+                          className={styles.employerLogo}
+                        />
+                      ) : (
+                        <div className={styles.employerLogo} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#38bdf8' }}>
+                          {(job.company || 'J')[0]}
+                        </div>
+                      )}
+                      <div>
+                        <span className={styles.companyName}>{job.company}</span>
+                        <h3 className={styles.jobTitle}>{job.title}</h3>
+                      </div>
+                    </div>
+
+                    <div className={styles.scorePill}>
+                      <Sparkles style={{ width: 14, height: 14 }} />
+                      {job.score || 85}% Match
+                    </div>
+                  </div>
+
+                  {/* Badges: Location, Freshness (12h/24h), Source */}
+                  <div className={styles.badgeRow}>
+                    <span className={styles.badgeTag}>
+                      <MapPin style={{ width: 12, height: 12 }} />
+                      {job.location || 'Remote'}
+                    </span>
+
+                    <span
+                      className={`${styles.badgeTag} ${
+                        is12h ? styles.badgeTagFresh12 : is24h ? styles.badgeTagFresh24 : styles.badgeTagFresh48
+                      }`}
+                    >
+                      {is12h ? <Flame style={{ width: 12, height: 12 }} /> : <Clock style={{ width: 12, height: 12 }} />}
+                      {is12h ? `🔥 Posted ${ageHours}h ago (<12h)` : is24h ? `⚡ Posted ${ageHours}h ago (<24h)` : `Posted ${ageHours}h ago (≤48h)`}
+                    </span>
+
+                    {isLinkedIn ? (
+                      <span className={`${styles.badgeTag} ${styles.badgeTagLinkedIn}`}>
+                        <svg style={{ width: 12, height: 12, fill: '#0a66c2' }} viewBox="0 0 24 24">
+                          <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.64 1.64 0 1 0 0-3.28 1.64 1.64 0 0 0 0 3.28m1.4 9.74v-8.37H5.06v8.37h2.8z" />
+                        </svg>
+                        LinkedIn Verified
+                      </span>
+                    ) : (
+                      <span className={styles.badgeTag}>
+                        <ShieldCheck style={{ width: 12, height: 12, color: '#818cf8' }} /> Direct ATS
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Description Snippet */}
+                  <p className={styles.jobDescSnippet}>
+                    {job.description || 'Verified real-time job posting from direct applicant tracking platform.'}
+                  </p>
+
+                  {/* Match Rationale */}
+                  {job.matchReasons && job.matchReasons.length > 0 && (
+                    <div className={styles.rationaleBox}>
+                      <div className={styles.rationaleTitle}>
+                        <Cpu style={{ width: 12, height: 12, color: '#38bdf8' }} /> Match Rationale
+                      </div>
+                      <div>
+                        {job.matchReasons.slice(0, 2).map((reason, idx) => (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                            <Check style={{ width: 12, height: 12, color: '#34d399', flexShrink: 0 }} />
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{reason}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matched Skills */}
+                  {job.matchedSkills && job.matchedSkills.length > 0 && (
+                    <div className={styles.skillsRow}>
+                      {job.matchedSkills.slice(0, 4).map((skill, idx) => (
+                        <span key={idx} className={styles.skillBadge}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Buttons */}
+                <div className={styles.cardFooter}>
+                  <button
+                    onClick={() => handleStartApply(job)}
+                    className={styles.applyOneClickBtn}
+                  >
+                    <Zap style={{ width: 15, height: 15 }} /> 1-Click Apply
+                  </button>
+
+                  <a
+                    href={job.applyUrl || job.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.viewPostingBtn}
+                    title={isLinkedIn ? 'View on LinkedIn' : 'View ATS Posting'}
+                  >
+                    <ExternalLink style={{ width: 16, height: 16 }} />
+                  </a>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
-    </section>
+
+      {/* 1-Click Apply Execution Modal */}
+      {activeJob && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Agentic 1-Click Orchestrator
+                </span>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#ffffff', marginTop: 2 }}>
+                  {activeJob.title}
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  {activeJob.company} • {activeJob.location || 'Remote'}
+                </p>
+              </div>
+
+              {!applying && (
+                <button
+                  onClick={() => setActiveJob(null)}
+                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 4 }}
+                >
+                  <X style={{ width: 20, height: 20 }} />
+                </button>
+              )}
+            </div>
+
+            {/* Stepper Progress */}
+            <div>
+              {ORCHESTRATOR_STEPS.map((step, idx) => {
+                const isPassed = idx < currentStepIndex
+                const isCurrent = idx === currentStepIndex
+
+                return (
+                  <div
+                    key={step.key}
+                    className={`${styles.modalStepItem} ${
+                      isCurrent ? styles.modalStepActive : isPassed ? styles.modalStepPassed : ''
+                    }`}
+                  >
+                    <div>
+                      {isPassed ? (
+                        <CheckCircle2 style={{ width: 18, height: 18, color: '#34d399' }} />
+                      ) : isCurrent ? (
+                        <RefreshCw style={{ width: 18, height: 18, color: '#38bdf8', animation: 'spin 1s linear infinite' }} />
+                      ) : (
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid #475569' }} />
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isCurrent ? '#38bdf8' : isPassed ? '#34d399' : '#94a3b8' }}>
+                        {step.label}
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                        {step.desc}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Result State */}
+            {applicationResult && (
+              <div style={{ marginTop: 18, padding: 14, borderRadius: 10, background: applicationResult.state === 'SUBMITTED' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', border: `1px solid ${applicationResult.state === 'SUBMITTED' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}` }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: applicationResult.state === 'SUBMITTED' ? '#34d399' : '#f87171' }}>
+                  {applicationResult.state === 'SUBMITTED' ? 'Application Successfully Submitted!' : 'Application Error'}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: 4 }}>
+                  {applicationResult.state === 'SUBMITTED'
+                    ? 'Autonomous agent traversed all form steps, answered screening questions, and safely submitted to the employer ATS.'
+                    : applicationResult.error || 'The job form could not be automatically submitted.'}
+                </div>
+                <button
+                  onClick={() => setActiveJob(null)}
+                  style={{ marginTop: 10, padding: '7px 14px', borderRadius: 8, background: '#1e293b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: '0.8rem' }}
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   )
-}
-
-const globalCss = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=DM+Sans:wght@400;500;700&display=swap');
-`
-
-const styles = {
-  root: {
-    width: '100%',
-    backgroundColor: '#090d16',
-    border: '1px solid #173040',
-    borderRadius: '18px',
-    padding: '24px',
-    color: '#e8ecf3',
-    fontFamily: "'DM Sans', sans-serif",
-    boxShadow: '0 24px 48px rgba(0, 0, 0, 0.35)'
-  },
-  header: {
-    marginBottom: '18px'
-  },
-  kicker: {
-    color: '#00e5a0',
-    letterSpacing: '0.16em',
-    fontSize: '11px',
-    fontWeight: 700,
-    marginBottom: '8px'
-  },
-  heading: {
-    margin: 0,
-    fontSize: 'clamp(24px, 4vw, 32px)',
-    fontFamily: "'Syne', sans-serif",
-    lineHeight: 1.15
-  },
-  subheading: {
-    marginTop: '8px',
-    color: '#9ea9bc',
-    lineHeight: 1.6
-  },
-  summaryRow: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-    gap: '10px',
-    marginBottom: '16px'
-  },
-  summaryItem: {
-    backgroundColor: '#0f1623',
-    border: '1px solid #1a2d40',
-    borderRadius: '12px',
-    padding: '12px'
-  },
-  summaryValue: {
-    display: 'block',
-    fontSize: '24px',
-    fontWeight: 700,
-    color: '#00e5a0',
-    fontFamily: "'Syne', sans-serif"
-  },
-  summaryLabel: {
-    color: '#8a94a7',
-    fontSize: '12px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em'
-  },
-  controls: {
-    display: 'grid',
-    gap: '10px',
-    marginBottom: '16px'
-  },
-  searchInput: {
-    width: '100%',
-    border: '1px solid #1d3345',
-    borderRadius: '10px',
-    backgroundColor: '#0c1420',
-    color: '#e8ecf3',
-    padding: '11px 12px',
-    outline: 'none',
-    fontSize: '14px',
-    fontFamily: "'DM Sans', sans-serif"
-  },
-  filterRow: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap'
-  },
-  filterBtn: {
-    border: '1px solid #2a3f4f',
-    borderRadius: '999px',
-    backgroundColor: '#0d1521',
-    color: '#93a2b6',
-    padding: '7px 12px',
-    cursor: 'pointer',
-    fontFamily: "'DM Sans', sans-serif",
-    fontSize: '12px'
-  },
-  filterBtnActive: {
-    color: '#00e5a0',
-    borderColor: '#00e5a0',
-    backgroundColor: '#00e5a014'
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-    gap: '14px'
-  },
-  card: {
-    backgroundColor: '#0d1521',
-    border: '1px solid #1f3243',
-    borderRadius: '14px',
-    padding: '14px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
-  },
-  cardTopRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  platformBadge: {
-    fontSize: '11px',
-    border: '1px solid',
-    borderRadius: '999px',
-    padding: '4px 8px'
-  },
-  scoreBadge: {
-    color: '#00e5a0',
-    fontWeight: 700,
-    fontSize: '14px'
-  },
-  cardTitle: {
-    margin: 0,
-    fontFamily: "'Syne', sans-serif",
-    fontSize: '18px',
-    lineHeight: 1.2
-  },
-  cardCompany: {
-    margin: 0,
-    color: '#d1d7e2',
-    fontWeight: 500
-  },
-  cardMeta: {
-    margin: 0,
-    color: '#94a0b4',
-    fontSize: '13px'
-  },
-  cardSalary: {
-    margin: 0,
-    color: '#00e5a0',
-    fontSize: '13px'
-  },
-  meterWrap: {
-    marginTop: '2px'
-  },
-  meterTrack: {
-    width: '100%',
-    height: '6px',
-    backgroundColor: '#1f3344',
-    borderRadius: '999px',
-    overflow: 'hidden'
-  },
-  meterFill: {
-    height: '100%',
-    borderRadius: '999px',
-    transition: 'width 0.35s ease'
-  },
-  meterLabel: {
-    margin: '5px 0 0',
-    fontSize: '12px',
-    fontWeight: 700
-  },
-  readyBadge: {
-    alignSelf: 'flex-start',
-    border: '1px solid',
-    borderRadius: '999px',
-    padding: '4px 9px',
-    fontSize: '11px',
-    fontWeight: 700
-  },
-  linkGrid: {
-    marginTop: '4px',
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '6px'
-  },
-  linkBtn: {
-    border: '1px solid #2c4152',
-    borderRadius: '8px',
-    backgroundColor: '#0a111b',
-    color: '#9eb0c4',
-    fontSize: '11px',
-    textAlign: 'center',
-    textDecoration: 'none',
-    padding: '7px 6px'
-  },
-  primaryApply: {
-    marginTop: '6px',
-    textAlign: 'center',
-    borderRadius: '9px',
-    background: 'linear-gradient(90deg, #00e5a0, #00b4d8)',
-    color: '#041017',
-    textDecoration: 'none',
-    fontFamily: "'Syne', sans-serif",
-    fontWeight: 700,
-    padding: '10px 10px'
-  },
-  emptyState: {
-    border: '1px dashed #2b4153',
-    borderRadius: '12px',
-    textAlign: 'center',
-    color: '#92a2b7',
-    padding: '24px'
-  },
-  infoText: {
-    marginBottom: '10px',
-    padding: '10px 12px',
-    borderRadius: '10px',
-    border: '1px solid #24506b',
-    backgroundColor: '#102130',
-    color: '#9fd3f1',
-    fontSize: '13px'
-  },
-  warnText: {
-    marginBottom: '10px',
-    padding: '10px 12px',
-    borderRadius: '10px',
-    border: '1px solid #733046',
-    backgroundColor: '#2a141d',
-    color: '#ff8aa9',
-    fontSize: '13px'
-  }
 }

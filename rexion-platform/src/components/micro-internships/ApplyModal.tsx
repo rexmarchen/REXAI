@@ -4,13 +4,9 @@ import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { buildMicroGigPitch } from '@/lib/micro-gigs/pitch'
 import type { MicroGigShape, SubscriptionPlan } from '@/types'
 import styles from '@/styles/micro.module.css'
-
-function buildPitch(gig: MicroGigShape) {
-  const skills = gig.skills.slice(0, 3).join(', ')
-  return `I can ship this ${gig.domain.toLowerCase()} sprint quickly because I already work comfortably with ${skills}. I can start fast, communicate clearly, and focus on delivering the specific outcome this team needs.`
-}
 
 export function ApplyModal({
   gig,
@@ -116,7 +112,7 @@ export function ApplyModal({
                       />
                       <div className={styles.inlineMeta}>
                         <span className={styles.muted}>{pitch.length}/280</span>
-                        <button className={styles.buttonSubtle} onClick={() => setPitch(buildPitch(gig))}>
+                        <button className={styles.buttonSubtle} onClick={() => setPitch(buildMicroGigPitch(gig))}>
                           AI Help
                         </button>
                       </div>

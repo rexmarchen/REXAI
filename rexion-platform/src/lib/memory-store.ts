@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import type {
+  ApplicationBatchShape,
   GigApplicationShape,
   LeaderboardEntry,
   MicroGigShape,
@@ -8,8 +9,10 @@ import type {
   StoredUser,
 } from '@/types'
 import { mockCampaigns, mockContacts, mockLeaderboard, mockMicroGigs, mockUsers } from '@/lib/mock-data'
+import { isDemoModeEnabled } from '@/lib/runtime'
+import { createId } from '@/lib/utils'
 
-export interface MemoryUserRecord extends StoredUser {}
+export type MemoryUserRecord = StoredUser
 
 export interface MemoryCampaignRecord extends OutreachCampaignShape {
   userId: string
@@ -20,7 +23,8 @@ export interface MemoryContactRecord extends OutreachContactShape {
   campaignId?: string
 }
 
-export interface MemoryApplicationRecord extends GigApplicationShape {}
+export type MemoryApplicationRecord = GigApplicationShape
+export type MemoryApplicationBatchRecord = ApplicationBatchShape
 
 interface MemoryStore {
   users: MemoryUserRecord[]
@@ -28,6 +32,7 @@ interface MemoryStore {
   contacts: MemoryContactRecord[]
   gigs: MicroGigShape[]
   applications: MemoryApplicationRecord[]
+  applicationBatches: MemoryApplicationBatchRecord[]
   leaderboard: LeaderboardEntry[]
   unsubscribedEmails: string[]
 }
@@ -39,24 +44,32 @@ declare global {
 
 export function getMemoryStore(): MemoryStore {
   if (!global.rexionMemoryStore) {
+    const demoModeEnabled = isDemoModeEnabled()
     const demoPasswordHash = bcrypt.hashSync('password123', 10)
     global.rexionMemoryStore = {
-      users: mockUsers.map((user) => ({
-        ...user,
-        passwordHash: demoPasswordHash,
-      })),
-      campaigns: mockCampaigns.map((campaign) => ({
-        ...campaign,
-        userId: campaign.userId || 'user_demo',
-      })),
-      contacts: mockContacts.map((contact) => ({
-        ...contact,
-        userId: 'user_demo',
-        campaignId: mockCampaigns[0]?.id,
-      })),
-      gigs: [...mockMicroGigs],
+      users: demoModeEnabled
+        ? mockUsers.map((user) => ({
+            ...user,
+            passwordHash: demoPasswordHash,
+          }))
+        : [],
+      campaigns: demoModeEnabled
+        ? mockCampaigns.map((campaign) => ({
+            ...campaign,
+            userId: campaign.userId || 'user_demo',
+          }))
+        : [],
+      contacts: demoModeEnabled
+        ? mockContacts.map((contact) => ({
+            ...contact,
+            userId: 'user_demo',
+            campaignId: mockCampaigns[0]?.id,
+          }))
+        : [],
+      gigs: demoModeEnabled ? [...mockMicroGigs] : [],
       applications: [],
-      leaderboard: [...mockLeaderboard],
+      applicationBatches: [],
+      leaderboard: demoModeEnabled ? [...mockLeaderboard] : [],
       unsubscribedEmails: [],
     }
   }
@@ -70,6 +83,10 @@ export function ensureMemoryUser(partialUser: {
   email?: string | null
   image?: string | null
 }) {
+  if (!isDemoModeEnabled()) {
+    return null
+  }
+
   const store = getMemoryStore()
   const email = partialUser.email?.toLowerCase()
 
@@ -89,11 +106,11 @@ export function ensureMemoryUser(partialUser: {
   }
 
   const newUser: MemoryUserRecord = {
-    id: partialUser.id || `user_${Math.random().toString(36).slice(2, 10)}`,
+    id: partialUser.id || createId('user'),
     name: partialUser.name || 'REXION User',
     email,
     image: partialUser.image || null,
-    role: 'candidate',
+    role: 'user',
     plan: 'free',
     status: 'inactive',
     profile: {

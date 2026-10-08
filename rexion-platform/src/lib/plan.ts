@@ -15,11 +15,11 @@ export function normalizePlan(plan?: string | null): SubscriptionPlan {
 }
 
 export function normalizeRole(role?: string | null): UserRole {
-  if (role === 'company' || role === 'admin') {
+  if (role === 'company' || role === 'admin' || role === 'user') {
     return role
   }
 
-  return 'candidate'
+  return 'user'
 }
 
 export function hasRequiredPlan(currentPlan: SubscriptionPlan, requiredPlan: SubscriptionPlan) {

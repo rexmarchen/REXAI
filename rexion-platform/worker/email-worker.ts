@@ -1,18 +1,19 @@
-import { registerEmailWorker } from '@/lib/queue'
+import dotenv from 'dotenv'
+import path from 'path'
 
-const worker = registerEmailWorker()
+// Load environment variables (useful when running as a standalone worker process)
+dotenv.config({ path: path.resolve(process.cwd(), '.env') })
 
-if (!worker) {
-  console.info('Email worker not started because REDIS_URL is not configured.')
-  process.exit(0)
-}
+import { registerOutreachWorker } from '../src/lib/queue'
 
-console.info('REXION email worker started.')
+const worker = registerOutreachWorker()
+
+console.info('REXION outreach queue worker started.')
 
 worker.on('completed', (job) => {
-  console.info(`Email job completed: ${job.id}`)
+  console.info(`Outreach email job completed: ${job.id}`)
 })
 
 worker.on('failed', (job, error) => {
-  console.error(`Email job failed: ${job?.id}`, error)
+  console.error(`Outreach email job failed: ${job?.id}`, error)
 })

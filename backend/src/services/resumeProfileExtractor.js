@@ -1,11 +1,27 @@
 const KNOWN_SKILLS = [
+  ['Python', ['python', 'python programming', 'python3']],
+  ['Generative AI', ['generative ai', 'genai', 'gen ai', 'llm', 'llms', 'prompt engineering']],
+  ['Machine Learning', ['machine learning', 'ml']],
+  ['Artificial Intelligence', ['artificial intelligence', 'ai engineer', 'ai & machine learning']],
+  ['AI Chatbots', ['ai chatbots', 'chatbot', 'chatbots', 'bot integration']],
+  ['C Programming', ['c programming', 'c language', 'c coder']],
+  ['C++', ['c++', 'cpp']],
+  ['Java', ['java', 'core java']],
+  ['Android Studio', ['android studio', 'android development']],
+  ['Data Structures', ['data structures', 'dsa']],
+  ['Algorithms', ['algorithms']],
+  ['No-Code Tools', ['no code', 'no-code', 'no code tools']],
+  ['CRUD Operations', ['crud operations', 'crud']],
   ['JavaScript', ['javascript', 'js']],
   ['TypeScript', ['typescript', 'ts']],
-  ['React', ['react', 'react.js']],
+  ['React', ['react', 'react.js', 'reactjs']],
+  ['Next.js', ['next.js', 'nextjs', 'next js']],
   ['Node.js', ['node', 'nodejs', 'node.js']],
   ['Express.js', ['express', 'expressjs', 'express.js']],
-  ['Python', ['python']],
-  ['SQL', ['sql', 'mysql', 'postgresql', 'postgres']],
+  ['FastAPI', ['fastapi', 'fast api']],
+  ['Django', ['django']],
+  ['PostgreSQL', ['postgresql', 'postgres']],
+  ['SQL', ['sql', 'mysql', 'sqlite']],
   ['MongoDB', ['mongodb', 'mongo']],
   ['HTML', ['html', 'html5']],
   ['CSS', ['css', 'css3']],
@@ -13,8 +29,7 @@ const KNOWN_SKILLS = [
   ['Docker', ['docker']],
   ['Kubernetes', ['kubernetes', 'k8s']],
   ['Git', ['git', 'github']],
-  ['Machine Learning', ['machine learning', 'ml']],
-  ['Deep Learning', ['deep learning']],
+  ['Deep Learning', ['deep learning', 'neural networks']],
   ['TensorFlow', ['tensorflow']],
   ['PyTorch', ['pytorch']],
   ['NLP', ['nlp', 'natural language processing']],
@@ -22,12 +37,7 @@ const KNOWN_SKILLS = [
   ['Scikit-learn', ['scikit-learn', 'sklearn']],
   ['Pandas', ['pandas']],
   ['NumPy', ['numpy']],
-  ['Power BI', ['power bi', 'powerbi']],
-  ['Tableau', ['tableau']],
-  ['REST APIs', ['rest api', 'restful', 'apis']],
-  ['C++', ['c++', 'cpp']],
-  ['Java', ['java']],
-  ['C#', ['c#', '.net', 'dotnet']]
+  ['REST APIs', ['rest api', 'restful', 'apis']]
 ]
 
 const SECTION_ALIASES = {
@@ -161,15 +171,16 @@ function extractSectionLines(lines, sectionName, maxItems = 8) {
 
 function tokenizeSkills(skillsLines) {
   const tokens = []
+  const invalidSkillRegex = /\b(learned|how to|integrate|use of|school|technology|university|bangalore|karnataka|punjab|himachal|experience|intern|b\.tech|pursuing|college)\b/i
 
   for (const line of skillsLines) {
     const parts = String(line)
       .split(/[,|/;]+/)
-      .map((part) => normalizeLine(part))
+      .map((part) => normalizeLine(part).replace(/[•*]/g, '').trim())
       .filter(Boolean)
 
     for (const part of parts) {
-      if (part.length < 2 || part.length > 40) {
+      if (part.length < 2 || part.length > 30 || invalidSkillRegex.test(part)) {
         continue
       }
       tokens.push(part)
@@ -210,42 +221,63 @@ function uniqList(values, maxItems = 20) {
   return Array.from(map.values())
 }
 
-function pickName(lines) {
-  const blockedWords = new Set([
-    'resume',
-    'curriculum vitae',
-    'profile',
-    'summary',
-    'objective',
-    'skills',
-    'education',
-    'experience',
-    'projects'
-  ])
+const SECTION_BLOCKED_WORDS = new Set([
+  'resume', 'curriculum vitae', 'cv', 'profile', 'summary', 'professional summary',
+  'objective', 'career objective', 'skills', 'technical skills', 'core skills',
+  'education', 'academics', 'academic background', 'experience', 'work experience',
+  'professional experience', 'employment', 'employment history', 'career history',
+  'projects', 'key projects', 'certifications', 'certification', 'licenses',
+  'contact', 'contact info', 'contact information', 'languages', 'hobbies',
+  'interests', 'declaration', 'references', 'about me'
+])
 
-  const topLines = lines.slice(0, 12)
+function pickName(lines, rawText = '') {
+  const textStr = String(rawText || lines.join(' '))
+  const emailMatch = textStr.match(/([a-zA-Z0-9._%+-]+)@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)
+  const emailPrefix = emailMatch ? emailMatch[1].toLowerCase().replace(/[\d._%+-]+/g, '') : ''
+  const linkedinMatch = textStr.match(/linkedin\.com\/in\/([a-zA-Z0-9_-]+)/i)
+  const linkedinSlug = linkedinMatch ? linkedinMatch[1].toLowerCase().replace(/-\w+/g, '') : ''
+
+  const topLines = lines.slice(0, 15)
+
+  // 1. Check if any top line strongly matches email username or linkedin handle
   for (const line of topLines) {
-    const value = normalizeLine(line)
+    const value = normalizeLine(line).replace(/[•*|]/g, '').trim()
+    const lower = value.toLowerCase()
+    if (!value || value.length < 2 || value.length > 35) continue
+    if (SECTION_BLOCKED_WORDS.has(lower)) continue
+    if (/\b(experience|education|skills|contact|profile|university|college|school|intern|engineer|developer|pursuing|graduate)\b/i.test(lower)) continue
+
+    if (emailPrefix.length >= 3 && (lower === emailPrefix || lower.startsWith(emailPrefix) || emailPrefix.startsWith(lower))) {
+      return value.split(/\s+/).slice(0, 3).join(' ')
+    }
+    if (linkedinSlug.length >= 3 && (lower === linkedinSlug || lower.startsWith(linkedinSlug) || linkedinSlug.startsWith(lower))) {
+      return value.split(/\s+/).slice(0, 3).join(' ')
+    }
+  }
+
+  // 2. First prominent non-header title line (1-3 words, purely alphabetic)
+  for (const line of topLines) {
+    const value = normalizeLine(line).replace(/[•*|]/g, '').trim()
     const lower = value.toLowerCase()
     const words = value.split(/\s+/)
 
     if (
       !value ||
-      value.length < 4 ||
-      value.length > 60 ||
+      value.length < 2 ||
+      value.length > 35 ||
       /\d/.test(value) ||
       /[@:/\\]/.test(value) ||
-      words.length < 2 ||
-      words.length > 4 ||
-      blockedWords.has(lower)
+      words.length < 1 ||
+      words.length > 3 ||
+      SECTION_BLOCKED_WORDS.has(lower) ||
+      /\b(experience|education|skills|contact|profile|university|college|school|intern|engineer|developer|pursuing|graduate|management|system|project|innovator|masterclass|technologies|bangalore|karnataka|punjab|himachal)\b/i.test(lower)
     ) {
       continue
     }
 
     const alphaWords = words.every((word) => /^[A-Za-z.'-]+$/.test(word))
-    if (!alphaWords) {
-      continue
-    }
+    if (!alphaWords) continue
 
     return value
   }
@@ -344,7 +376,7 @@ export function extractResumeProfile(resumeData) {
   const mergedSkills = uniqList([...skillSectionItems, ...knownSkills], 20)
 
   return {
-    name: pickName(lines),
+    name: pickName(lines, normalizedLowerText),
     skills: mergedSkills,
     education: pickEducation(lines),
     certifications: pickCertifications(lines),

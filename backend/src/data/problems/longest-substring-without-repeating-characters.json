@@ -1,0 +1,151 @@
+{
+ "slug": "longest-substring-without-repeating-characters",
+ "title": "Longest Substring Without Repeating Characters",
+ "difficulty": "MEDIUM",
+ "topics": [
+  "String",
+  "Sliding Window",
+  "Hash Table"
+ ],
+ "companies": [],
+ "functionName": "lengthOfLongestSubstring",
+ "checker": "EXACT",
+ "xp": 60,
+ "statement": "Given a string `s`, return the length of the longest substring that contains no repeated characters.\n\nExample 1:\nInput: s = \"abcabcbb\"\nOutput: 3\n\nExample 2:\nInput: s = \"bbbbb\"\nOutput: 1",
+ "constraints": "0 <= s.length <= 5 * 10^4\ns consists of English letters, digits, symbols and spaces.",
+ "starterCode": {
+  "python": "def lengthOfLongestSubstring(s):\n    # Write your solution here\n    pass\n",
+  "javascript": "function lengthOfLongestSubstring(s) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def lengthOfLongestSubstring(s):\n    last = {}; start = best = 0\n    for i, c in enumerate(s):\n        if c in last and last[c] >= start: start = last[c] + 1\n        last[c] = i; best = max(best, i - start + 1)\n    return best\n"
+ },
+ "tests": [
+  {
+   "input": [
+    "abcabcbb"
+   ],
+   "expected": 3,
+   "isSample": true
+  },
+  {
+   "input": [
+    "bbbbb"
+   ],
+   "expected": 1,
+   "isSample": true
+  },
+  {
+   "input": [
+    "pwwkew"
+   ],
+   "expected": 3,
+   "isSample": true
+  },
+  {
+   "input": [
+    ""
+   ],
+   "expected": 0,
+   "isSample": false
+  },
+  {
+   "input": [
+    "a"
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    "ca"
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    "caaab"
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    "ababcc"
+   ],
+   "expected": 3,
+   "isSample": false
+  },
+  {
+   "input": [
+    "baababbccaca"
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    "bbbbacbaacab"
+   ],
+   "expected": 3,
+   "isSample": false
+  },
+  {
+   "input": [
+    "cacac"
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    "bbccbcaca"
+   ],
+   "expected": 3,
+   "isSample": false
+  },
+  {
+   "input": [
+    "bacaccaabca"
+   ],
+   "expected": 3,
+   "isSample": false
+  },
+  {
+   "input": [
+    "cbbaaaa"
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    "acaca"
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    "cabaaaaccab"
+   ],
+   "expected": 3,
+   "isSample": false
+  },
+  {
+   "input": [
+    "caa"
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    "bihhajjhcciigceihijfcdcihdfbhgdeghiahgcgfgbeffbjhaaecddechhabideihbhadcjcedegihbeigidacbgicjjfbgbhfafihhjdhaabcgaegdcbhbgdfefbdefefheghdgieefbhgjggdibhdciebiafefijjhacgbecdfafhbbgegghibcgdcejghedjjajbjbaghicaighgagegcffgjhibjajdhfibahiffgbhhfejjdfdijfgdbcjaciffchbjjidfcddiaedfjfddjcgagdcggddcgcbffdceciiffdjidgdhhbidigdefbfifcfcedabdjficfiigdggjhgbhbbhfdghcaiijjccacddiaeegegdcgfcbbgjdhaheeifecfihchjiadajcbdgjeiefiaabbjdajjgfdeiedefeiaeeagebcejdcjeadbhiehiiacjbgehbccbehcibiagjgeedjehjgibgdhfechgjibebcbecicafahccidgifhegeegccfehbcfagiggdgfbigabbchcjccjfiibajfihifhfbejeehhjbfecfidighfghdebbhjdaifjfcgdicaafhdhcibcbafbijfiaiheijadibgjfgjiabecghfgideibfbchfhdjbchhbcbjhbcbjajhdecafhbehhehfgffagidcheaigifhhffcfgcdifdhgehiiebbijbjdcbhehbhgjdiaaabaidfjicajabcfbgihhegeaecdgjccjbhbedieghabbbdcdeebfbjidcijjddafeiichhiabaicffbceeafhdggffjigdgiaagegibhiheajbabdcjhbfgcjejcccghdcdaifhgiiabehdhfbeggbccihaieicbbbigdbhdhiggihaajahcafejeaiccgfcgfaicjjdjjhebgbeecjjcjiiahbicbccdhaechbebhacdaihiabhcggaijajacfeicfefhgfejgfegchbcfhjcbedfgedfaebcchhjdeheafhaciiddeibagfjgijbhjeeagagehcfghhfhedcaihhiajhhieibaccaaiggedfcehhhfdjagijabeheffjgjdabbcjggcabffdcfbbaacacahjhbihbhecgjichjfjiiggdgjhdbgfabdcgeeajjdjidhbiigfcjdjcahhhggidejigggahejafjgcdjcdbhhegeeacaheafebafiaeajeceehgdfdbijbfddhhaffafceddgebgibcajbcfchcidcaggdhhfbagbjfcfhfaigcjgbefegjfbjabcihahibchchchhahiigcabafbhcdfhhjegfbgacdfedechabdfhcaiahfgdeddegaacaiaigagibgddbgegbeigbafcggahcecjicebbcfcafbffegdfgefcehdebgahgifbdgieahjffhcefigbbfejbadbdiaaideggceheihcbdhjdbacfahcbgfdggegiecdbcfifcgbfjffifghhbcchaeedbicbjaagjeecajggcjjahcdeediahdiheecifcgaadhidegbbeijjgcgbcfajjhabjgcdhbbgfdbcdeeiahbahcfcdfdjbcehdiiiibbbhjfbhdfgdaabdbbgjfcaadbaiibeaidbehaagibdfdiidhcifbhjaadhjbhbcjadhgbbcagjjffebchiddeaigchgaagaadeccgebdigbhbcdgfgiaabibheafhcaebagefbiddgfibfieehdibhafaecajbjhbbhdjadbihggigagjcidafefcjedjejjeaibgeecjbibjahhdghdccdfebhgacicheecbhgiifffdbfhjfbifeajhhghhhajhfdhcjcidhbcggebajddcbjehaifcggffchiffebgaedfhddjecdagcdajgeefihbecfgcecbaajecbjdgibjeaifcichcfgafheihiegihajjdbahbiaacdjacbhedjcjgbejcggcihgcddihccgjedidjjecahbciidhefagegjacejfiaagbifceaahhfcdbegchbjgjjafcigiecgiccfgfcaihhijjcfiecaebgiebfhiaajjeecaehchfcjhfjjdgfbgjajbbcbfieeajfbddaiigfcjhcdhgdchcjcfijicbhdbhdahabiaijgbeheahbefedcaegeibeehjfhhgaabaijajfjcejhcdchaibgidhffaaeeefgcdheigfabicjgcbbjeidgigejchhgcfdidfhibgejibgeeiddgdjdgcbjegegccjhiiijghgifhbaccbgbhjbchfffjeeghcbbhfjacchjfdcghjeaaceeebfdebghiaehchdhgedeidjcbcfbbhcgieeaaggbhedbdhhdfgibbggebggebaihaaaedfjhhebahgdhhegjfehgbifegfcefagajjebbficjhjaacjfdechhhgbjcfbbbgiibegcdehfjbafggihhbegejfeedddgidjaibifjggcjabhfddeachedfbaicfacagceecegagffeghhafajafjdejdaccffjhbejjfcjecceciceefcaaedcjbfigdijgeifdcadhagejeeeficjigaijidgbbjgfbcddjihjaabdcaebfjcjjgdfegacjfebajeebajhidibccaficchhceeegbafbaehbceeehajigideeccgedfibehcahhahabicheicigcaigidijejjfeddcheggagchfbfebbihejbfgjjifgfgadijffadgddggaegehgcfadcfbdjecdbdajgjgajfdhbdajejeiefbdjhfigjhjdcgfahaaaejagbiaaibdjegjaidafaeihdaadgjadaecibcbbcgaheijaaeddhhbaahichfhdcjgchehiajgfhdahadgfiefdbacijjgjhedjeeigajhedagjhjbaajhfegcccheghadjihijbcjiahgjjacffbicccghdbbhhgedjagegfhibejdjbjgeeijacahiecdgjjeghejbgbdhahicgcbbfbedgcceegibjfjjhjcefhdhjecifceahbgacbibajjfjhahehgbbcgfdgfjgjdfghcahaafadaffgbahiaacfjdbghhfebbbbbcefiefbdciciffffgcjaiidjhdjijigbbfaidbdcghffiaciihddgbcaidffhjdajcdibjebahjaefebcggiafcicdjfafiegfijebfgccaicjedbgacjgbeiibfeifcgifbihdaibhiffbhbajfiahdejbcccjcabdfccjcegdchjibidfcabegjijgccahejgeegjadjaijchhaehhgfaibaejdbeeaagicgjaeejhabajgbdejfahcfdbhcgicdgjaccaicicaagbeifiieaehbdgefchefcbbbcdahgeabejacifbaecgdfgfgbeiaaddhhdiabiibiigibgjaadcjicgcebbcchjaffdjfiddbcgfidicabgajabccgfgedbfdbbhaahahacbcgideafafbfcbdgjbcbdhhjddchbcbabbgjjbaebbcihbhjabjjcdacaecigeeiahgjjigdhjigfjffachahccedbdeegibccjebagbajgcbhdbagfdfdaebbcidfaiadedbjahiiciaaaijhbiabbaibbafjdgggbdgaiibhcbhaifiagcdgeggieddgaebecbjehjieheagijgjedbehfciicijjbbfgehahediaebjbfeciifigicdabfhibcghdidjddgdeijcccacaadbdbccdaeffbcjeiiiciigefcaahjccidgcafjcejcjaddjdabjbcaehajdccfdcaicjbdacgfgbdhhjijjfacghhjgedbhjbhifjdcbbjjcfjdfjegejeghjafbeabbiddhadfadbfbbjdfhiecffadachjfcdifcaaadcdiahjhbgbcecccidggjgigjjdbhabbhichbdabbceafajgegeaajadgjeebbegfjidihfcbcdfadeggcjbiciieihehjfgjbbihfeeibhejiigbiigdbjhhaaijheibdidebjacidegcfidjjgafhchcefafabjhbihfbjifjabhadicdjiaafiejcegaefbacbfjdfbagjcjdcbbcciaidegffbebaghigdaahifheddhciebdhijhefeahichbiiihbifdfcfijfdggaffegjidhcdifjbedhebeefacfgejiiabfifidigbdcadeegfhgdiiehebgdchdfgdggbbahfccacihbdbiacaihifefedcbgiideiidceidjidjdjijeaffjjbfceigffiegjaegfdcjfeaiegjaffbcghcggdfbbchjijacbdijiagifccjeceehdagfhcghcbfciahbgabhidcdcjhafafeggiihifbcgidbihccfaddjajaebjehjegjaaejbigjjfhaicgbafdibiibeffadichghcechcbbiddhfhhbdffeechahhffiibcheccgjedgfadbgbgiijjjageahffcefhdgcjafccdijdbcbidbebhefgihfbcgacgjffaijajddgaiihdgiceeidffihcddeajhcjbbidfbfdjgcabiebfigefbdfdifijcagfjabhafgaadihijaeihbicaejddajhdebechfcaacacgceddbghbiaibfdabdeddcaaagecccadjggdaadebdfeehihigccjgfdaffjhehdcefccabiafcjabbhgjahggeceecfcbdaecghhbfjefbhibcacgabcdejhgidebjiabahdgjgaebhdefigjbg"
+   ],
+   "expected": 9,
+   "isSample": false
+  }
+ ]
+}

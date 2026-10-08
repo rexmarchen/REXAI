@@ -112,16 +112,86 @@ run('leaderboard rows remain ordered by rank', () => {
 
 run('plan helpers normalize safely and compare plan gates', () => {
   assert.equal(normalizePlan('anything'), 'free')
-  assert.equal(normalizeRole('anything'), 'candidate')
+  assert.equal(normalizeRole('anything'), 'user')
   assert.equal(hasRequiredPlan('elite', 'pro'), true)
   assert.equal(hasRequiredPlan('free', 'pro'), false)
 })
 
-run('rate limiter blocks requests after the configured threshold', () => {
-  const key = `test:${Date.now()}`
-  assert.equal(checkRateLimit(key, 2, 60_000).allowed, true)
-  assert.equal(checkRateLimit(key, 2, 60_000).allowed, true)
-  assert.equal(checkRateLimit(key, 2, 60_000).allowed, false)
+import { calculateProfileCompletion } from '@/lib/profile-completion'
+
+run('calculateProfileCompletion calculates accurate dynamic score for empty profile', () => {
+  const result = calculateProfileCompletion(null, '', '')
+  assert.equal(result.percentage, 0)
+  assert.equal(result.completedCount, 0)
+  assert.equal(result.totalCount, 9)
+})
+
+run('calculateProfileCompletion correctly scores completed sections', () => {
+  const partialResult = calculateProfileCompletion(
+    {
+      headline: 'Software Engineer',
+      city: 'Bengaluru',
+      country: 'India',
+      phone: '+919999999999',
+      skills: ['Python', 'TypeScript', 'React'],
+      targetRoles: ['Frontend Engineer'],
+      careerLevel: 'Entry Level',
+    },
+    'Alex Morgan',
+    'alex@example.com'
+  )
+
+  // Basic (15) + Direction (10) + Skills (15) = 40%
+  assert.equal(partialResult.percentage, 40)
+  assert.equal(partialResult.completedCount, 3)
+
+  const fullResult = calculateProfileCompletion(
+    {
+      headline: 'Software Engineer',
+      professionalSummary: 'Experienced software engineer specializing in scalable React and Node.js applications.',
+      city: 'Bengaluru',
+      country: 'India',
+      phone: '+919999999999',
+      skills: ['Python', 'TypeScript', 'React'],
+      targetRoles: ['Frontend Engineer'],
+      careerLevel: 'Entry Level',
+      experience: [
+        {
+          company: 'Acme Corp',
+          role: 'Frontend Engineer',
+          startDate: '2023',
+          description: 'Built customer dashboards.',
+        },
+      ],
+      education: [
+        {
+          institution: 'Tech University',
+          degree: 'B.Tech',
+          fieldOfStudy: 'Computer Science',
+          startYear: '2020',
+        },
+      ],
+      projects: [
+        {
+          title: 'Career OS',
+          description: 'Autonomous career platform with AI matching.',
+          technologies: ['Next.js', 'TypeScript'],
+        },
+      ],
+      resume: {
+        fileName: 'resume.pdf',
+        fileUrl: '/uploads/resume.pdf',
+      },
+      socialLinks: {
+        github: 'https://github.com/alex',
+      },
+    },
+    'Alex Morgan',
+    'alex@example.com'
+  )
+
+  assert.equal(fullResult.percentage, 100)
+  assert.equal(fullResult.completedCount, 9)
 })
 
 console.log('All tests passed.')

@@ -1,4 +1,5 @@
 import type {
+  ApplicationBatchShape,
   GigApplicationShape,
   LeaderboardEntry,
   MicroGigShape,
@@ -16,19 +17,24 @@ import {
   ensureMemoryUser,
   getMemoryStore,
   type MemoryApplicationRecord,
+  type MemoryApplicationBatchRecord,
   type MemoryCampaignRecord,
   type MemoryContactRecord,
   type MemoryUserRecord,
 } from '@/lib/memory-store'
 import { mockLeaderboard } from '@/lib/mock-data'
 import { normalizePlan, normalizeRole } from '@/lib/plan'
+import { isDemoModeEnabled } from '@/lib/runtime'
 import { createId } from '@/lib/utils'
 import User from '@/models/User'
+import CareerProfile from '@/models/CareerProfile'
 import Subscription from '@/models/Subscription'
 import OutreachCampaign from '@/models/OutreachCampaign'
 import OutreachContact from '@/models/OutreachContact'
 import MicroGig from '@/models/MicroGig'
 import GigApplication from '@/models/GigApplication'
+import ApplicationBatch from '@/models/ApplicationBatch'
+import AdminLog from '@/models/AdminLog'
 import GigCompletion from '@/models/GigCompletion'
 import UnsubscribeList from '@/models/UnsubscribeList'
 
@@ -37,12 +43,20 @@ function normalizeUserProfile(profile?: Partial<UserProfile> | null): UserProfil
   const skills = Array.isArray(profileSkills) ? profileSkills : []
 
   return {
+    phone: profile?.phone,
+    college: profile?.college,
+    degree: profile?.degree,
+    graduationYear: profile?.graduationYear,
     headline: profile?.headline,
     resumeText: profile?.resumeText,
     skills,
     targetRole: profile?.targetRole,
     preferredDomain: profile?.preferredDomain,
     location: profile?.location,
+    linkedinUrl: profile?.linkedinUrl,
+    githubUrl: profile?.githubUrl,
+    portfolioUrl: profile?.portfolioUrl,
+    resumeUrl: profile?.resumeUrl,
     companyRole: profile?.companyRole,
   }
 }
@@ -52,8 +66,14 @@ function toStoredUser(input: {
   name: string
   email: string
   image?: string | null
+  avatar?: string | null
   passwordHash?: string
   role?: string | null
+  plan?: string | null
+  emailVerified?: boolean
+  isActive?: boolean
+  lastLogin?: Date | string | null
+  loginCount?: number
   subscription?: {
     plan?: string | null
     status?: string | null
@@ -68,9 +88,10 @@ function toStoredUser(input: {
     name: input.name,
     email: input.email.toLowerCase(),
     image: input.image || null,
+    avatar: input.avatar || input.image || null,
     passwordHash: input.passwordHash,
     role: normalizeRole(input.role),
-    plan: normalizePlan(input.subscription?.plan),
+    plan: normalizePlan(input.plan || input.subscription?.plan),
     status:
       input.subscription?.status === 'active' ||
       input.subscription?.status === 'past_due' ||
@@ -82,6 +103,10 @@ function toStoredUser(input: {
     currentPeriodEnd: input.subscription?.currentPeriodEnd
       ? new Date(input.subscription.currentPeriodEnd).toISOString()
       : undefined,
+    emailVerified: input.emailVerified,
+    isActive: input.isActive,
+    lastLogin: input.lastLogin ? new Date(input.lastLogin).toISOString() : undefined,
+    loginCount: input.loginCount,
     profile: normalizeUserProfile(input.profile),
   }
 }
@@ -199,6 +224,22 @@ function toApplicationShape(input: MemoryApplicationRecord): GigApplicationShape
   }
 }
 
+function toApplicationBatchShape(input: MemoryApplicationBatchRecord): ApplicationBatchShape {
+  return {
+    id: input.id,
+    userId: input.userId,
+    source: input.source,
+    totalJobsProcessed: input.totalJobsProcessed,
+    successfulApplications: input.successfulApplications,
+    skippedApplications: input.skippedApplications,
+    failedApplications: input.failedApplications,
+    status: input.status,
+    results: input.results,
+    createdAt: input.createdAt,
+    completedAt: input.completedAt,
+  }
+}
+
 async function hasDatabase() {
   return Boolean(await safeConnectToDatabase())
 }
@@ -216,8 +257,14 @@ export async function findUserByEmail(email: string) {
       name: user.name,
       email: user.email,
       image: user.image,
+      avatar: user.avatar,
       passwordHash: user.password,
       role: user.role,
+      plan: user.plan,
+      emailVerified: user.emailVerified,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      loginCount: user.loginCount,
       subscription: user.subscription,
       profile: user.profile,
     })
@@ -238,8 +285,14 @@ export async function findUserById(id: string) {
       name: user.name,
       email: user.email,
       image: user.image,
+      avatar: user.avatar,
       passwordHash: user.password,
       role: user.role,
+      plan: user.plan,
+      emailVerified: user.emailVerified,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      loginCount: user.loginCount,
       subscription: user.subscription,
       profile: user.profile,
     })
@@ -263,8 +316,14 @@ export async function findUserByStripeCustomerId(stripeCustomerId: string) {
       name: user.name,
       email: user.email,
       image: user.image,
+      avatar: user.avatar,
       passwordHash: user.password,
       role: user.role,
+      plan: user.plan,
+      emailVerified: user.emailVerified,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      loginCount: user.loginCount,
       subscription: user.subscription,
       profile: user.profile,
     })
@@ -289,7 +348,12 @@ export async function createUserRecord(input: {
       email: normalizedEmail,
       password: input.passwordHash,
       image: input.image,
-      role: input.role || 'candidate',
+      avatar: input.image,
+      role: input.role || 'user',
+      plan: 'free',
+      emailVerified: false,
+      isActive: true,
+      loginCount: 0,
       subscription: {
         plan: 'free',
         status: 'inactive',
@@ -299,15 +363,42 @@ export async function createUserRecord(input: {
       },
     })
 
+    try {
+      await CareerProfile.create({
+        userId: user._id,
+        firstName: input.name.split(' ')[0] || '',
+        lastName: input.name.split(' ').slice(1).join(' ') || '',
+        email: normalizedEmail,
+        skills: [],
+        experience: [],
+        education: [],
+        projects: [],
+        certifications: [],
+        achievements: [],
+      })
+    } catch (err) {
+      console.error('Failed to initialize career profile for user:', err)
+    }
+
     return toStoredUser({
       id: String(user._id),
       name: user.name,
       email: user.email,
       image: user.image,
+      avatar: user.avatar,
       role: user.role,
+      plan: user.plan,
+      emailVerified: user.emailVerified,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      loginCount: user.loginCount,
       subscription: user.subscription,
       profile: user.profile,
     })
+  }
+
+  if (!isDemoModeEnabled()) {
+    throw new Error('Registration requires MONGODB_URI when demo mode is disabled.')
   }
 
   const store = getMemoryStore()
@@ -317,9 +408,12 @@ export async function createUserRecord(input: {
     email: normalizedEmail,
     image: input.image || null,
     passwordHash: input.passwordHash,
-    role: input.role || 'candidate',
+    role: input.role || 'user',
     plan: 'free',
     status: 'inactive',
+    emailVerified: false,
+    isActive: true,
+    loginCount: 0,
     profile: {
       skills: [],
     },
@@ -344,8 +438,11 @@ export async function upsertOAuthUser(input: {
           $set: {
             name: input.name || existing.name,
             image: input.image || existing.image,
+            avatar: input.image || existing.avatar || existing.image,
+            emailVerified: true,
             'authProviders.google.sub': input.googleSub,
             'authProviders.google.email': input.email.toLowerCase(),
+            'authProviders.google.picture': input.image,
           },
         }
       )
@@ -360,10 +457,17 @@ export async function upsertOAuthUser(input: {
       name: input.name || 'REXION User',
       email: input.email.toLowerCase(),
       image: input.image,
+      avatar: input.image,
+      role: 'user',
+      plan: 'free',
+      emailVerified: true,
+      isActive: true,
+      loginCount: 0,
       authProviders: {
         google: {
           sub: input.googleSub,
           email: input.email.toLowerCase(),
+          picture: input.image,
         },
       },
       subscription: {
@@ -380,13 +484,24 @@ export async function upsertOAuthUser(input: {
       name: user.name,
       email: user.email,
       image: user.image,
+      avatar: user.avatar,
       role: user.role,
+      plan: user.plan,
+      emailVerified: user.emailVerified,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      loginCount: user.loginCount,
       subscription: user.subscription,
       profile: user.profile,
     })
   }
 
-  return ensureMemoryUser(input) as StoredUser
+  const memoryUser = ensureMemoryUser(input)
+  if (!memoryUser) {
+    throw new Error('OAuth sign-in requires MONGODB_URI when demo mode is disabled.')
+  }
+
+  return memoryUser as StoredUser
 }
 
 export async function ensureSessionUser(input: {
@@ -419,6 +534,53 @@ export async function ensureSessionUser(input: {
   }
 
   return null
+}
+
+export async function touchUserLogin(userId: string) {
+  if (await hasDatabase()) {
+    await User.updateOne(
+      { _id: userId },
+      {
+        $set: {
+          lastLogin: new Date(),
+        },
+        $inc: {
+          loginCount: 1,
+        },
+      }
+    )
+    return
+  }
+
+  const user = getMemoryStore().users.find((record) => record.id === userId)
+  if (!user) {
+    return
+  }
+
+  user.lastLogin = new Date().toISOString()
+  user.loginCount = (user.loginCount || 0) + 1
+}
+
+export async function logAdminAction(input: {
+  adminId?: string
+  action: string
+  targetType: string
+  targetId?: string
+  details?: string
+  ip?: string
+}) {
+  if (!(await hasDatabase())) {
+    return
+  }
+
+  await AdminLog.create({
+    adminId: input.adminId,
+    action: input.action,
+    targetType: input.targetType,
+    targetId: input.targetId,
+    details: input.details,
+    ip: input.ip,
+  })
 }
 
 export async function updateUserSubscriptionRecord(input: {
@@ -902,6 +1064,124 @@ export async function createGigApplicationRecord(input: {
   return toApplicationShape(application)
 }
 
+export async function findExistingGigApplication(input: { gigId: string; userId: string }) {
+  if (await hasDatabase()) {
+    const application = await GigApplication.findOne({
+      gigId: input.gigId,
+      userId: input.userId,
+      status: { $in: ['pending', 'reviewing', 'accepted'] },
+    }).lean()
+
+    if (!application) {
+      return null
+    }
+
+    return {
+      id: String(application._id),
+      gigId: String(application.gigId),
+      userId: String(application.userId),
+      resumeUrl: application.resumeUrl,
+      pitch: application.pitch,
+      startDate: new Date(application.startDate).toISOString(),
+      status: application.status,
+      appliedAt: new Date(application.appliedAt).toISOString(),
+    } satisfies GigApplicationShape
+  }
+
+  const application = getMemoryStore().applications.find(
+    (record) =>
+      record.gigId === input.gigId &&
+      record.userId === input.userId &&
+      record.status !== 'rejected'
+  )
+
+  return application ? toApplicationShape(application) : null
+}
+
+export async function createApplicationBatchRecord(input: {
+  userId: string
+  source: ApplicationBatchShape['source']
+  results: ApplicationBatchShape['results']
+}) {
+  const successfulApplications = input.results.filter((result) => result.status === 'applied').length
+  const skippedApplications = input.results.filter((result) => result.status === 'skipped').length
+  const failedApplications = input.results.filter((result) => result.status === 'failed').length
+  const status =
+    successfulApplications === 0 && failedApplications > 0 ? 'failed' : 'completed'
+
+  if (await hasDatabase()) {
+    const batch = await ApplicationBatch.create({
+      userId: input.userId,
+      source: input.source,
+      totalJobsProcessed: input.results.length,
+      successfulApplications,
+      skippedApplications,
+      failedApplications,
+      status,
+      results: input.results,
+      completedAt: new Date(),
+    })
+
+    return {
+      id: String(batch._id),
+      userId: String(batch.userId),
+      source: batch.source,
+      totalJobsProcessed: batch.totalJobsProcessed,
+      successfulApplications: batch.successfulApplications,
+      skippedApplications: batch.skippedApplications,
+      failedApplications: batch.failedApplications,
+      status: batch.status,
+      results: batch.results,
+      createdAt: new Date(batch.createdAt).toISOString(),
+      completedAt: batch.completedAt ? new Date(batch.completedAt).toISOString() : undefined,
+    } satisfies ApplicationBatchShape
+  }
+
+  const batch: MemoryApplicationBatchRecord = {
+    id: createId('batch'),
+    userId: input.userId,
+    source: input.source,
+    totalJobsProcessed: input.results.length,
+    successfulApplications,
+    skippedApplications,
+    failedApplications,
+    status,
+    results: input.results,
+    createdAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+  }
+
+  getMemoryStore().applicationBatches.unshift(batch)
+  return toApplicationBatchShape(batch)
+}
+
+export async function listUserApplicationBatches(userId: string) {
+  if (await hasDatabase()) {
+    const batches = await ApplicationBatch.find({ userId }).sort({ createdAt: -1 }).lean()
+    return batches.map(
+      (batch) =>
+        ({
+          id: String(batch._id),
+          userId: String(batch.userId),
+          source: batch.source,
+          totalJobsProcessed: batch.totalJobsProcessed,
+          successfulApplications: batch.successfulApplications,
+          skippedApplications: batch.skippedApplications,
+          failedApplications: batch.failedApplications,
+          status: batch.status,
+          results: batch.results,
+          createdAt: new Date(batch.createdAt).toISOString(),
+          completedAt: batch.completedAt ? new Date(batch.completedAt).toISOString() : undefined,
+        }) satisfies ApplicationBatchShape
+    )
+  }
+
+  return getMemoryStore()
+    .applicationBatches.filter((batch) => batch.userId === userId)
+    .sort((left, right) => +new Date(right.createdAt) - +new Date(left.createdAt))
+    .map((batch) => toApplicationBatchShape(batch))
+}
+
 export async function createGigRecord(input: {
   userId: string
   companyName: string
@@ -1041,6 +1321,7 @@ export async function exportUserData(userId: string) {
   const campaigns = await listUserCampaigns(userId)
   const details = await Promise.all(campaigns.map((campaign) => getCampaignDetail(userId, campaign.id)))
   const gigs = await listGigs()
+  const applicationBatches = await listUserApplicationBatches(userId)
   const applications = getMemoryStore().applications.filter((application) => application.userId === userId)
 
   return {
@@ -1049,6 +1330,7 @@ export async function exportUserData(userId: string) {
     campaigns: details.filter(Boolean),
     gigs,
     applications,
+    applicationBatches,
   }
 }
 
@@ -1060,6 +1342,7 @@ export async function deleteUserData(userId: string) {
       OutreachCampaign.deleteMany({ userId }),
       OutreachContact.deleteMany({ userId }),
       GigApplication.deleteMany({ userId }),
+      ApplicationBatch.deleteMany({ userId }),
       GigCompletion.deleteMany({ userId }),
     ])
     return
@@ -1070,4 +1353,5 @@ export async function deleteUserData(userId: string) {
   store.campaigns = store.campaigns.filter((campaign) => campaign.userId !== userId)
   store.contacts = store.contacts.filter((contact) => contact.userId !== userId)
   store.applications = store.applications.filter((application) => application.userId !== userId)
+  store.applicationBatches = store.applicationBatches.filter((batch) => batch.userId !== userId)
 }

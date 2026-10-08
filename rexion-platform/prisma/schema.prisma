@@ -1,0 +1,79 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Contact {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  name      String
+  title     String
+  company   String
+  email     String   @unique
+  verified  Boolean  @default(false)
+  source    String
+  createdAt DateTime @default(now())
+
+  sends     CampaignSend[]
+}
+
+model Campaign {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String
+  name         String
+  subject      String
+  bodyTemplate String
+  status       String   // draft, sending, complete
+  createdAt    DateTime @default(now())
+
+  sends        CampaignSend[]
+}
+
+model CampaignSend {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId String    @db.ObjectId
+  campaign   Campaign  @relation(fields: [campaignId], references: [id])
+  contactId  String    @db.ObjectId
+  contact    Contact   @relation(fields: [contactId], references: [id])
+  subject    String
+  body       String
+  status     String    // queued, sent, opened, replied, bounced, skipped
+  queuedAt   DateTime  @default(now())
+  sentAt     DateTime?
+  openedAt   DateTime?
+  repliedAt  DateTime?
+  bouncedAt  DateTime?
+}
+
+model SuppressionEntry {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String
+  email   String   @unique
+  reason  String   // unsubscribed, bounced, complained
+  addedAt DateTime @default(now())
+}
+
+model LinkedInAccount {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String    @unique
+  provider       String    @default("unipile")
+  providerAcctId String
+  status         String    @default("warming_up") // warming_up | healthy | paused | disconnected
+  dailyCap       Int       @default(6)
+  connectedAt    DateTime  @default(now())
+  lastActionAt   DateTime?
+}
+
+model SavedSearch {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  name      String
+  filters   Json
+  createdAt DateTime @default(now())
+}
+
+

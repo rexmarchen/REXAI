@@ -60,6 +60,8 @@ Minimum local setup:
 Optional but supported:
 
 - `MONGODB_URI`
+- `REXION_ENABLE_DEMO_MODE`
+- `REXION_UNSUBSCRIBE_SECRET`
 - `REDIS_URL`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
@@ -80,6 +82,14 @@ Optional but supported:
 - `NEXT_PUBLIC_APP_URL=http://localhost:3000`
 
 If Mongo, Redis, Stripe, or provider keys are missing, the app falls back to local/demo behavior where possible so the UI still runs.
+
+Production guidance:
+
+- Set `REXION_ENABLE_DEMO_MODE=false` or leave it unset in production.
+- Set both `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` to your deployed origin.
+- Configure `MONGODB_URI` before enabling real signups.
+- Configure Stripe before enabling billing.
+- See [DEPLOYMENT.md](./DEPLOYMENT.md) for the production checklist.
 
 ## Install
 
@@ -114,6 +124,14 @@ Optional worker when `REDIS_URL` is configured:
 ```powershell
 npm run worker
 ```
+
+Run the app and automated outreach worker together:
+
+```powershell
+npm run dev:outreach
+```
+
+The worker sends queued messages through the SMTP credentials or Resend key submitted in the outreach confirmation step, throttled to one message every four seconds.
 
 ## Demo Credentials
 
@@ -187,3 +205,4 @@ Billing and account:
 - Build currently succeeds. Next may still emit `jose` edge-runtime warnings from `next-auth/jwt` in middleware; these are warnings, not build blockers.
 - Redis-backed campaign status progression is implemented through `worker/email-worker.ts`. Without Redis, outreach sends inline and updates immediately.
 - Mongo-backed persistence is used when `MONGODB_URI` is present; otherwise the app uses in-memory records for local development.
+- Demo mode is intended for local testing only and should not be enabled on a live deployment.

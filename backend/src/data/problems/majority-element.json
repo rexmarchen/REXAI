@@ -1,0 +1,233 @@
+{
+ "slug": "majority-element",
+ "title": "Majority Element",
+ "difficulty": "EASY",
+ "topics": [
+  "Array",
+  "Hash Table",
+  "Counting"
+ ],
+ "companies": [],
+ "functionName": "majorityElement",
+ "checker": "EXACT",
+ "xp": 30,
+ "statement": "Given an array `nums` of size `n`, return the majority element: the element that appears more than `n / 2` times. It always exists.\n\nExample 1:\nInput: nums = [3,2,3]\nOutput: 3\n\nExample 2:\nInput: nums = [2,2,1,1,1,2,2]\nOutput: 2",
+ "constraints": "1 <= n <= 5 * 10^4\nA majority element always exists.",
+ "starterCode": {
+  "python": "def majorityElement(nums):\n    # Write your solution here\n    pass\n",
+  "javascript": "function majorityElement(nums) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def majorityElement(nums):\n    cand = None; cnt = 0\n    for x in nums:\n        if cnt == 0: cand = x\n        cnt += 1 if x == cand else -1\n    return cand\n"
+ },
+ "tests": [
+  {
+   "input": [
+    [
+     3,
+     2,
+     3
+    ]
+   ],
+   "expected": 3,
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     2,
+     2,
+     1,
+     1,
+     1,
+     2,
+     2
+    ]
+   ],
+   "expected": 2,
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     1
+    ]
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     5,
+     5
+    ]
+   ],
+   "expected": 5,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     -3,
+     -3,
+     -3,
+     2,
+     -3,
+     -3,
+     2
+    ]
+   ],
+   "expected": -3,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     -3,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   ],
+   "expected": -1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     0,
+     0,
+     -3,
+     0,
+     -2
+    ]
+   ],
+   "expected": 0,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     -3,
+     -3,
+     -3,
+     2,
+     -3,
+     -3,
+     -3,
+     -1,
+     -3
+    ]
+   ],
+   "expected": -3,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     3,
+     -1,
+     2,
+     2,
+     3,
+     2,
+     2
+    ]
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     1,
+     1,
+     -1
+    ]
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     2,
+     2,
+     -1,
+     2,
+     2,
+     -3
+    ]
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     1,
+     0,
+     1,
+     1,
+     -2,
+     1
+    ]
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "expected": 0,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ]
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     1,
+     -1,
+     1,
+     1,
+     2
+    ]
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     0,
+     3,
+     0,
+     0
+    ]
+   ],
+   "expected": 0,
+   "isSample": false
+  }
+ ]
+}

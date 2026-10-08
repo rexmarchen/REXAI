@@ -7,15 +7,20 @@ const outreachContactSchema = new Schema(
     name: String,
     role: String,
     email: String,
-    confidence: String,
+    confidence: {
+      type: String,
+      enum: ['verified', 'likely', 'guessed'],
+      default: 'guessed',
+    },
     linkedinUrl: String,
     status: {
       type: String,
-      enum: ['queued', 'sent', 'failed', 'opened'],
+      enum: ['queued', 'sent', 'failed', 'opened', 'replied'],
       default: 'queued',
     },
     sentAt: Date,
     openedAt: Date,
+    repliedAt: Date,
     error: String,
   },
   {

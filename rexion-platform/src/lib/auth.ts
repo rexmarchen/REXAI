@@ -3,8 +3,9 @@ import Credentials from 'next-auth/providers/credentials'
 import Google from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import { sendWelcomeEmail } from '@/lib/emails/welcome'
 import { normalizePlan, normalizeRole } from '@/lib/plan'
-import { findUserByEmail, upsertOAuthUser } from '@/lib/server-data'
+import { findUserByEmail, touchUserLogin, upsertOAuthUser } from '@/lib/server-data'
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -26,6 +27,8 @@ export async function authorizeCredentials(rawCredentials: unknown) {
   if (!validPassword) {
     return null
   }
+
+  await touchUserLogin(user.id)
 
   return {
     id: user.id,
@@ -70,16 +73,24 @@ export const authConfig = {
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google' && user.email) {
-        const storedUser = await upsertOAuthUser({
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          googleSub: typeof profile?.sub === 'string' ? profile.sub : undefined,
-        })
+        let storedUser
+
+        try {
+          storedUser = await upsertOAuthUser({
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            googleSub: typeof profile?.sub === 'string' ? profile.sub : undefined,
+          })
+        } catch (error) {
+          console.error('Google sign-in failed because persistence is not configured.', error)
+          return false
+        }
 
         user.id = storedUser.id
         user.plan = storedUser.plan
         user.role = storedUser.role
+        await touchUserLogin(storedUser.id)
       }
 
       return true
@@ -108,6 +119,18 @@ export const authConfig = {
       }
 
       return session
+    },
+  },
+  events: {
+    async createUser({ user }) {
+      if (user.email) {
+        await sendWelcomeEmail(user.email, user.name || 'there')
+      }
+    },
+    async signIn({ user, isNewUser }) {
+      if (isNewUser && user.email) {
+        await sendWelcomeEmail(user.email, user.name || 'there')
+      }
     },
   },
 } satisfies NextAuthConfig

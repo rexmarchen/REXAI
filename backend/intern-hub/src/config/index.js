@@ -12,7 +12,14 @@ function parseEnvFile(filePath) {
   }
 
   const parsed = {}
-  const content = fs.readFileSync(filePath, 'utf8')
+  let content = ''
+
+  try {
+    content = fs.readFileSync(filePath, 'utf8')
+  } catch (error) {
+    console.warn(`[intern-hub] Unable to read ${filePath}; using environment defaults.`)
+    return parsed
+  }
 
   for (const line of content.split(/\r?\n/)) {
     const trimmed = line.trim()

@@ -1,0 +1,150 @@
+{
+ "slug": "longest-palindromic-substring-length",
+ "title": "Longest Palindromic Substring (Length)",
+ "difficulty": "MEDIUM",
+ "topics": [
+  "String",
+  "Dynamic Programming"
+ ],
+ "companies": [],
+ "functionName": "longestPalindromeLength",
+ "checker": "EXACT",
+ "xp": 60,
+ "statement": "Given a string `s`, return the length of the longest palindromic substring in `s`.\n\nExample 1:\nInput: s = \"babad\"\nOutput: 3\n\nExample 2:\nInput: s = \"cbbd\"\nOutput: 2",
+ "constraints": "1 <= s.length <= 1000\ns consists of lowercase English letters.",
+ "starterCode": {
+  "python": "def longestPalindromeLength(s):\n    # Write your solution here\n    pass\n",
+  "javascript": "function longestPalindromeLength(s) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def longestPalindromeLength(s):\n    best = 0\n    for c in range(len(s)):\n        for l, r in ((c, c), (c, c + 1)):\n            while l >= 0 and r < len(s) and s[l] == s[r]: l -= 1; r += 1\n            best = max(best, r - l - 1)\n    return best\n"
+ },
+ "tests": [
+  {
+   "input": [
+    "babad"
+   ],
+   "expected": 3,
+   "isSample": true
+  },
+  {
+   "input": [
+    "cbbd"
+   ],
+   "expected": 2,
+   "isSample": true
+  },
+  {
+   "input": [
+    "a"
+   ],
+   "expected": 1,
+   "isSample": true
+  },
+  {
+   "input": [
+    "abc"
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    "aaaa"
+   ],
+   "expected": 4,
+   "isSample": false
+  },
+  {
+   "input": [
+    "baa"
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    "abbabbb"
+   ],
+   "expected": 5,
+   "isSample": false
+  },
+  {
+   "input": [
+    "aaabab"
+   ],
+   "expected": 3,
+   "isSample": false
+  },
+  {
+   "input": [
+    "babaaaaaabbb"
+   ],
+   "expected": 8,
+   "isSample": false
+  },
+  {
+   "input": [
+    "abbababbb"
+   ],
+   "expected": 7,
+   "isSample": false
+  },
+  {
+   "input": [
+    "aaaababbbb"
+   ],
+   "expected": 4,
+   "isSample": false
+  },
+  {
+   "input": [
+    "ba"
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    "babba"
+   ],
+   "expected": 4,
+   "isSample": false
+  },
+  {
+   "input": [
+    "bbbabb"
+   ],
+   "expected": 5,
+   "isSample": false
+  },
+  {
+   "input": [
+    "bababbabaaba"
+   ],
+   "expected": 8,
+   "isSample": false
+  },
+  {
+   "input": [
+    "abbabab"
+   ],
+   "expected": 5,
+   "isSample": false
+  },
+  {
+   "input": [
+    "bbabbba"
+   ],
+   "expected": 5,
+   "isSample": false
+  },
+  {
+   "input": [
+    "baaaabaabbbabaaabbaabbabbababbbbbabbbbaaaaaaababaabbbbaaaaaabbaabbababbbbaabaaababbbbabaaaaabbaaabbbaaababaaabbabbbaaabbabbbbaabaabaaabbbbabbbabaaaaabaaabaabbabaabaababbbbaabbaabaabbbaaabaaabbabbabbaabbbbaaaaabaaabaabbbbabababbbbbbaabaaababbaaabaababbbbabaabababaaabbabbaabbbbbabaabbababbaabbbaabbbbaaaaabaabbababbbbaabbbaaabbabbabaaabbaabbbaaabbbaaaaaababbbaababbbababbbbaabbabababaaaabaabaaabbbbababaababababbaabaaaabbbaabbabaaaaababaaabababbabaabaaabbbababbabbabbabaabaaabbabbababbabbbaabbbbabbbbbabbaaaaabababbbaaaababbbabaaaaaaaaaabaaaaaaabbabbbbbbbbaabaaabbabaabbaabbbbbbababaababaaaaaabbbbbbabbbaaaabbbaaabaabbaababaabbababbbbabbbaabbbaababaabbaaabbaaaaaaaabbbaababababbaaabaaabbababbaaaabbaabbbaaaaabbbabaabbabbabbabbbabbbabababbbbbababbabbbbabbaababbbbaaababbbbabbaabbbabababbbaabbaaabbbabbabbabbbbaaababbbbbaaababaaaaabbbaabbaabbaabbbaabbbababbababbabababaaababbbbaaabbbabbbabbaaabbbaaabbaaaabaabaabaabbaaabbaaabbbaabbaababbbbbabaaabaaabbabbbabbbbaaabbbaaaaaaabbabbaaaababaabbbabbbbbbbbbabb"
+   ],
+   "expected": 21,
+   "isSample": false
+  }
+ ]
+}

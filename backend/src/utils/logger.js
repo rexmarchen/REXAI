@@ -15,7 +15,11 @@ const log = (level, message) => {
   const timestamp = new Date().toISOString()
   const logMessage = `[${timestamp}] [${level}] ${message}`
   console.log(logMessage)
-  fs.appendFileSync(logFile, logMessage + '\n')
+  try {
+    fs.appendFileSync(logFile, logMessage + '\n')
+  } catch (err) {
+    // Silently fallback to console only if file write is blocked (e.g. OneDrive issues)
+  }
 }
 
 export const logger = {

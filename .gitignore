@@ -6,3 +6,17 @@ dist/
 build/
 *.log
 *.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.local
+scratch/
+screenshots/
+session-data/
+uploads/
+docs/
+scratch*
+test_ui_flow.mjs
+test_pdf_export.mjs
+.codex-temp/
+.agents/

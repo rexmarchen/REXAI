@@ -1,0 +1,57 @@
+{
+  "runId": "local-1774806779634-kqsee3",
+  "mode": "local-fallback",
+  "createdAt": "2026-03-29T17:52:59.634Z",
+  "fallbackReason": "The requested webhook \"POST rexion/apply\" is not registered.",
+  "webhookUrl": "https://rexer.app.n8n.cloud/webhook/rexion/apply",
+  "payload": {
+    "source": "rexion-dashboard-one-click-mode",
+    "submitted_at": "2026-03-29T17:52:58.755Z",
+    "user_name": "Domination Smoke",
+    "user_email": "domination-smoke@example.com",
+    "user_phone": "+919000000000",
+    "target_role": "Frontend Engineer",
+    "resume_text": "Anshu Sharma Frontend Engineer Email: domination-smoke@example.com Phone: +91 9000000000 Skills React, TypeScript, JavaScript, Node.js, Express.js, HTML, CSS, Git Experience 2 years building dashboards, landing pages, and workflow automation tools. Projects Built a recruiter dashboard in React and Node.js. Improved application conversion flows and internal analytics tools.",
+    "resume_filename": "domination-smoke-resume.pdf",
+    "resume_mime_type": "application/pdf",
+    "preferences": {
+      "job_type": "full-time",
+      "location": "Remote",
+      "experience_level": "junior",
+      "priority_notes": "Smoke test"
+    },
+    "rexion": {
+      "user_id": "6",
+      "role": "candidate",
+      "plan": "free"
+    }
+  },
+  "resumeProfile": {
+    "name": "",
+    "skills": [
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Node.js",
+      "Express.js",
+      "HTML",
+      "CSS",
+      "Git",
+      "Machine Learning",
+      "Data Analysis",
+      "Java"
+    ],
+    "education": "",
+    "certifications": [],
+    "projects": [
+      "Anshu Sharma Frontend Engineer Email: domination-smoke@example.com Phone: +91 9000000000 Skills React, TypeScript, JavaScript, Node.js, Express.js, HTML, CSS, Git Experience 2 years building dashboards, landing pages, and workflow automation tools. Projects Built a recruiter dashboard in React and Node.js. Improved application conversion flows and internal analytics tools."
+    ],
+    "experience_years": 2,
+    "predicted_role": "Full Stack Developer"
+  },
+  "summary": {
+    "totalJobsFound": 53,
+    "totalApplied": 20,
+    "avgScore": 90
+  }
+}

@@ -1,0 +1,7 @@
+pdfplumber==0.11.4
+PyMuPDF==1.24.10
+phonenumbers==8.13.44
+pydantic==2.9.2
+openai==1.51.0
+python-dotenv==1.0.1
+tenacity==9.0.0

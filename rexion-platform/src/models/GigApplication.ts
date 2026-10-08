@@ -6,16 +6,25 @@ const gigApplicationSchema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     resumeUrl: String,
     pitch: String,
+    githubLink: String,
+    submittedFile: String,
+    submittedText: String,
+    submissionType: {
+      type: String,
+      enum: ['github', 'file', 'text'],
+    },
+    reviewNote: String,
     startDate: Date,
     status: {
       type: String,
-      enum: ['pending', 'reviewing', 'accepted', 'rejected'],
+      enum: ['pending', 'reviewing', 'accepted', 'rejected', 'submitted', 'under_review', 'selected'],
       default: 'pending',
     },
     appliedAt: {
       type: Date,
       default: Date.now,
     },
+    reviewedAt: Date,
   },
   { timestamps: true }
 )

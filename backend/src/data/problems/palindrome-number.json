@@ -1,0 +1,142 @@
+{
+ "slug": "palindrome-number",
+ "title": "Palindrome Number",
+ "difficulty": "EASY",
+ "topics": [
+  "Math"
+ ],
+ "companies": [],
+ "functionName": "isPalindrome",
+ "checker": "EXACT",
+ "xp": 30,
+ "statement": "Given an integer `x`, return `true` if `x` is a palindrome (reads the same forward and backward), otherwise `false`. Negative numbers are never palindromes.\n\nExample 1:\nInput: x = 121\nOutput: true\n\nExample 2:\nInput: x = -121\nOutput: false",
+ "constraints": "-2^31 <= x <= 2^31 - 1",
+ "starterCode": {
+  "python": "def isPalindrome(x):\n    # Write your solution here\n    pass\n",
+  "javascript": "function isPalindrome(x) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def isPalindrome(x):\n    s = str(x)\n    return s == s[::-1]\n"
+ },
+ "tests": [
+  {
+   "input": [
+    121
+   ],
+   "expected": true,
+   "isSample": true
+  },
+  {
+   "input": [
+    -121
+   ],
+   "expected": false,
+   "isSample": true
+  },
+  {
+   "input": [
+    10
+   ],
+   "expected": false,
+   "isSample": true
+  },
+  {
+   "input": [
+    0
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    7
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    800008
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    15555
+   ],
+   "expected": false,
+   "isSample": false
+  },
+  {
+   "input": [
+    18235
+   ],
+   "expected": false,
+   "isSample": false
+  },
+  {
+   "input": [
+    494
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    178871
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    14184
+   ],
+   "expected": false,
+   "isSample": false
+  },
+  {
+   "input": [
+    5946
+   ],
+   "expected": false,
+   "isSample": false
+  },
+  {
+   "input": [
+    14643
+   ],
+   "expected": false,
+   "isSample": false
+  },
+  {
+   "input": [
+    4209
+   ],
+   "expected": false,
+   "isSample": false
+  },
+  {
+   "input": [
+    97079
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    21712
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    583385
+   ],
+   "expected": true,
+   "isSample": false
+  }
+ ]
+}

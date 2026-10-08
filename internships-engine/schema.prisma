@@ -1,0 +1,62 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+
+enum WorkMode { REMOTE ONSITE HYBRID }
+enum Domain { WEB_DEV DATA MARKETING DESIGN OTHER }
+enum Level { FRESHER FIRST_SECOND_YEAR ANY }
+enum ListingStatus { ACTIVE EXPIRED UNDER_REVIEW REMOVED }
+enum ReportReason { FAKE_COMPANY ASKS_FOR_MONEY NO_LONGER_OPEN WRONG_DETAILS SPAM OTHER }
+
+model Internship {
+  id             String        @id @default(cuid())
+  source         String
+  sourceUrl      String        @unique            // dedupe key for the scraper
+  applyUrl       String
+  title          String
+  company        String
+  companyWebsite String?
+  contactEmail   String?
+  description    String        @db.Text
+  domain         Domain
+  workMode       WorkMode
+  location       String?
+  stipendMin     Int?                              // INR per month
+  stipendMax     Int?
+  isUnpaid       Boolean       @default(false)
+  durationWeeks  Int?
+  level          Level         @default(ANY)
+  skills         String[]
+  deadline       DateTime?
+  scrapedAt      DateTime
+  lastVerifiedAt DateTime                          // only updated when the apply link is confirmed live
+  trustScore     Int           @default(50)        // 0-100
+  trustFlags     Json          @default("[]")      // [{code, severity, message}]
+  status         ListingStatus @default(ACTIVE)
+  reports        Report[]
+
+  @@index([status, domain, workMode])
+  @@index([status, lastVerifiedAt])
+  @@index([trustScore])
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  internshipId String
+  internship   Internship   @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+  reason       ReportReason
+  note         String?      @db.VarChar(500)
+  reporterHash String                              // sha256(ip + ua + salt), never the raw IP
+  createdAt    DateTime     @default(now())
+
+  @@unique([internshipId, reporterHash])           // one report per person per listing
+  @@index([internshipId])
+}
+
+model SkillResource {
+  id    String  @id @default(cuid())
+  skill String                                     // canonical skill name, e.g. "React"
+  title String
+  url   String
+  free  Boolean @default(true)
+  @@index([skill])
+}

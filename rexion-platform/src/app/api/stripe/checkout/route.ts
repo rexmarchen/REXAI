@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { ok, apiError, requireSessionUser } from '@/lib/api'
+import { getAppUrl, isDemoModeEnabled } from '@/lib/runtime'
 import { getPlanPriceId, getStripe } from '@/lib/stripe'
 import { ensureSessionUser, updateUserSubscriptionRecord } from '@/lib/server-data'
 
@@ -25,9 +26,13 @@ export async function POST(request: Request) {
   }
 
   const stripe = getStripe()
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin
+  const appUrl = getAppUrl(request.url)
 
   if (!stripe) {
+    if (!isDemoModeEnabled()) {
+      return apiError('Stripe is not configured for this environment.', 503)
+    }
+
     await updateUserSubscriptionRecord({
       userId: storedUser.id,
       plan: parsed.data.plan,

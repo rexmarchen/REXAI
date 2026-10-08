@@ -1,0 +1,215 @@
+.templateRail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.toolbarHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ECE3D7;
+}
+
+.panelTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: #161616;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.helperText {
+  font-size: 12.5px;
+  color: #756E66;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.categoryBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.categoryPill {
+  background: #FFFFFF;
+  border: 1px solid #ECE3D7;
+  color: #756E66;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.categoryPill:hover {
+  border-color: #E97852;
+  color: #E97852;
+}
+
+.categoryPillActive {
+  background: #E97852;
+  border-color: #E97852;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(233, 120, 82, 0.25);
+}
+
+.templateGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 4px 2px 12px;
+}
+
+.templateCard {
+  background: #FFFFFF;
+  border: 1.5px solid #ECE3D7;
+  border-radius: 16px;
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  transition: all 0.18s ease;
+  text-align: left;
+}
+
+.templateCard:hover {
+  border-color: #E97852;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(233, 120, 82, 0.12);
+}
+
+.templateCardActive {
+  border-color: #E97852;
+  background: #FFFDF9;
+  box-shadow: 0 4px 18px rgba(233, 120, 82, 0.18);
+  outline: 2px solid #E97852;
+}
+
+.thumbWrapper {
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+  background: #F8F5F0;
+  border-radius: 10px;
+  border: 1px solid #EFE8DE;
+}
+
+.thumbInner {
+  transform: scale(0.25);
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  width: 794px;
+}
+
+.templateMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.templateHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.templateTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: #161616;
+}
+
+.categoryTag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #756E66;
+  background: #FAF6F0;
+  border: 1px solid #ECE3D7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.templateDesc {
+  font-size: 11px;
+  color: #8C8276;
+  margin: 0;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.templateBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #FAF6F0;
+}
+
+.colorSwatchRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.colorDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.fontName {
+  font-size: 10.5px;
+  color: #756E66;
+  font-weight: 600;
+}
+
+.activeCheckBadge {
+  background: #E97852;
+  color: #FFFFFF;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.recommendedBadge {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #B45309;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+  padding: 1px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+

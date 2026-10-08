@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs'
 import Resume from '../models/Resume.js'
 import Prediction from '../models/Prediction.js'
-import { analyzeResumeContent } from '../services/resumeAnalysisService.js'
+import { analyzeResumeContent, auditResumeProduction } from '../services/resumeAnalysisService.js'
+import { extractText } from '../services/resumeParser.js'
+import { extractResumeProfile } from '../services/resumeProfileExtractor.js'
 import {
   predictCareerPathViaMlService,
   getPredictionFromMlService,
@@ -147,10 +149,29 @@ export const predictResume = catchAsync(async (req, res, next) => {
 
     // Fallback to local analysis if ML service fails
     if (process.env.USE_FALLBACK_ANALYSIS === 'true') {
-      logger.info('Falling back to local analysis...')
+      logger.info('Falling back to local analysis with real PDF/DOCX text parser...')
       
       try {
-        const analysis = await analyzeResumeContent(resumeBuffer, fileName)
+        let extractedText = ''
+        try {
+          extractedText = await extractText(req.file.path, req.file.mimetype)
+        } catch (parseErr) {
+          logger.warn(`extractText failed, falling back to buffer decoding: ${parseErr.message}`)
+          extractedText = resumeBuffer.toString('utf8')
+        }
+
+        const extractedProfile = extractResumeProfile(extractedText)
+        const jobDescription = req.body?.jobDescription || ''
+        const targetRole = req.body?.targetRole || extractedProfile?.role || ''
+
+        const auditReport = auditResumeProduction({
+          formData: extractedProfile,
+          resumeText: extractedText,
+          jobDescription,
+          targetRole
+        })
+
+        const analysis = await analyzeResumeContent(extractedText || resumeBuffer, fileName)
         
         let predictionId = null
         if (userId) {
@@ -176,7 +197,9 @@ export const predictResume = catchAsync(async (req, res, next) => {
               llmModel: analysis.llmModel,
               analysisMethod: analysis.analysisMethod,
               voiceSummary: analysis.voiceSummary,
-              mlServiceSource: false
+              mlServiceSource: false,
+              auditScore: auditReport.overallScore,
+              categories: auditReport.categories
             }
           })
 
@@ -184,10 +207,14 @@ export const predictResume = catchAsync(async (req, res, next) => {
         }
 
         res.status(201).json({
+          success: true,
           fileName: fileName,
           sizeBytes: req.file.size,
+          extractedText,
+          extractedProfile,
+          auditReport,
           ...buildPredictionPayload(analysis, predictionId),
-          analysisMethod: 'local-fallback',
+          analysisMethod: 'production-hybrid-audit',
           source: 'local-analysis'
         })
       } catch (fallbackError) {
@@ -200,6 +227,21 @@ export const predictResume = catchAsync(async (req, res, next) => {
 })
 
 export const analyzeResume = predictResume
+
+export const auditResume = catchAsync(async (req, res) => {
+  const { formData, resumeText, jobDescription, targetRole } = req.body || {}
+  const report = auditResumeProduction({
+    formData: formData || {},
+    resumeText: resumeText || '',
+    jobDescription: jobDescription || '',
+    targetRole: targetRole || ''
+  })
+
+  res.status(200).json({
+    success: true,
+    data: report
+  })
+})
 
 export const searchJobs = catchAsync(async (req, res) => {
   const query = String(req.query.query || '').trim()

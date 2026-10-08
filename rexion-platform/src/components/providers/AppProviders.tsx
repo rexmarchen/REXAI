@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SessionProvider } from 'next-auth/react'
+import { useState } from 'react'
 import { Toaster } from 'sonner'
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -11,7 +11,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30000,
+            staleTime: 60 * 1000,
             refetchOnWindowFocus: false,
           },
         },
@@ -22,18 +22,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         {children}
-        <Toaster
-          richColors
-          position="bottom-right"
-          theme="dark"
-          toastOptions={{
-            style: {
-              background: '#0f1511',
-              color: '#f5f7f5',
-              border: '1px solid rgba(196,255,221,0.16)',
-            },
-          }}
-        />
+        <Toaster position="bottom-right" theme="dark" richColors />
       </QueryClientProvider>
     </SessionProvider>
   )

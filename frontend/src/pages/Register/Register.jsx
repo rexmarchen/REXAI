@@ -5,7 +5,17 @@ import AuthParticleBackground from '../../components/common/AuthParticleBackgrou
 import { useAuth } from '../../context/AuthContext'
 import authApi from '../../services/authApi'
 import { getAuthErrorMessage, resolveAuthRedirectPath } from '../../utils/authSession'
+import { isGoogleAuthConfigured } from '../../config/googleAuth'
 import styles from './Register.module.css'
+
+const getDestinationLabel = (path) => {
+  if (path.startsWith('/resume-predictor')) return 'Resume Predictor'
+  if (path.startsWith('/intern-hunt')) return 'Intern Hunt'
+  if (path.startsWith('/resume')) return 'Resume Builder'
+  if (path.startsWith('/rexcode')) return 'Rexcode'
+  if (path.startsWith('/workspace') || path.startsWith('/dashboard')) return 'Dashboard'
+  return 'REXION'
+}
 
 const Register = () => {
   const navigate = useNavigate()
@@ -67,10 +77,11 @@ const Register = () => {
       ),
     [location.state, searchParams]
   )
+  const destinationLabel = useMemo(() => getDestinationLabel(nextPath), [nextPath])
 
   const completeGoogleAuth = (response) => {
     applyAuthResponse(response, true)
-    setSubmitMessage(response.message || 'Google sign-in successful. Redirecting to your dashboard...')
+    setSubmitMessage(response.message || `Google sign-in successful. Redirecting to ${destinationLabel}...`)
     setTimeout(() => navigate(nextPath, { replace: true }), 500)
   }
 
@@ -89,8 +100,11 @@ const Register = () => {
         password: form.password
       })
 
-      setSubmitMessage(response.message || 'Registration successful. Redirecting to login...')
-      setTimeout(() => navigate('/login'), 700)
+      // Auto-login: persist the token + user returned from registration
+      applyAuthResponse(response, true)
+
+      setSubmitMessage(response.message || 'Account created! Taking you to profile setup...')
+      setTimeout(() => navigate('/profile-setup', { replace: true }), 600)
     } catch (error) {
       setSubmitError(getAuthErrorMessage(error, 'Registration failed. Please try again.'))
     } finally {
@@ -127,7 +141,11 @@ const Register = () => {
       <div className={styles.card}>
         <p className={styles.kicker}>REXION AI</p>
         <h1 className={styles.title}>Create your account.</h1>
-        <p className={styles.subtitle}>Start with the premium frontend, then move straight into the new dashboard workflow.</p>
+        <p className={styles.subtitle}>
+          {destinationLabel === 'Dashboard'
+            ? 'Create an account to open your dashboard and start using the workspace.'
+            : `Create an account to continue to ${destinationLabel}.`}
+        </p>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.field}>
@@ -219,22 +237,26 @@ const Register = () => {
             {loading ? 'Creating Account...' : 'Create Account'}
           </button>
 
-          <div className={styles.authDivider} aria-hidden="true">
-            <span>OR</span>
-          </div>
+          {isGoogleAuthConfigured() && (
+            <>
+              <div className={styles.authDivider} aria-hidden="true">
+                <span>OR</span>
+              </div>
 
-          <GoogleSignInButton
-            text="signup_with"
-            disabled={loading}
-            onCredential={handleGoogleCredential}
-          />
+              <GoogleSignInButton
+                text="signup_with"
+                disabled={loading}
+                onCredential={handleGoogleCredential}
+              />
+            </>
+          )}
 
           {submitMessage && <p className={styles.success}>{submitMessage}</p>}
           {submitError && <p className={styles.error}>{submitError}</p>}
         </form>
 
         <p className={styles.footerText}>
-          Already have an account? <Link to="/login">Log in</Link>
+          Already have an account? <Link to={`/login?next=${encodeURIComponent(nextPath)}`}>Log in</Link>
         </p>
       </div>
     </section>

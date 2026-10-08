@@ -1,8 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { Sidebar } from '@/components/dashboard/Sidebar'
-import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar'
-import styles from '@/styles/dashboard.module.css'
+import { DashboardLayout as Shell } from '@/components/layout/DashboardLayout'
 
 export default async function DashboardLayout({
   children,
@@ -15,13 +13,5 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  return (
-    <div className={styles.shell}>
-      <Sidebar user={session.user} />
-      <div className={styles.main}>
-        <DashboardNavbar user={session.user} />
-        <main className={styles.content}>{children}</main>
-      </div>
-    </div>
-  )
+  return <Shell user={session.user}>{children}</Shell>
 }

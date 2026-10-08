@@ -1,121 +1,73 @@
 'use client'
 
-import { useState } from 'react'
-import { formatCurrency } from '@/lib/utils'
-import type { MicroGigShape, SubscriptionPlan } from '@/types'
-import styles from '@/styles/micro.module.css'
-import { ApplyModal } from '@/components/micro-internships/ApplyModal'
+import React from 'react'
+import type { MicroGigShape } from '@/types'
 
-const tabs = ['overview', 'deliverables', 'company', 'alumni'] as const
-
-export function GigDetail({
-  gig,
-  plan,
-}: {
+interface GigDetailProps {
   gig: MicroGigShape
-  plan: SubscriptionPlan
-}) {
-  const [tab, setTab] = useState<(typeof tabs)[number]>('overview')
-  const [open, setOpen] = useState(false)
-  const spotsLeft = gig.spotsTotal - gig.spotsFilled
+  onClose: () => void
+  onApply: (gig: MicroGigShape) => void
+}
 
+export function GigDetail({ gig, onClose, onApply }: GigDetailProps) {
   return (
-    <>
-      <section className={styles.detailLayout}>
-        <div className={styles.detailBody}>
-          <div className={styles.heroPanel}>
-            <div className={styles.detailHeader}>
-              <div>
-                <div className={styles.strong}>{gig.company.name}</div>
-                <div className={styles.muted}>
-                  {gig.company.rating ? `${gig.company.rating} rating` : 'Hiring partner'} ·{' '}
-                  {gig.company.location || 'Remote'}
-                </div>
-              </div>
-              {gig.isPreHiring ? <span className={styles.badge}>Active Hiring</span> : null}
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-2xl rounded-[32px] border border-white/10 bg-[rgba(15,26,22,0.95)] p-8 shadow-2xl">
+        <div className="flex items-start justify-between">
+          <div>
+            <span className="text-xs font-semibold uppercase text-emerald-400">
+              {typeof gig.company === 'string' ? gig.company : gig.company?.name || 'Company'}
+            </span>
+            <h2 className="mt-1 text-2xl font-bold text-white">{gig.title}</h2>
+          </div>
+          <button onClick={onClose} className="rounded-full p-2 text-white/60 hover:text-white">✕</button>
+        </div>
 
-            <h1 className={styles.title}>{gig.title}</h1>
+        <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">{gig.description}</p>
 
-            <div className={styles.detailTabs}>
-              {tabs.map((item) => (
-                <button
-                  key={item}
-                  className={tab === item ? styles.button : styles.buttonSubtle}
-                  onClick={() => setTab(item)}
-                >
-                  {item}
-                </button>
+        <div className="mt-6 space-y-4">
+          <div>
+            <h4 className="text-xs font-semibold uppercase text-white/80">Required Tech Stack</h4>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {gig.skills.map((s) => (
+                <span key={s} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-white">
+                  {s}
+                </span>
               ))}
-            </div>
-
-            <div className={styles.tagRow}>
-              <span className={styles.statusTag}>{gig.duration} days</span>
-              <span className={styles.statusTag}>{formatCurrency(gig.pay)}</span>
-              <span className={styles.statusTag}>{gig.location}</span>
             </div>
           </div>
 
-          {tab === 'overview' ? (
-            <div className={styles.card}>
-              <div className={styles.copy}>{gig.description}</div>
-              <div className={styles.strong}>Skills you will use</div>
-              <div className={styles.skillRow}>
-                {gig.skills.map((skill) => (
-                  <span key={skill} className={styles.skillTag}>
-                    {skill}
-                  </span>
-                ))}
-              </div>
+          <div className="grid grid-cols-3 gap-4 border-y border-white/10 py-4 text-xs">
+            <div>
+              <span className="block text-[var(--text-secondary)]">Stipend</span>
+              <span className="text-base font-semibold text-emerald-400">${gig.pay.toLocaleString()}</span>
             </div>
-          ) : null}
-
-          {tab === 'deliverables' ? (
-            <div className={styles.card}>
-              <div className={styles.strong}>What you will build</div>
-              <ul>
-                <li>Ship the core outcome described in the brief within {gig.duration} days.</li>
-                <li>Share updates clearly and hand over working output with notes.</li>
-                <li>Leave behind a clean implementation the full-time team can extend.</li>
-              </ul>
+            <div>
+              <span className="block text-[var(--text-secondary)]">Duration</span>
+              <span className="text-base font-semibold text-white">{gig.duration} Weeks</span>
             </div>
-          ) : null}
-
-          {tab === 'company' ? (
-            <div className={styles.card}>
-              <div className={styles.strong}>Company context</div>
-              <div className={styles.copy}>
-                {gig.company.name} is using this micro-internship as a high-signal way to evaluate shipping quality before full-time hiring decisions.
-              </div>
+            <div>
+              <span className="block text-[var(--text-secondary)]">Location</span>
+              <span className="text-base font-semibold text-white">{gig.location}</span>
             </div>
-          ) : null}
-
-          {tab === 'alumni' ? (
-            <div className={styles.card}>
-              <div className={styles.strong}>People who did this gig</div>
-              <div className={styles.notice}>3 out of 5 recent completions converted to full-time offers here.</div>
-            </div>
-          ) : null}
+          </div>
         </div>
 
-        <aside className={styles.applyBox}>
-          <div className={styles.strong}>{formatCurrency(gig.pay)}</div>
-          <div className={styles.muted}>{gig.duration} days · {gig.location}</div>
-          <div className={styles.muted}>Spots left: {spotsLeft} of {gig.spotsTotal}</div>
-          <button className={styles.button} onClick={() => setOpen(true)}>
+        <div className="mt-8 flex justify-end gap-4">
+          <button onClick={onClose} className="rounded-xl border border-white/10 px-5 py-2.5 text-xs text-white hover:bg-white/5">
+            Close
+          </button>
+          <button
+            onClick={() => {
+              onClose()
+              onApply(gig)
+            }}
+            className="rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-semibold text-black hover:bg-emerald-400"
+          >
             Apply Now
           </button>
-          <button className={styles.buttonGhost}>Save Gig</button>
-          {gig.isPreHiring ? (
-            <div className={styles.notice}>
-              Pre-Hiring Signal: this company currently has {gig.activeRoles || 1} open full-time roles.
-            </div>
-          ) : null}
-          <div className={styles.muted}>REXION takes 10% on completion. You receive {formatCurrency(Math.round(gig.pay * 0.9))}.</div>
-        </aside>
-      </section>
-
-      <ApplyModal gig={gig} open={open} plan={plan} onClose={() => setOpen(false)} />
-    </>
+        </div>
+      </div>
+    </div>
   )
 }

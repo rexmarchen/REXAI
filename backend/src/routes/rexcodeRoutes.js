@@ -1,10 +1,14 @@
 import express from 'express'
+import { generateSite, getSite } from '../controllers/rexcodeController.js'
 import { protect } from '../middleware/authMiddleware.js'
-import { generateCode, getGeneratedSites } from '../controllers/rexcodeController.js'
+import { validate } from '../middleware/validationMiddleware.js'
+import { rexcodePromptSchema } from '../utils/validators.js'
 
 const router = express.Router()
 
-router.post('/generate', protect, generateCode)
-router.get('/sites', protect, getGeneratedSites)
+router.use(protect)
+
+router.post('/generate', validate(rexcodePromptSchema), generateSite)
+router.get('/site/:siteId', getSite)
 
 export default router

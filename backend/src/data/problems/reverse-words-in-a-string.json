@@ -1,0 +1,136 @@
+{
+ "slug": "reverse-words-in-a-string",
+ "title": "Reverse Words in a String",
+ "difficulty": "MEDIUM",
+ "topics": [
+  "String",
+  "Two Pointers"
+ ],
+ "companies": [],
+ "functionName": "reverseWords",
+ "checker": "EXACT",
+ "xp": 60,
+ "statement": "Given a string `s`, reverse the order of its words. Words are separated by one or more spaces. Return the words in reverse order joined by a single space, with no leading or trailing spaces.\n\nExample 1:\nInput: s = \"the sky is blue\"\nOutput: \"blue is sky the\"\n\nExample 2:\nInput: s = \"  hello world  \"\nOutput: \"world hello\"",
+ "constraints": "1 <= s.length <= 10^4\ns contains at least one word.",
+ "starterCode": {
+  "python": "def reverseWords(s):\n    # Write your solution here\n    pass\n",
+  "javascript": "function reverseWords(s) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def reverseWords(s):\n    return ' '.join(reversed(s.split()))\n"
+ },
+ "tests": [
+  {
+   "input": [
+    "the sky is blue"
+   ],
+   "expected": "blue is sky the",
+   "isSample": true
+  },
+  {
+   "input": [
+    "  hello world  "
+   ],
+   "expected": "world hello",
+   "isSample": true
+  },
+  {
+   "input": [
+    "a"
+   ],
+   "expected": "a",
+   "isSample": false
+  },
+  {
+   "input": [
+    "  a   b  "
+   ],
+   "expected": "b a",
+   "isSample": false
+  },
+  {
+   "input": [
+    "hi "
+   ],
+   "expected": "hi",
+   "isSample": false
+  },
+  {
+   "input": [
+    "  the Go x Go  "
+   ],
+   "expected": "Go x Go the",
+   "isSample": false
+  },
+  {
+   "input": [
+    "  abc  Go  Go   the   Go"
+   ],
+   "expected": "Go the Go Go abc",
+   "isSample": false
+  },
+  {
+   "input": [
+    " x Go the   abc"
+   ],
+   "expected": "abc the Go x",
+   "isSample": false
+  },
+  {
+   "input": [
+    " Go Go x the hi"
+   ],
+   "expected": "hi the x Go Go",
+   "isSample": false
+  },
+  {
+   "input": [
+    " hi  hi  "
+   ],
+   "expected": "hi hi",
+   "isSample": false
+  },
+  {
+   "input": [
+    " the Go x   x   abc  "
+   ],
+   "expected": "abc x x Go the",
+   "isSample": false
+  },
+  {
+   "input": [
+    "  the  "
+   ],
+   "expected": "the",
+   "isSample": false
+  },
+  {
+   "input": [
+    "the   the   hi"
+   ],
+   "expected": "hi the the",
+   "isSample": false
+  },
+  {
+   "input": [
+    "Go"
+   ],
+   "expected": "Go",
+   "isSample": false
+  },
+  {
+   "input": [
+    "x   Go  the the  the  "
+   ],
+   "expected": "the the the Go x",
+   "isSample": false
+  },
+  {
+   "input": [
+    "hi  the  "
+   ],
+   "expected": "the hi",
+   "isSample": false
+  }
+ ]
+}

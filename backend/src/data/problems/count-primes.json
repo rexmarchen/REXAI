@@ -1,0 +1,157 @@
+{
+ "slug": "count-primes",
+ "title": "Count Primes",
+ "difficulty": "MEDIUM",
+ "topics": [
+  "Math",
+  "Sieve"
+ ],
+ "companies": [],
+ "functionName": "countPrimes",
+ "checker": "EXACT",
+ "xp": 60,
+ "statement": "Given an integer `n`, return the number of prime numbers strictly less than `n`.\n\nExample 1:\nInput: n = 10\nOutput: 4\n\nExample 2:\nInput: n = 0\nOutput: 0",
+ "constraints": "0 <= n <= 5 * 10^6",
+ "starterCode": {
+  "python": "def countPrimes(n):\n    # Write your solution here\n    pass\n",
+  "javascript": "function countPrimes(n) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def countPrimes(n):\n    if n < 3: return 0\n    s = bytearray([1]) * n; s[0] = s[1] = 0\n    for i in range(2, int(n ** 0.5) + 1):\n        if s[i]: s[i*i::i] = bytearray(len(range(i*i, n, i)))\n    return sum(s)\n"
+ },
+ "tests": [
+  {
+   "input": [
+    10
+   ],
+   "expected": 4,
+   "isSample": true
+  },
+  {
+   "input": [
+    0
+   ],
+   "expected": 0,
+   "isSample": true
+  },
+  {
+   "input": [
+    1
+   ],
+   "expected": 0,
+   "isSample": true
+  },
+  {
+   "input": [
+    2
+   ],
+   "expected": 0,
+   "isSample": false
+  },
+  {
+   "input": [
+    3
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    100
+   ],
+   "expected": 25,
+   "isSample": false
+  },
+  {
+   "input": [
+    128
+   ],
+   "expected": 31,
+   "isSample": false
+  },
+  {
+   "input": [
+    189
+   ],
+   "expected": 42,
+   "isSample": false
+  },
+  {
+   "input": [
+    107
+   ],
+   "expected": 27,
+   "isSample": false
+  },
+  {
+   "input": [
+    54
+   ],
+   "expected": 16,
+   "isSample": false
+  },
+  {
+   "input": [
+    16
+   ],
+   "expected": 6,
+   "isSample": false
+  },
+  {
+   "input": [
+    29
+   ],
+   "expected": 9,
+   "isSample": false
+  },
+  {
+   "input": [
+    58
+   ],
+   "expected": 16,
+   "isSample": false
+  },
+  {
+   "input": [
+    11
+   ],
+   "expected": 4,
+   "isSample": false
+  },
+  {
+   "input": [
+    199
+   ],
+   "expected": 45,
+   "isSample": false
+  },
+  {
+   "input": [
+    73
+   ],
+   "expected": 20,
+   "isSample": false
+  },
+  {
+   "input": [
+    21
+   ],
+   "expected": 8,
+   "isSample": false
+  },
+  {
+   "input": [
+    155
+   ],
+   "expected": 36,
+   "isSample": false
+  },
+  {
+   "input": [
+    1000000
+   ],
+   "expected": 78498,
+   "isSample": false
+  }
+ ]
+}

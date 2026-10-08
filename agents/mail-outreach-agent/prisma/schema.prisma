@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MailboxProvider {
+  GOOGLE
+  MICROSOFT
+}
+
+enum MailboxStatus {
+  ACTIVE       // healthy, sending normally
+  WARMING_UP   // new connection, ramping daily cap
+  PAUSED       // auto-paused, e.g. bounce/complaint threshold breached
+  DISCONNECTED // OAuth token revoked/invalid, needs reauthorization
+}
+
+enum SendStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED   // inferred: no bounce seen after a grace window
+  OPENED
+  CLICKED
+  REPLIED
+  BOUNCED_SOFT
+  BOUNCED_HARD
+  COMPLAINED
+  FAILED      // permanent failure not related to the recipient (e.g. auth error)
+  CANCELED    // canceled before send, e.g. lead unsubscribed mid-queue
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  createdAt DateTime   @default(now())
+  mailboxes Mailbox[]
+  campaigns Campaign[]
+  leads     Lead[]
+}
+
+// One row per connected sending identity (a real Gmail or Outlook mailbox).
+// Rate limiting, warm-up state and health are tracked per mailbox, not globally.
+model Mailbox {
+  id       String          @id @default(cuid())
+  userId   String
+  user     User            @relation(fields: [userId], references: [id])
+  provider MailboxProvider
+  email    String
+  status   MailboxStatus   @default(WARMING_UP)
+
+  // OAuth tokens — store ENCRYPTED at rest (see src/lib/crypto.ts). Never log these.
+  accessTokenEnc  String
+  refreshTokenEnc String
+  tokenExpiresAt  DateTime
+
+  // Warm-up / rate-limit state
+  connectedAt      DateTime @default(now())
+  dailyCap         Int      @default(20)
+  sentToday        Int      @default(0)
+  sentTodayResetAt DateTime @default(now())
+
+  // Health signals used for auto-pause
+  bounceCount    Int @default(0)
+  complaintCount Int @default(0)
+  sentTotal      Int @default(0)
+
+  lastSyncedHistoryId String? // Gmail historyId / Graph delta token cursor for polling
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  sends     Send[]
+  campaigns Campaign[]
+
+  @@unique([userId, email])
+  @@index([status])
+}
+
+model Lead {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  email      String
+  firstName  String?
+  lastName   String?
+  company    String?
+  title      String?
+  source     String?  // e.g. "apollo_api", "csv_upload", "manual"
+  verifyStatus String @default("unknown") // unknown | valid | risky | invalid | catch_all
+  createdAt  DateTime @default(now())
+
+  sends Send[]
+
+  @@unique([userId, email])
+  @@index([userId, verifyStatus])
+}
+
+// A global suppression list per user: never send to these addresses/domains again.
+model Suppression {
+  id        String   @id @default(cuid())
+  userId    String
+  value     String   // an email address or a full domain (prefixed "@domain.com")
+  reason    String   // unsubscribed | hard_bounce | complaint | manual
+  createdAt DateTime @default(now())
+
+  @@unique([userId, value])
+  @@index([userId])
+}
+
+model Campaign {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  mailboxId String
+  mailbox   Mailbox        @relation(fields: [mailboxId], references: [id])
+  name      String
+  subject   String
+  bodyHtml  String
+  status    CampaignStatus @default(DRAFT)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  sends Send[]
+}
+
+// One row per (lead, campaign) — this is the job queue's source of truth.
+// Idempotency key = (campaignId, leadId), enforced by the unique constraint,
+// so a retried or duplicated enqueue can never double-send.
+model Send {
+  id         String     @id @default(cuid())
+  campaignId String
+  campaign   Campaign   @relation(fields: [campaignId], references: [id])
+  leadId     String
+  lead       Lead       @relation(fields: [leadId], references: [id])
+  mailboxId  String
+  mailbox    Mailbox    @relation(fields: [mailboxId], references: [id])
+
+  status       SendStatus @default(QUEUED)
+  attempts     Int        @default(0)
+  lastError    String?
+
+  providerMessageId String? // Gmail message id / Graph message id, for reply/bounce matching
+  rfcMessageId      String? // RFC5322 Message-ID header, for threading and bounce parsing
+
+  queuedAt   DateTime  @default(now())
+  sentAt     DateTime?
+  openedAt   DateTime?
+  clickedAt  DateTime?
+  repliedAt  DateTime?
+  bouncedAt  DateTime?
+
+  @@unique([campaignId, leadId])
+  @@index([status])
+  @@index([mailboxId, status])
+}

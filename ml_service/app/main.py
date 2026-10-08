@@ -154,6 +154,7 @@ app.add_middleware(
 
 
 @app.get("/health", tags=["system"])
+@app.get("/api/health", tags=["system"])
 async def health():
     return {
         "status": "ok",

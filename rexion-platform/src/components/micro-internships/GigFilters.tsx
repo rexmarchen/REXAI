@@ -1,103 +1,83 @@
 'use client'
 
-import type { GigLocation } from '@/types'
-import styles from '@/styles/micro.module.css'
+import React from 'react'
 
 export interface GigFilterState {
   domain: string
   duration: string
-  location: GigLocation | 'all'
-  status: 'all' | 'open' | 'closing'
+  location: string
+  status: string
   payMin: number
   payMax: number
 }
 
-export function GigFilters({
-  filters,
-  onChange,
-}: {
+interface GigFiltersProps {
   filters: GigFilterState
-  onChange: (next: GigFilterState) => void
-}) {
+  onChange: (filters: GigFilterState) => void
+}
+
+export function GigFilters({ filters, onChange }: GigFiltersProps) {
   return (
-    <aside className={styles.sidebar}>
-      <div>
-        <div className={styles.strong}>Filters</div>
-        <div className={styles.muted}>Narrow the marketplace to the gigs you can realistically close this week.</div>
-      </div>
+    <aside className="space-y-6 rounded-[24px] border border-white/8 bg-[rgba(15,26,22,0.8)] p-6 shadow-soft">
+      <h2 className="text-lg font-semibold text-white">Filter Micro-Gigs</h2>
 
-      <div className={styles.field}>
-        <label>Domain</label>
-        <select value={filters.domain} onChange={(event) => onChange({ ...filters, domain: event.target.value })}>
-          <option value="all">All domains</option>
-          <option value="Frontend">Frontend</option>
-          <option value="Backend">Backend</option>
-          <option value="Design">Design</option>
-          <option value="Marketing">Marketing</option>
-          <option value="Data">Data</option>
-          <option value="Mobile">Mobile</option>
-        </select>
-      </div>
+      <div className="space-y-4 text-xs">
+        <div>
+          <label className="block mb-2 font-medium text-[var(--text-secondary)]">Domain</label>
+          <select
+            value={filters.domain}
+            onChange={(e) => onChange({ ...filters, domain: e.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+          >
+            <option value="all">All Domains</option>
+            <option value="Frontend">Frontend Engineering</option>
+            <option value="Backend">Backend & Infrastructure</option>
+            <option value="AI/ML">AI & Machine Learning</option>
+            <option value="Fullstack">Fullstack Development</option>
+            <option value="Data">Data Engineering</option>
+          </select>
+        </div>
 
-      <div className={styles.field}>
-        <label>Duration</label>
-        <select value={filters.duration} onChange={(event) => onChange({ ...filters, duration: event.target.value })}>
-          <option value="all">Any duration</option>
-          <option value="7">7 days</option>
-          <option value="10">10 days</option>
-          <option value="14">14 days</option>
-        </select>
-      </div>
+        <div>
+          <label className="block mb-2 font-medium text-[var(--text-secondary)]">Location</label>
+          <select
+            value={filters.location}
+            onChange={(e) => onChange({ ...filters, location: e.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+          >
+            <option value="all">All Locations</option>
+            <option value="Remote">Remote</option>
+            <option value="Hybrid">Hybrid</option>
+            <option value="On-site">On-site</option>
+          </select>
+        </div>
 
-      <div className={styles.field}>
-        <label>Location</label>
-        <select
-          value={filters.location}
-          onChange={(event) => onChange({ ...filters, location: event.target.value as GigLocation | 'all' })}
-        >
-          <option value="all">All locations</option>
-          <option value="remote">Remote</option>
-          <option value="hybrid">Hybrid</option>
-          <option value="onsite">On-site</option>
-        </select>
-      </div>
+        <div>
+          <label className="block mb-2 font-medium text-[var(--text-secondary)]">Duration (Weeks)</label>
+          <select
+            value={filters.duration}
+            onChange={(e) => onChange({ ...filters, duration: e.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+          >
+            <option value="all">Any Duration</option>
+            <option value="2">2 Weeks</option>
+            <option value="3">3 Weeks</option>
+            <option value="4">4 Weeks</option>
+          </select>
+        </div>
 
-      <div className={styles.field}>
-        <label>Status</label>
-        <select
-          value={filters.status}
-          onChange={(event) =>
-            onChange({ ...filters, status: event.target.value as GigFilterState['status'] })
-          }
-        >
-          <option value="all">All</option>
-          <option value="open">Open</option>
-          <option value="closing">Closing soon</option>
-        </select>
-      </div>
-
-      <div className={styles.field}>
-        <label>Minimum pay</label>
-        <input
-          type="number"
-          value={filters.payMin}
-          min={8000}
-          max={25000}
-          step={1000}
-          onChange={(event) => onChange({ ...filters, payMin: Number(event.target.value) })}
-        />
-      </div>
-
-      <div className={styles.field}>
-        <label>Maximum pay</label>
-        <input
-          type="number"
-          value={filters.payMax}
-          min={8000}
-          max={25000}
-          step={1000}
-          onChange={(event) => onChange({ ...filters, payMax: Number(event.target.value) })}
-        />
+        <div>
+          <label className="block mb-2 font-medium text-[var(--text-secondary)]">Stipend Range (${filters.payMin} - ${filters.payMax})</label>
+          <input
+            type="range"
+            min="5000"
+            max="30000"
+            step="1000"
+            value={filters.payMax}
+            onChange={(e) => onChange({ ...filters, payMax: Number(e.target.value) })}
+            className="w-full accent-emerald-500"
+          />
+        </div>
       </div>
     </aside>
   )

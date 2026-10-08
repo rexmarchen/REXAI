@@ -1,74 +1,38 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import type { LeaderboardEntry } from '@/types'
-import styles from '@/styles/micro.module.css'
+import React from 'react'
 
-export function Leaderboard({
-  entries,
-  domain,
-  onDomainChange,
-}: {
-  entries: LeaderboardEntry[]
-  domain: string
-  onDomainChange: (domain: string) => void
-}) {
-  const filtered = domain === 'all' ? entries : entries.filter((entry) => entry.domain === domain)
+export interface LeaderboardEntry {
+  rank: number
+  name: string
+  points: number
+  completedGigs: number
+  avatarUrl?: string
+}
 
+export function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
   return (
-    <section className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Fastest Micro-Gig to Full-Time Hall of Fame</h1>
-          <p className={styles.copy}>The leaderboard rewards shipping speed, conversion velocity, and real money earned before the final offer.</p>
-        </div>
-      </div>
-
-      <div className={styles.leaderboardCard}>
-        <div className={styles.tabs}>
-          {['all', 'Frontend', 'Data', 'Design'].map((value) => (
-            <button
-              key={value}
-              className={domain === value ? styles.button : styles.buttonSubtle}
-              onClick={() => onDomainChange(value)}
-            >
-              {value === 'all' ? 'All Domains' : value}
-            </button>
-          ))}
-        </div>
-
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Name</th>
-              <th>College</th>
-              <th>Gig</th>
-              <th>Company</th>
-              <th>Days to Offer</th>
-              <th>Earnings</th>
+    <div className="overflow-hidden rounded-[24px] border border-white/8 bg-[rgba(15,26,22,0.8)] shadow-soft">
+      <table className="w-full text-left text-xs">
+        <thead className="border-b border-white/8 bg-black/40 text-[var(--text-secondary)] uppercase font-semibold">
+          <tr>
+            <th className="px-6 py-4">Rank</th>
+            <th className="px-6 py-4">Developer</th>
+            <th className="px-6 py-4">Sprints Completed</th>
+            <th className="px-6 py-4 text-right">Reputation Points</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/6 text-white">
+          {entries.map((entry) => (
+            <tr key={entry.rank} className="hover:bg-white/5 transition-colors">
+              <td className="px-6 py-4 font-bold text-emerald-400">#{entry.rank}</td>
+              <td className="px-6 py-4 font-semibold">{entry.name}</td>
+              <td className="px-6 py-4 text-[var(--text-secondary)]">{entry.completedGigs} Sprints</td>
+              <td className="px-6 py-4 text-right font-mono text-emerald-400">{entry.points.toLocaleString()} pts</td>
             </tr>
-          </thead>
-          <tbody>
-            {filtered.map((entry, index) => (
-              <motion.tr
-                key={entry.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05, duration: 0.2 }}
-              >
-                <td>{entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}</td>
-                <td>{entry.name}</td>
-                <td>{entry.college}</td>
-                <td>{entry.gig}</td>
-                <td>{entry.company}</td>
-                <td>{entry.daysToOffer} days</td>
-                <td>₹{entry.earnings.toLocaleString('en-IN')}</td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

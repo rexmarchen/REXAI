@@ -1,21 +1,55 @@
 import type { Metadata } from 'next'
-import { Inter, Manrope } from 'next/font/google'
+import { Space_Grotesk, Inter, IBM_Plex_Mono } from 'next/font/google'
 import { AppProviders } from '@/components/providers/AppProviders'
+import { getAppUrl } from '@/lib/runtime'
 import './globals.css'
 
-const inter = Inter({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--font-sans',
-})
-
-const manrope = Manrope({
-  subsets: ['latin'],
+  weight: ['500', '700'],
   variable: '--font-display',
 })
 
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-body',
+})
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono',
+})
+
+const appUrl = getAppUrl()
+
 export const metadata: Metadata = {
-  title: 'REXION AI',
+  metadataBase: new URL(appUrl),
+  title: {
+    default: 'REXION AI',
+    template: '%s | REXION AI',
+  },
   description: 'Premium AI job-hacking platform for outreach, matching, and micro-internship conversion.',
+  applicationName: 'REXION AI',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'REXION AI',
+    description: 'Premium AI job-hacking platform for outreach, matching, and micro-internship conversion.',
+    url: appUrl,
+    siteName: 'REXION AI',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'REXION AI',
+    description: 'Premium AI job-hacking platform for outreach, matching, and micro-internship conversion.',
+  },
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export default function RootLayout({
@@ -25,7 +59,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${manrope.variable}`}>
+      <body className={`${spaceGrotesk.variable} ${inter.variable} ${ibmPlexMono.variable}`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

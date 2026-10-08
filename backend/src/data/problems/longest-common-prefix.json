@@ -1,0 +1,194 @@
+{
+ "slug": "longest-common-prefix",
+ "title": "Longest Common Prefix",
+ "difficulty": "EASY",
+ "topics": [
+  "String"
+ ],
+ "companies": [],
+ "functionName": "longestCommonPrefix",
+ "checker": "EXACT",
+ "xp": 30,
+ "statement": "Write a function to find the longest common prefix string amongst an array of strings. If there is none, return an empty string.\n\nExample 1:\nInput: strs = [\"flower\",\"flow\",\"flight\"]\nOutput: \"fl\"\n\nExample 2:\nInput: strs = [\"dog\",\"racecar\",\"car\"]\nOutput: \"\"",
+ "constraints": "1 <= strs.length <= 200\n0 <= strs[i].length <= 200\nstrs[i] consists of lowercase English letters.",
+ "starterCode": {
+  "python": "def longestCommonPrefix(strs):\n    # Write your solution here\n    pass\n",
+  "javascript": "function longestCommonPrefix(strs) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def longestCommonPrefix(strs):\n    p = strs[0]\n    for s in strs[1:]:\n        while not s.startswith(p): p = p[:-1]\n    return p\n"
+ },
+ "tests": [
+  {
+   "input": [
+    [
+     "flower",
+     "flow",
+     "flight"
+    ]
+   ],
+   "expected": "fl",
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     "dog",
+     "racecar",
+     "car"
+    ]
+   ],
+   "expected": "",
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     "a"
+    ]
+   ],
+   "expected": "a",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "",
+     " "
+    ]
+   ],
+   "expected": "",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "baaba",
+     "baa",
+     "baabb",
+     "baaca",
+     "baa"
+    ]
+   ],
+   "expected": "baa",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "aab"
+    ]
+   ],
+   "expected": "aab",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "cb",
+     "c",
+     "c",
+     "aa",
+     "bb"
+    ]
+   ],
+   "expected": "",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "ac"
+    ]
+   ],
+   "expected": "ac",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "abba",
+     "ac",
+     "aa"
+    ]
+   ],
+   "expected": "a",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "a",
+     "",
+     "ab"
+    ]
+   ],
+   "expected": "",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "bb",
+     "bb",
+     "b"
+    ]
+   ],
+   "expected": "b",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "c",
+     "bca",
+     "ca",
+     "cbb"
+    ]
+   ],
+   "expected": "",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "abca",
+     "a"
+    ]
+   ],
+   "expected": "a",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "abac",
+     "abbc",
+     "acbc"
+    ]
+   ],
+   "expected": "a",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "abccb",
+     "abcaa",
+     "abbc"
+    ]
+   ],
+   "expected": "ab",
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     "b"
+    ]
+   ],
+   "expected": "b",
+   "isSample": false
+  }
+ ]
+}

@@ -1,59 +1,31 @@
-from __future__ import annotations
-
-from pathlib import Path
-from typing import Any, List
-
+import re
 import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-
-FALLBACK_CORPUS = [
-    "python machine learning tensorflow pytorch nlp data scientist",
-    "react javascript typescript html css frontend web developer",
-    "node express api microservices sql mongodb backend developer",
-    "docker kubernetes aws terraform ci cd devops engineer cloud",
-]
-
-
 class FeatureExtractor:
-    """Extract features from text using a TF-IDF vectorizer."""
+    def __init__(self, vectorizer_path: str = None):
+        self.vectorizer = None
+        if vectorizer_path:
+            self.vectorizer = joblib.load(vectorizer_path)
 
-    def __init__(self, vectorizer_path: str | Path):
-        """
-        Initialize feature extractor with a pre-trained vectorizer.
+    @staticmethod
+    def clean_text(text: str) -> str:
+        # Lowercase, remove special chars, extra spaces
+        text = text.lower()
+        text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+        text = re.sub(r'\s+', ' ', text).strip()
+        return text
 
-        Args:
-            vectorizer_path: Absolute path to the TF-IDF vectorizer joblib/pickle file
-        """
-        self.vectorizer_path = Path(vectorizer_path)
-        self.vectorizer = self._load_or_build_vectorizer()
+    def fit(self, texts, **kwargs):
+        self.vectorizer = TfidfVectorizer(**kwargs)
+        self.vectorizer.fit([self.clean_text(t) for t in texts])
+        return self
 
-    def _load_or_build_vectorizer(self) -> TfidfVectorizer:
-        try:
-            if self.vectorizer_path.exists():
-                loaded = joblib.load(self.vectorizer_path)
-                if hasattr(loaded, "transform") and hasattr(loaded, "vocabulary_"):
-                    return loaded
-        except Exception:
-            pass
+    def transform(self, texts):
+        if self.vectorizer is None:
+            raise ValueError("Vectorizer not fitted.")
+        cleaned = [self.clean_text(t) for t in texts]
+        return self.vectorizer.transform(cleaned)
 
-        vectorizer = TfidfVectorizer(
-            lowercase=True,
-            stop_words="english",
-            ngram_range=(1, 2),
-            max_features=2000,
-        )
-        vectorizer.fit(FALLBACK_CORPUS)
-        return vectorizer
-
-    def transform(self, texts: List[str]) -> Any:
-        """
-        Transform texts into feature vectors.
-
-        Args:
-            texts: List of text strings
-
-        Returns:
-            Feature vectors
-        """
-        return self.vectorizer.transform(texts)
+    def save(self, path):
+        joblib.dump(self.vectorizer, path)

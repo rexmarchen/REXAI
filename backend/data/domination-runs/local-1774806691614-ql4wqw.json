@@ -1,0 +1,47 @@
+{
+  "runId": "local-1774806691614-ql4wqw",
+  "mode": "local-fallback",
+  "createdAt": "2026-03-29T17:51:31.614Z",
+  "fallbackReason": "The requested webhook \"POST rexion/apply\" is not registered.",
+  "webhookUrl": "https://rexer.app.n8n.cloud/webhook/rexion/apply",
+  "payload": {
+    "source": "rexion-dashboard-one-click-mode",
+    "submitted_at": "2026-03-29T17:51:30.457Z",
+    "user_name": "REXION Admin",
+    "user_email": "admin@rexion.ai",
+    "user_phone": "+919317932859",
+    "target_role": "Frontend Engineer",
+    "resume_text": "%PDF-1.4 % ReportLab Generated PDF document http://www.reportlab.com 1 0 obj << /F1 2 0 R /F2 3 0 R >> endobj 2 0 obj << /BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font >> endobj 3 0 obj << /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font >> endobj 4 0 obj << /Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources << /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ] >> /Rotate 0 /Trans << >> /Type /Page >> endobj 5 0 obj << /PageMode /UseNone /Pages 7 0 R /Type /Catalog >> endobj 6 0 obj << /Author (\\(anonymous\\)) /CreationDate (D:20260227093117+00'00') /Creator (\\(unspecified\\)) /Keywords () /ModDate (D:20260227093117+00'00') /Producer (ReportLab PDF Library - www.reportlab.com) /Subject (\\(unspecified\\)) /Title (\\(anonymous\\)) /Trapped /False >> endobj 7 0 obj << /Count 1 /Kids [ 4 0 R ] /Type /Pages >> endobj 8 0 obj << /Filter [ /ASCII85Decode /FlateDecode ] /Length 1304 >> stream GatUs?!$#V&;KZP'm7Xb!2_ga+'rg&\\.]+4+n;Y?a.\"E_&5CShVk`:Dq=.B(^^nGFS?/6U5UTi5lE.P,,[fSh<57H%i&H>+;Z_V=F:6%O3Y7:eNt2.P+IanY\"6_hB3uAA2GR#j'eUh$Gi4\\2s41m;cXXK9^hMP4E&aAu#`3BNV*mLD??%cRf@,d/16$*@Z+4,:[!QP(mYICd9r>^0.M0t7Nf3%g$<qV+\\<m/fkOraYIMe2]3f,qT/aP\\F>Q6PK^n9IPcf?ZZcg3<'<@`%F?L(3Z\"6E47P-K5<&6n)3lNuQ/[P2GkVO<6bl]h<CZE1#^AeH=@\\pA.-$/kWAr0&=@7?Cq\"%(gLBl@gK9`cb8T;=pVTUKV3Z_g3Ybm;dP]f.QVX=4Ra=WEN:.KjD_sXGUca!_IK=+i-pD.c=?t8(AJF<3oPA.+j\".n-7S(t!Cb412G6%mo%E^s>&:T=PF/=;j96=E*5%rN&s$;g3>>8Ci`XZ_n30EBr'Kklid6]Pc.Co1SuXboP5s2K?cZuW[bg4.6H8\"rP&j/+01V&JN\"pY[Od9\"sDJ`.*Yn#UKhK?=QCugYk>Qc:RlITE+%dO,MJ[)N9rn`pJUZn0-MioZ:E<MIQ[F?'U@h1,LA[90pL>U\"Y83LIR\\ZXZuku=sI572[s9W+sg-tsVQ`12&?MDe-gMcD?miu4>%]-5W0;bRu8,+XX>+\\n'P0G0\"B8H)JDbh^fdgg)-J;FEMWkQ':j^ClcGlA(KSs.Yh!ge=:;S*<Z[s*Zp+$NB_:T*G;6aKLNjR(K-bVE=buFrfoqpm)Ip+jUfFhs!WGa\\22.ciNT[\";-]]GkK)KE7:Ns[;RJ\\9dDBrMqi][I0=V0Fe#<dIma'\\36(Zj?@(Y?^MS;S\\g;fuY@AN0hk<c&^Ok2e[;*nN^5:Mm1QG]kIJRlGD%d^?]\"kRA;r.0[r;-:T&ELBH@'A(g[+b;Aek9ijNGc#u9h16oRj6%C_A(jmC\"b!M.LiSB^KRS-d6b:roGFO\"Jo$]mI>f?e/(G9iD1K&P=NfeCI::lJ6]'.3b1^t>CH%$+8Hk:_\"_0En,UUEg`7>/+;kmc;o\"PUn'h)$a<5(/d<*l0f=h.Ym(fJOi)3%\"=HQO?EO-=5U.&rgrkeL<t[+D\\YVu2=Q-8,A$%SYb<OS/D473V@i+n_A(drZsLO>3RZ\\(XMQfB<V-2\"a:fAro\"C-S(\"KekrTl]be#,dL4T)>FD:Qd5H<(d_3te*B!eZX-\"4Wrs#lnM6Y@*e[3V_]@Bc9ZhR(%WtJ>7@D&3*.hB4,&#'kU4\\1=2CE*h5!NS&X3r~>endstream endobj xref 0 9 0000000000 65535 f 0000000073 00000 n 0000000114 00000 n 0000000221 00000 n 0000000333 00000 n 0000000536 00000 n 0000000604 00000 n 0000000887 00000 n 0000000946 00000 n trailer << /ID [<e9f42a387da6a67930e0c483ec306851><e9f42a387da6a67930e0c483ec306851>] % ReportLab generated PDF document -- digest (http://www.reportlab.com) /Info 6 0 R /Root 5 0 R /Size 9 >> startxref 2341 %%EOF",
+    "resume_filename": "Anshu_Pal_Resume.pdf",
+    "resume_mime_type": "application/pdf",
+    "preferences": {
+      "job_type": "full-time",
+      "location": "Remote",
+      "experience_level": "fresher",
+      "priority_notes": null
+    },
+    "rexion": {
+      "user_id": "4",
+      "role": "admin",
+      "plan": "elite"
+    }
+  },
+  "resumeProfile": {
+    "name": "",
+    "skills": [
+      "TypeScript",
+      "Machine Learning",
+      "C#"
+    ],
+    "education": "%PDF-1.4 % ReportLab Generated PDF document http://www.reportlab.com 1 0 obj << /F1 2 0 R /F2 3 0 R >> endobj 2 0 obj << /BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font >> endobj 3 0 obj << /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font >> endobj 4 0 obj << /Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources << /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ] >> /Rotate 0 /Trans << >> /Type /Page >> endobj 5 0 obj << /PageMode /UseNone /Pages 7 0 R /Type /Catalog >> endobj 6 0 obj << /Author (\\(anonymous\\)) /CreationDate (D:20260227093117+00'00') /Creator (\\(unspecified\\)) /Keywords () /ModDate (D:20260227093117+00'00') /Producer (ReportLab PDF Library - www.reportlab.com) /Subject (\\(unspecified\\)) /Title (\\(anonymous\\)) /Trapped /False >> endobj 7 0 obj << /Count 1 /Kids [ 4 0 R ] /Type /Pages >> endobj 8 0 obj << /Filter [ /ASCII85Decode /FlateDecode ] /Length 1304 >> stream GatUs?!$#V&;KZP'm7Xb!2_ga+'rg&\\.]+4+n;Y?a.\"E_&5CShVk`:Dq=.B(^^nGFS?/6U5UTi5lE.P,,[fSh<57H%i&H>+;Z_V=F:6%O3Y7:eNt2.P+IanY\"6_hB3uAA2GR#j'eUh$Gi4\\2s41m;cXXK9^hMP4E&aAu#`3BNV*mLD??%cRf@,d/16$*@Z+4,:[!QP(mYICd9r>^0.M0t7Nf3%g$<qV+\\<m/fkOraYIMe2]3f,qT/aP\\F>Q6PK^n9IPcf?ZZcg3<'<@`%F?L(3Z\"6E47P-K5<&6n)3lNuQ/[P2GkVO<6bl]h<CZE1#^AeH=@\\pA.-$/kWAr0&=@7?Cq\"%(gLBl@gK9`cb8T;=pVTUKV3Z_g3Ybm;dP]f.QVX=4Ra=WEN:.KjD_sXGUca!_IK=+i-pD.c=?t8(AJF<3oPA.+j\".n-7S(t!Cb412G6%mo%E^s>&:T=PF/=;j96=E*5%rN&s$;g3>>8Ci`XZ_n30EBr'Kklid6]Pc.Co1SuXboP5s2K?cZuW[bg4.6H8\"rP&j/+01V&JN\"pY[Od9\"sDJ`.*Yn#UKhK?=QCugYk>Qc:RlITE+%dO,MJ[)N9rn`pJUZn0-MioZ:E<MIQ[F?'U@h1,LA[90pL>U\"Y83LIR\\ZXZuku=sI572[s9W+sg-tsVQ`12&?MDe-gMcD?miu4>%]-5W0;bRu8,+XX>+\\n'P0G0\"B8H)JDbh^fdgg)-J;FEMWkQ':j^ClcGlA(KSs.Yh!ge=:;S*<Z[s*Zp+$NB_:T*G;6aKLNjR(K-bVE=buFrfoqpm)Ip+jUfFhs!WGa\\22.ciNT[\";-]]GkK)KE7:Ns[;RJ\\9dDBrMqi][I0=V0Fe#<dIma'\\36(Zj?@(Y?^MS;S\\g;fuY@AN0hk<c&^Ok2e[;*nN^5:Mm1QG]kIJRlGD%d^?]\"kRA;r.0[r;-:T&ELBH@'A(g[+b;Aek9ijNGc#u9h16oRj6%C_A(jmC\"b!M.LiSB^KRS-d6b:roGFO\"Jo$]mI>f?e/(G9iD1K&P=NfeCI::lJ6]'.3b1^t>CH%$+8Hk:_\"_0En,UUEg`7>/+;kmc;o\"PUn'h)$a<5(/d<*l0f=h.Ym(fJOi)3%\"=HQO?EO-=5U.&rgrkeL<t[+D\\YVu2=Q-8,A$%SYb<OS/D473V@i+n_A(drZsLO>3RZ\\(XMQfB<V-2\"a:fAro\"C-S(\"KekrTl]be#,dL4T)>FD:Qd5H<(d_3te*B!eZX-\"4Wrs#lnM6Y@*e[3V_]@Bc9ZhR(%WtJ>7@D&3*.hB4,&#'kU4\\1=2CE*h5!NS&X3r~>endstream endobj xref 0 9 0000000000 65535 f 0000000073 00000 n 0000000114 00000 n 0000000221 00000 n 0000000333 00000 n 0000000536 00000 n 0000000604 00000 n 0000000887 00000 n 0000000946 00000 n trailer << /ID [<e9f42a387da6a67930e0c483ec306851><e9f42a387da6a67930e0c483ec306851>] % ReportLab generated PDF document -- digest (http://www.reportlab.com) /Info 6 0 R /Root 5 0 R /Size 9 >> startxref 2341 %%EOF",
+    "certifications": [],
+    "projects": [],
+    "experience_years": 0,
+    "predicted_role": "Machine Learning Engineer"
+  },
+  "summary": {
+    "totalJobsFound": 21,
+    "totalApplied": 8,
+    "avgScore": 68
+  }
+}

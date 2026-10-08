@@ -1,119 +1,20 @@
-from __future__ import annotations
+from pydantic_settings import BaseSettings
+from pydantic import Field
 
-import os
-from dataclasses import dataclass
-from pathlib import Path
+class Settings(BaseSettings):
+    app_name: str = "Rexion ML Service"
+    debug: bool = False
+    model_path: str = "data/models/career_model.pkl"
+    vectorizer_path: str = "data/models/tfidf_vectorizer.pkl"
+    
+    # JSearch / RapidAPI settings
+    rapidapi_key: str = Field(default="", env="RAPIDAPI_KEY")
+    rapidapi_host: str = Field(default="jsearch.p.rapidapi.com", env="RAPIDAPI_HOST")
+    
+    log_level: str = "INFO"
 
-from dotenv import load_dotenv
-
-
-# Resolve project root as <repo>/ml_service
-APP_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = APP_DIR.parent
-REPO_ROOT = PROJECT_ROOT.parent
-DATA_DIR = PROJECT_ROOT / "data"
-MODELS_DIR = DATA_DIR / "models"
-UPLOADS_DIR = PROJECT_ROOT / "uploads"
-
-# Load env in precedence order, lowest -> highest priority.
-load_dotenv(REPO_ROOT / ".env", override=False)
-load_dotenv(REPO_ROOT / "backend" / "legacy" / "rexion-backend" / ".env", override=False)
-load_dotenv(REPO_ROOT / "backend" / ".env", override=False)
-load_dotenv(PROJECT_ROOT / ".env", override=True)
-
-
-def _get_env(*keys: str) -> str | None:
-    for key in keys:
-        value = os.getenv(key)
-        if value and value.strip():
-            return value.strip()
-    return None
-
-
-def _as_bool(value: str | None, default: bool) -> bool:
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _as_float(value: str | None, default: float) -> float:
-    if value is None:
-        return default
-    try:
-        numeric = float(value.strip())
-    except Exception:
-        return default
-    return numeric if numeric > 0 else default
-
-
-def _as_int(value: str | None, default: int) -> int:
-    if value is None:
-        return default
-    try:
-        numeric = int(str(value).strip())
-    except Exception:
-        return default
-    return numeric if numeric > 0 else default
-
-
-def _career_backend_default() -> str:
-    explicit = _get_env("CAREER_PREDICTION_BACKEND")
-    if explicit:
-        normalized = explicit.strip().lower()
-    elif _as_bool(os.getenv("USE_BERT_RESUME_CLASSIFIER"), False):
-        normalized = "auto"
-    else:
-        normalized = "production"
-    if normalized in {"production", "bert", "auto"}:
-        return normalized
-    return "production"
-
-
-@dataclass(frozen=True)
-class Settings:
-    model_dir: Path = MODELS_DIR
-    career_model_path: Path = MODELS_DIR / "career_model.pkl"
-    tfidf_vectorizer_path: Path = MODELS_DIR / "tfidf_vectorizer.pkl"
-    career_prediction_backend: str = _career_backend_default()
-    production_bert_model_dir: Path = Path(_get_env("BERT_RESUME_MODEL_DIR", "MODEL_DIR") or (PROJECT_ROOT / "model"))
-    bert_resume_device: str = _get_env("BERT_RESUME_DEVICE", "MODEL_DEVICE") or "auto"
-
-    ats_vectorizer_path: Path = MODELS_DIR / "ats_vectorizer.pkl"
-    ats_classifier_path: Path = MODELS_DIR / "ats_classifier.pkl"
-    ats_training_dataset_path: Path = (
-        PROJECT_ROOT / "ats_system" / "data" / "sample_resumes" / "labeled_resumes.csv"
-    )
-    ats_skills_path: Path = DATA_DIR / "skills.json"
-
-    jsearch_api_key: str | None = _get_env(
-        "JSEARCH_API_KEY",
-        "RAPIDAPI_KEY",
-        "RAPID_API_KEY",
-        "X_RAPIDAPI_KEY",
-    )
-    jsearch_api_host: str = _get_env(
-        "JSEARCH_API_HOST",
-        "RAPIDAPI_HOST",
-        "RAPID_API_HOST",
-    ) or "jsearch.p.rapidapi.com"
-    jsearch_default_remote: bool = _as_bool(os.getenv("JSEARCH_DEFAULT_REMOTE"), True)
-    jsearch_default_location: str | None = os.getenv("JSEARCH_DEFAULT_LOCATION") or None
-    jsearch_enable_fallback: bool = _as_bool(os.getenv("JSEARCH_ENABLE_FALLBACK"), False)
-    jsearch_timeout_seconds: float = _as_float(os.getenv("JSEARCH_TIMEOUT_SECONDS"), 35.0)
-    jsearch_cache_ttl_seconds: int = _as_int(os.getenv("JSEARCH_CACHE_TTL_SECONDS"), 300)
-
-    cors_origins: tuple[str, ...] = (
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-        "*",
-    )
-
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
 settings = Settings()
-
-# Ensure runtime directories exist.
-settings.model_dir.mkdir(parents=True, exist_ok=True)
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)

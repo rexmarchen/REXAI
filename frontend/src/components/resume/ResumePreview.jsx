@@ -1,516 +1,563 @@
 import { useDeferredValue } from 'react'
+import './ResumeTemplates.css'
 import styles from './ResumeBuilder.module.css'
-import { SECTION_LABELS, TEMPLATE_OPTIONS, normalizeFormData } from '../../utils/resumeBuilder'
+import {
+  SECTION_LABELS,
+  TEMPLATE_OPTIONS,
+  getTemplateConfig,
+  normalizeFormData,
+} from '../../utils/resumeBuilder'
 
-const PROFESSIONAL_SECTION_LABELS = {
-  summary: 'Career Objective',
-  skills: 'Skills',
-  experience: 'Experience',
-  education: 'Education',
-  projects: 'Projects & Learning Activities',
-  certifications: 'Achievements & Certifications',
-}
-
-const buildInitials = (name) => {
-  const parts = String(name || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-
-  if (parts.length === 0) {
-    return 'R'
-  }
-
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || '')
-    .join('')
-}
-
-const ResumePreview = ({ resume, sheetRef }) => {
+const ResumePreview = ({
+  resume,
+  sheetRef,
+  zoom = 1,
+  customAccent = null,
+  customFont = null,
+  showPageGuide = true,
+}) => {
   const deferredResume = useDeferredValue(resume)
   const formData = normalizeFormData(deferredResume?.formData)
-  const templateId = deferredResume?.template || 'modern'
+  const templateId = deferredResume?.template || 'rec-1'
   const previewMode = deferredResume?.previewMode || 'light'
-  const sectionOrder = deferredResume?.sectionOrder || []
-  const template = TEMPLATE_OPTIONS.find((item) => item.id === templateId) || TEMPLATE_OPTIONS[0]
+  const template = getTemplateConfig(templateId)
   const isDark = previewMode === 'dark'
-  const isProfessional = templateId === 'professional'
-  const isCreative = templateId === 'creative'
 
-  const contactDetails = [
-    { label: 'Location', value: formData.personal.location },
-    { label: 'Phone', value: formData.personal.phone },
-    { label: 'Email', value: formData.personal.email },
-    { label: 'Portfolio', value: formData.personal.website },
-    { label: 'LinkedIn', value: formData.personal.linkedin },
-  ].filter((item) => String(item.value || '').trim())
+  const activeAccent = customAccent || deferredResume?.customAccent || template.accent
+  const activeFont = customFont || deferredResume?.customFont || null
 
-  const contactItems = contactDetails.map((item) => item.value)
-  const emptyClassName = `${styles.sheetParagraph} ${isDark ? styles.sheetEmptyDark : styles.sheetEmpty}`
-  const metaClassName = `${styles.sheetEntryMeta} ${isDark ? styles.sheetEntryMetaDark : ''}`
-  const contactClassName = `${styles.sheetContact} ${isDark ? styles.sheetContactDark : ''}`
-  const initials = buildInitials(formData.personal.name)
-  const summaryHighlight = formData.summary
-    .split(/[.!?]/)
-    .find((item) => String(item || '').trim())
-    ?.trim()
+  const name = formData.personal?.name || 'Your Name'
+  const role = formData.personal?.role || 'Target Role / Specialization'
+  const email = formData.personal?.email
+  const phone = formData.personal?.phone
+  const location = formData.personal?.location
+  const website = formData.personal?.website
+  const linkedin = formData.personal?.linkedin
+  const initials =
+    (name || '')
+      .split(' ')
+      .filter(Boolean)
+      .map((w) => w[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'CV'
 
-  const sidebarHighlights =
-    formData.certifications.length > 0
-      ? formData.certifications.map((entry) => entry.name).filter(Boolean).slice(0, 3)
-      : [
-          formData.education[0]
-            ? [formData.education[0].degree, formData.education[0].institution]
-                .filter(Boolean)
-                .join(' at ')
-            : '',
-          formData.projects[0]?.name ? `Featured project: ${formData.projects[0].name}` : '',
-          summaryHighlight ? `${summaryHighlight}.` : '',
-        ].filter(Boolean)
+  const hasContent =
+    Boolean(formData.summary?.trim()) ||
+    (formData.experience && formData.experience.length > 0) ||
+    (formData.projects && formData.projects.length > 0) ||
+    (formData.education && formData.education.length > 0) ||
+    (formData.skills && formData.skills.length > 0)
 
-  const renderProfessionalHeading = (sectionId) => (
-    <div className={styles.sheetProfileSectionHeader}>
-      <span className={styles.sheetProfileSectionMarker} aria-hidden="true" />
-      <h2 className={styles.sheetProfileSectionTitle}>
-        {PROFESSIONAL_SECTION_LABELS[sectionId] || SECTION_LABELS[sectionId] || sectionId}
-      </h2>
+  const pageCutoffGuide = showPageGuide && (
+    <div
+      style={{
+        position: 'absolute',
+        top: '1123px',
+        left: 0,
+        right: 0,
+        display: 'flex',
+        alignItems: 'center',
+        pointerEvents: 'none',
+        zIndex: 10,
+      }}
+    >
+      <div style={{ flex: 1, borderTop: '1.5px dashed #E97852', opacity: 0.65 }} />
+      <span
+        style={{
+          fontSize: '10px',
+          fontWeight: 800,
+          color: '#E97852',
+          background: '#FFF8F4',
+          padding: '2px 9px',
+          borderRadius: '999px',
+          border: '1px solid #FCD9CD',
+          margin: '0 8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+          letterSpacing: '0.02em',
+        }}
+      >
+        ✂ A4 Page 1 Boundary (1123px)
+      </span>
+      <div style={{ flex: 1, borderTop: '1.5px dashed #E97852', opacity: 0.65 }} />
     </div>
   )
 
-  const renderSummary = ({ professional = false } = {}) => (
-    <section className={professional ? styles.sheetProfileSection : styles.sheetSectionBlock}>
-      {professional ? (
-        renderProfessionalHeading('summary')
-      ) : (
-        <h2 className={styles.sheetSectionTitle}>{SECTION_LABELS.summary}</h2>
-      )}
-      {formData.summary ? (
-        <p className={professional ? styles.sheetProfileParagraph : styles.sheetParagraph}>
-          {formData.summary}
-        </p>
-      ) : (
-        <p className={professional ? styles.sheetProfileEmpty : emptyClassName}>
-          Add a concise summary to position your experience and value.
-        </p>
-      )}
-    </section>
-  )
+  // TOP RECOMMENDED PROFESSIONAL TEMPLATES (.r L1..L5 H1..H6)
+  if (template.isRecommended || (template.id && template.id.startsWith('rec-'))) {
+    const layout = template.layout || 1
+    const heading = template.heading || 1
+    const flags = template.flags || ''
 
-  const renderSkills = ({ professional = false } = {}) => (
-    <section className={professional ? styles.sheetProfileSection : styles.sheetSectionBlock}>
-      {professional ? (
-        renderProfessionalHeading('skills')
-      ) : (
-        <h2 className={styles.sheetSectionTitle}>{SECTION_LABELS.skills}</h2>
-      )}
-      {formData.skills.length > 0 ? (
-        professional ? (
-          <ul className={styles.sheetProfileList}>
-            {formData.skills.map((skill) => (
-              <li key={skill}>{skill}</li>
-            ))}
-          </ul>
-        ) : (
-          <div className={styles.sheetSkillRow}>
-            {formData.skills.map((skill) => (
-              <span key={skill} className={styles.sheetSkill}>
-                {skill}
-              </span>
-            ))}
-          </div>
-        )
-      ) : (
-        <p className={professional ? styles.sheetProfileEmpty : emptyClassName}>
-          Add your strongest technical, domain, or leadership skills.
-        </p>
-      )}
-    </section>
-  )
-
-  const renderExperience = ({ professional = false } = {}) => (
-    <section className={professional ? styles.sheetProfileSection : styles.sheetSectionBlock}>
-      {professional ? (
-        renderProfessionalHeading('experience')
-      ) : (
-        <h2 className={styles.sheetSectionTitle}>{SECTION_LABELS.experience}</h2>
-      )}
-      {formData.experience.length > 0 ? (
-        formData.experience.map((entry) => (
+    return (
+      <div
+        className={isDark ? styles.previewChromeDark : styles.previewChromeLight}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '20px 10px',
+          overflowX: 'auto',
+          width: '100%',
+        }}
+      >
+        <div
+          style={{
+            transform: `scale(${zoom})`,
+            transformOrigin: 'top center',
+            transition: 'transform 0.18s ease-out',
+            position: 'relative',
+            width: '794px',
+            minWidth: '794px',
+            minHeight: '1123px',
+          }}
+        >
+          {pageCutoffGuide}
           <article
-            key={entry.id}
-            className={professional ? styles.sheetProfileEntry : styles.sheetEntry}
+            ref={sheetRef}
+            className={`r L${layout} H${heading} ${flags}`}
+            style={{
+              '--c': activeAccent,
+              '--hb': template.headerBg,
+              '--ht': template.headerText,
+              '--sb': template.sideBg,
+              '--st': template.sideText,
+              '--f': activeFont || template.font,
+              '--hf': activeFont || template.font,
+              width: '794px',
+              minWidth: '794px',
+              minHeight: '1123px',
+            }}
           >
-            <div
-              className={professional ? styles.sheetProfileEntryHeader : styles.sheetEntryHeader}
-            >
-              <div>
-                <h3
-                  className={professional ? styles.sheetProfileEntryTitle : styles.sheetEntryTitle}
-                >
-                  {professional
-                    ? entry.role || 'Experience'
-                    : [entry.role, entry.company].filter(Boolean).join(' at ') || 'Experience'}
-                </h3>
-                {professional && entry.company ? (
-                  <p className={styles.sheetProfileEntrySubline}>{entry.company}</p>
-                ) : null}
-              </div>
-              <span className={professional ? styles.sheetProfileEntryMeta : metaClassName}>
-                {[entry.location, entry.startDate, entry.current ? 'Present' : entry.endDate]
-                  .filter(Boolean)
-                  .join(' | ')}
-              </span>
-            </div>
-            {(entry.bullets || []).filter(Boolean).length > 0 ? (
-              <ul className={professional ? styles.sheetProfileList : styles.sheetList}>
-                {(entry.bullets || []).filter(Boolean).map((bullet, index) => (
-                  <li key={`${entry.id}-${index}`}>{bullet}</li>
-                ))}
+            <header>
+              <div className="av">{initials}</div>
+              <h1>{name}</h1>
+              <div className="role">{role}</div>
+              <ul className="ct">
+                {email && <li>✉ {email}</li>}
+                {phone && <li>☏ {phone}</li>}
+                {location && <li>📍 {location}</li>}
+                {website && <li>🌐 {website}</li>}
+                {linkedin && <li>in {linkedin}</li>}
+                {!email && !phone && !location && (
+                  <li style={{ opacity: 0.75 }}>your.email@example.com • +1 555-0100 • City, Country</li>
+                )}
               </ul>
-            ) : (
-              <p className={professional ? styles.sheetProfileEmpty : emptyClassName}>
-                Add at least one achievement bullet for this role.
-              </p>
-            )}
-          </article>
-        ))
-      ) : (
-        <p className={professional ? styles.sheetProfileEmpty : emptyClassName}>
-          Add work experience or keep projects strong enough to carry your profile.
-        </p>
-      )}
-    </section>
-  )
+            </header>
 
-  const renderEducation = ({ professional = false } = {}) => (
-    <section className={professional ? styles.sheetProfileSection : styles.sheetSectionBlock}>
-      {professional ? (
-        renderProfessionalHeading('education')
-      ) : (
-        <h2 className={styles.sheetSectionTitle}>{SECTION_LABELS.education}</h2>
-      )}
-      {formData.education.length > 0 ? (
-        formData.education.map((entry) => (
-          <article
-            key={entry.id}
-            className={professional ? styles.sheetProfileEntry : styles.sheetEntry}
-          >
-            <div
-              className={professional ? styles.sheetProfileEntryHeader : styles.sheetEntryHeader}
-            >
-              <div>
-                <h3
-                  className={professional ? styles.sheetProfileEntryTitle : styles.sheetEntryTitle}
-                >
-                  {professional
-                    ? entry.institution || 'Education'
-                    : [entry.degree, entry.institution].filter(Boolean).join(' - ') || 'Education'}
-                </h3>
-                {professional && entry.degree ? (
-                  <p className={styles.sheetProfileEntrySubline}>{entry.degree}</p>
-                ) : null}
-              </div>
-              <span className={professional ? styles.sheetProfileEntryMeta : metaClassName}>
-                {[entry.location, entry.startDate, entry.endDate].filter(Boolean).join(' | ')}
-              </span>
-            </div>
-            {entry.grade ? (
-              <p className={professional ? styles.sheetProfileFootnote : styles.sheetParagraph}>
-                Grade: {entry.grade}
-              </p>
-            ) : null}
-          </article>
-        ))
-      ) : (
-        <p className={professional ? styles.sheetProfileEmpty : emptyClassName}>
-          Add an education entry to complete the academic profile.
-        </p>
-      )}
-    </section>
-  )
-
-  const renderProjects = ({ professional = false } = {}) => (
-    <section className={professional ? styles.sheetProfileSection : styles.sheetSectionBlock}>
-      {professional ? (
-        renderProfessionalHeading('projects')
-      ) : (
-        <h2 className={styles.sheetSectionTitle}>{SECTION_LABELS.projects}</h2>
-      )}
-      {formData.projects.length > 0 ? (
-        formData.projects.map((entry) => (
-          <article
-            key={entry.id}
-            className={professional ? styles.sheetProfileEntry : styles.sheetEntry}
-          >
-            <div
-              className={professional ? styles.sheetProfileEntryHeader : styles.sheetEntryHeader}
-            >
-              <div>
-                <h3
-                  className={professional ? styles.sheetProfileEntryTitle : styles.sheetEntryTitle}
-                >
-                  {entry.name || 'Project'}
-                </h3>
-                {professional && entry.role ? (
-                  <p className={styles.sheetProfileEntrySubline}>{entry.role}</p>
-                ) : null}
-              </div>
-              {entry.url ? (
-                <span className={professional ? styles.sheetProfileEntryMeta : metaClassName}>
-                  {entry.url}
-                </span>
+            <main>
+              {formData.summary ? (
+                <>
+                  <h2>Profile</h2>
+                  <p>{formData.summary}</p>
+                </>
+              ) : !hasContent ? (
+                <>
+                  <h2>Profile</h2>
+                  <p style={{ opacity: 0.65 }}>
+                    Dedicated professional with a proven record of translating organizational goals into robust, measurable outcomes. Fill in your summary in the editor to personalize.
+                  </p>
+                </>
               ) : null}
-            </div>
-            {entry.description ? (
-              <p className={professional ? styles.sheetProfileParagraph : styles.sheetParagraph}>
-                {entry.description}
-              </p>
-            ) : (
-              <p className={professional ? styles.sheetProfileEmpty : emptyClassName}>
-                Add a short project summary.
-              </p>
-            )}
-            {entry.technologies.length > 0 ? (
-              <p className={professional ? styles.sheetProfileFootnote : styles.sheetParagraph}>
-                {professional ? 'Tools: ' : 'Stack: '}
-                {entry.technologies.join(', ')}
-              </p>
-            ) : null}
-          </article>
-        ))
-      ) : (
-        <p className={professional ? styles.sheetProfileEmpty : emptyClassName}>
-          Add project case studies to showcase proof of execution.
-        </p>
-      )}
-    </section>
-  )
 
-  const renderCertifications = ({ professional = false } = {}) => (
-    <section className={professional ? styles.sheetProfileSection : styles.sheetSectionBlock}>
-      {professional ? (
-        renderProfessionalHeading('certifications')
-      ) : (
-        <h2 className={styles.sheetSectionTitle}>{SECTION_LABELS.certifications}</h2>
-      )}
-      {formData.certifications.length > 0 ? (
-        formData.certifications.map((entry) => (
-          <article
-            key={entry.id}
-            className={professional ? styles.sheetProfileEntry : styles.sheetEntry}
-          >
-            <div
-              className={professional ? styles.sheetProfileEntryHeader : styles.sheetEntryHeader}
-            >
-              <div>
-                <h3
-                  className={professional ? styles.sheetProfileEntryTitle : styles.sheetEntryTitle}
-                >
-                  {entry.name || 'Certification'}
-                </h3>
-                {professional && entry.issuer ? (
-                  <p className={styles.sheetProfileEntrySubline}>{entry.issuer}</p>
-                ) : null}
-              </div>
-              <span className={professional ? styles.sheetProfileEntryMeta : metaClassName}>
-                {entry.date}
-              </span>
-            </div>
-            {!professional ? (
-              <p className={styles.sheetParagraph}>
-                {[entry.issuer, entry.credentialId, entry.url].filter(Boolean).join(' | ')}
-              </p>
-            ) : entry.credentialId || entry.url ? (
-              <p className={styles.sheetProfileFootnote}>
-                {[entry.credentialId, entry.url].filter(Boolean).join(' | ')}
-              </p>
-            ) : null}
-          </article>
-        ))
-      ) : (
-        <p className={professional ? styles.sheetProfileEmpty : emptyClassName}>
-          Optional certifications can reinforce role-specific credibility.
-        </p>
-      )}
-    </section>
-  )
+              {formData.experience?.length > 0 ? (
+                <>
+                  <h2>Experience</h2>
+                  {formData.experience.map((job) => (
+                    <div key={job.id} className="job">
+                      <div className="jh">
+                        <span>{job.role || 'Job Role'}</span>
+                        <em>{[job.startDate, job.endDate, job.location].filter(Boolean).join(' • ')}</em>
+                      </div>
+                      <div className="jc">{job.company || 'Company Name'}</div>
+                      {job.bullets?.filter(Boolean).length > 0 && (
+                        <ul>
+                          {job.bullets.filter(Boolean).map((bullet, idx) => (
+                            <li key={idx}>{bullet}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </>
+              ) : !hasContent ? (
+                <>
+                  <h2>Experience</h2>
+                  <div className="job" style={{ opacity: 0.65 }}>
+                    <div className="jh">
+                      <span>Lead Engineer / Specialist</span>
+                      <em>2022 - Present • Remote</em>
+                    </div>
+                    <div className="jc">Tech Innovations Inc.</div>
+                    <ul>
+                      <li>Spearheaded core development cycle, boosting system reliability by 35%.</li>
+                      <li>Collaborated across cross-functional engineering and design squads.</li>
+                    </ul>
+                  </div>
+                  <div className="job" style={{ opacity: 0.65 }}>
+                    <div className="jh">
+                      <span>Software Associate</span>
+                      <em>2020 - 2022 • New York, NY</em>
+                    </div>
+                    <div className="jc">Global Systems Corp</div>
+                    <ul>
+                      <li>Delivered key customer-facing features supporting 100k+ active users.</li>
+                    </ul>
+                  </div>
+                </>
+              ) : null}
 
-  const sectionMap = {
-    summary: (options) => renderSummary(options),
-    skills: (options) => renderSkills(options),
-    experience: (options) => renderExperience(options),
-    education: (options) => renderEducation(options),
-    projects: (options) => renderProjects(options),
-    certifications: (options) => renderCertifications(options),
+              {formData.projects?.length > 0 && (
+                <>
+                  <h2>Projects</h2>
+                  {formData.projects.map((proj) => (
+                    <div key={proj.id} className="job">
+                      <div className="jh">
+                        <span>{proj.name}</span>
+                        <em>{proj.role}</em>
+                      </div>
+                      {proj.url && <div className="jc">{proj.url}</div>}
+                      {proj.description && <p>{proj.description}</p>}
+                      {proj.technologies?.length > 0 && (
+                        <p style={{ fontSize: '12px', opacity: 0.85, margin: '2px 0' }}>
+                          Stack: {proj.technologies.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {formData.education?.length > 0 ? (
+                <>
+                  <h2>Education</h2>
+                  {formData.education.map((edu) => (
+                    <div key={edu.id} className="job">
+                      <div className="jh">
+                        <span>{edu.degree || 'Degree / Credential'}</span>
+                        <em>{[edu.startDate, edu.endDate, edu.location].filter(Boolean).join(' • ')}</em>
+                      </div>
+                      <div className="jc">{edu.institution || 'University Name'}</div>
+                      {edu.grade && <small style={{ opacity: 0.8 }}>Grade / GPA: {edu.grade}</small>}
+                    </div>
+                  ))}
+                </>
+              ) : !hasContent ? (
+                <>
+                  <h2>Education</h2>
+                  <div className="job" style={{ opacity: 0.65 }}>
+                    <div className="jh">
+                      <span>B.S. in Computer Science & Engineering</span>
+                      <em>2016 - 2020</em>
+                    </div>
+                    <div className="jc">State University of Technology</div>
+                  </div>
+                </>
+              ) : null}
+            </main>
+
+            <aside>
+              {formData.skills?.length > 0 ? (
+                <div>
+                  <h2>Skills</h2>
+                  <ul className="sk">
+                    {formData.skills.map((skill, index) => {
+                      const percent = Math.max(65, 95 - index * 4)
+                      return (
+                        <li key={skill}>
+                          {skill}
+                          <i style={{ '--p': `${percent}%` }}></i>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ) : !hasContent ? (
+                <div>
+                  <h2>Skills</h2>
+                  <ul className="sk" style={{ opacity: 0.65 }}>
+                    <li>TypeScript <i style={{ '--p': '92%' }}></i></li>
+                    <li>React.js <i style={{ '--p': '90%' }}></i></li>
+                    <li>Node.js <i style={{ '--p': '85%' }}></i></li>
+                    <li>Python & AI <i style={{ '--p': '88%' }}></i></li>
+                    <li>System Design <i style={{ '--p': '82%' }}></i></li>
+                    <li>PostgreSQL <i style={{ '--p': '80%' }}></i></li>
+                  </ul>
+                </div>
+              ) : null}
+
+              {formData.certifications?.length > 0 && (
+                <div>
+                  <h2>Certifications</h2>
+                  <ul className="cert">
+                    {formData.certifications.map((c) => (
+                      <li key={c.id || c.name}>
+                        <strong>{c.name}</strong>
+                        {c.issuer && <small>{c.issuer} {c.date ? `(${c.date})` : ''}</small>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </aside>
+          </article>
+        </div>
+      </div>
+    )
   }
 
-  const renderedSections = sectionOrder
-    .map((sectionId) => {
-      const renderSection = sectionMap[sectionId]
-
-      if (!renderSection) {
-        return null
-      }
-
-      return <div key={sectionId}>{renderSection()}</div>
-    })
-    .filter(Boolean)
-
-  const professionalSections = (sectionOrder.length > 0
-    ? sectionOrder.filter((sectionId) => sectionId !== 'skills')
-    : ['summary', 'education', 'experience', 'projects', 'certifications']
-  )
-    .map((sectionId) => {
-      const renderSection = sectionMap[sectionId]
-
-      if (!renderSection) {
-        return null
-      }
-
-      return <div key={sectionId}>{renderSection({ professional: true })}</div>
-    })
-    .filter(Boolean)
-
-  const standardLayout = (
-    <div className={styles.sheetInner}>
-      <header className={styles.sheetHeader}>
-        <h1 className={styles.sheetName}>{formData.personal.name || 'Your Name'}</h1>
-        <p className={styles.sheetRole}>{formData.personal.role || 'Target Role'}</p>
-        <div className={contactClassName}>
-          {contactItems.length > 0 ? (
-            contactItems.map((item) => <span key={item}>{item}</span>)
-          ) : (
-            <span>Location | Phone | Email | Portfolio</span>
-          )}
-        </div>
-      </header>
-      <div className={styles.sheetBody}>{renderedSections}</div>
-    </div>
-  )
-
-  const creativeLayout = (
-    <>
-      <aside className={styles.sheetCreativeRail}>
-        <div className={styles.sheetRailBlock}>
-          <h2 className={styles.sheetName}>{formData.personal.name || 'Your Name'}</h2>
-          <p className={styles.sheetRailText}>{formData.personal.role || 'Target Role'}</p>
-        </div>
-
-        <div className={styles.sheetRailBlock}>
-          <h3 className={styles.sheetRailTitle}>Contact</h3>
-          {contactItems.length > 0 ? (
-            contactItems.map((item) => (
-              <p key={item} className={styles.sheetRailText}>
-                {item}
-              </p>
-            ))
-          ) : (
-            <p className={styles.sheetRailText}>Add contact details to complete the rail.</p>
-          )}
-        </div>
-
-        <div className={styles.sheetRailBlock}>
-          <h3 className={styles.sheetRailTitle}>Skills Snapshot</h3>
-          {formData.skills.length > 0 ? (
-            formData.skills.slice(0, 8).map((skill) => (
-              <p key={skill} className={styles.sheetRailText}>
-                {skill}
-              </p>
-            ))
-          ) : (
-            <p className={styles.sheetRailText}>Your top skills will appear here.</p>
-          )}
-        </div>
-      </aside>
-      <div className={styles.sheetCreativeMain}>
-        <div className={styles.sheetBody}>{renderedSections}</div>
-      </div>
-    </>
-  )
-
-  const professionalLayout = (
-    <div className={styles.sheetProfessionalFrame}>
-      <aside className={styles.sheetProfileSidebar}>
-        <div className={styles.sheetProfileAvatarCluster}>
-          <div className={styles.sheetProfileAvatar}>{initials}</div>
-        </div>
-
-        <section className={styles.sheetProfileSidebarSection}>
-          <h3 className={styles.sheetProfileSidebarTitle}>Contacts</h3>
-          {contactDetails.length > 0 ? (
-            <div className={styles.sheetProfileSidebarList}>
-              {contactDetails.map((item) => (
-                <div key={`${item.label}-${item.value}`} className={styles.sheetProfileContactItem}>
-                  <span className={styles.sheetProfileContactLabel}>{item.label}</span>
-                  <span className={styles.sheetProfileContactValue}>{item.value}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className={styles.sheetProfileSidebarEmpty}>
-              Add location, phone, email, and profile links.
-            </p>
-          )}
-        </section>
-
-        <section className={styles.sheetProfileSidebarSection}>
-          <h3 className={styles.sheetProfileSidebarTitle}>Skills</h3>
-          {formData.skills.length > 0 ? (
-            <ul className={styles.sheetProfileBulletList}>
-              {formData.skills.slice(0, 10).map((skill) => (
-                <li key={skill}>{skill}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className={styles.sheetProfileSidebarEmpty}>Add your strongest skills to fill this rail.</p>
-          )}
-        </section>
-
-        <section className={styles.sheetProfileSidebarSection}>
-          <h3 className={styles.sheetProfileSidebarTitle}>
-            {formData.certifications.length > 0 ? 'Achievements' : 'Highlights'}
-          </h3>
-          {sidebarHighlights.length > 0 ? (
-            <ul className={styles.sheetProfileBulletList}>
-              {sidebarHighlights.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className={styles.sheetProfileSidebarEmpty}>
-              Certifications, project wins, or standout highlights will appear here.
-            </p>
-          )}
-        </section>
-      </aside>
-
-      <div className={styles.sheetProfileMain}>
-        <header className={styles.sheetProfileHeader}>
-          <h1 className={styles.sheetProfileName}>{formData.personal.name || 'Your Name'}</h1>
-          <p className={styles.sheetProfileBanner}>
-            {formData.personal.role || 'Target role, specialization, and positioning headline'}
-          </p>
-        </header>
-
-        <div className={styles.sheetProfileMainBody}>{professionalSections}</div>
-      </div>
-    </div>
-  )
-
-  const sheetToneClass = isProfessional ? styles.sheetProfessionalPaper : isDark ? styles.sheetDark : styles.sheetLight
+  // ATELIER CLASSIC TEMPLATES (.resume.t1 .. .resume.t24)
+  let templateClass = 't1'
+  if (template.id && template.id.startsWith('t')) {
+    templateClass = template.id
+  } else if (template.id === 'modern') {
+    templateClass = 't1'
+  } else if (template.id === 'professional') {
+    templateClass = 't2'
+  } else if (template.id === 'creative') {
+    templateClass = 't5'
+  }
 
   return (
-    <div className={isDark ? styles.previewChromeDark : styles.previewChromeLight}>
-      <article
-        ref={sheetRef}
-        className={`${styles.sheet} ${sheetToneClass} ${
-          isProfessional ? styles.sheetProfessional : ''
-        } ${isCreative ? styles.sheetCreative : !isProfessional ? styles.sheetModern : ''}`}
-        style={{ '--template-accent': template.accent }}
+    <div
+      className={isDark ? styles.previewChromeDark : styles.previewChromeLight}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '20px 10px',
+        overflowX: 'auto',
+        width: '100%',
+      }}
+    >
+      <div
+        style={{
+          transform: `scale(${zoom})`,
+          transformOrigin: 'top center',
+          transition: 'transform 0.18s ease-out',
+          position: 'relative',
+          width: '794px',
+          minWidth: '794px',
+          minHeight: '1123px',
+        }}
       >
-        {isProfessional ? professionalLayout : isCreative ? creativeLayout : standardLayout}
-      </article>
+        {pageCutoffGuide}
+        <article
+          ref={sheetRef}
+          className={`resume ${templateClass}`}
+          style={{
+            '--c': activeAccent,
+            ...(template.bg ? { '--bg': template.bg } : {}),
+            ...(template.side ? { '--side': template.side } : {}),
+            ...(activeFont ? { '--ft': activeFont } : template.font ? { '--ft': template.font } : {}),
+            width: '794px',
+            minWidth: '794px',
+            minHeight: '1123px',
+          }}
+        >
+          <aside>
+            <h1>{name}</h1>
+            <div className="role">{role}</div>
+
+            <h2>Contact</h2>
+            <ul className="contact">
+              {email && (
+                <li>
+                  <span>✉</span> {email}
+                </li>
+              )}
+              {phone && (
+                <li>
+                  <span>☏</span> {phone}
+                </li>
+              )}
+              {location && (
+                <li>
+                  <span>📍</span> {location}
+                </li>
+              )}
+              {website && (
+                <li>
+                  <span>🌐</span> {website}
+                </li>
+              )}
+              {linkedin && (
+                <li>
+                  <span>in</span> {linkedin}
+                </li>
+              )}
+              {!email && !phone && !location && (
+                <li style={{ opacity: 0.75 }}>your.email@example.com • City, Country</li>
+              )}
+            </ul>
+
+            {formData.skills?.length > 0 ? (
+              <div className="skillsWrap">
+                <h2>Skills</h2>
+                <div>
+                  {formData.skills.map((skill) => (
+                    <span key={skill} className="tag">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : !hasContent ? (
+              <div className="skillsWrap" style={{ opacity: 0.65 }}>
+                <h2>Skills</h2>
+                <div>
+                  {['React', 'TypeScript', 'Node.js', 'Python', 'SQL', 'Docker'].map((s) => (
+                    <span key={s} className="tag">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {formData.certifications?.length > 0 && (
+              <div className="certWrap">
+                <h2>Certifications</h2>
+                <ul>
+                  {formData.certifications.map((c) => (
+                    <li key={c.id || c.name} className="job">
+                      <b>{c.name}</b>
+                      {c.issuer && (
+                        <small>
+                          {c.issuer} {c.date ? `(${c.date})` : ''}
+                        </small>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </aside>
+
+          <main>
+            {formData.summary ? (
+              <>
+                <h2>Profile</h2>
+                <p>{formData.summary}</p>
+              </>
+            ) : !hasContent ? (
+              <>
+                <h2>Profile</h2>
+                <p style={{ opacity: 0.65 }}>
+                  Passionate and results-oriented professional with a strong track record of designing, building, and delivering mission-critical solutions. Fill in your summary in the editor to customize.
+                </p>
+              </>
+            ) : null}
+
+            {formData.experience?.length > 0 ? (
+              <>
+                <h2>Experience</h2>
+                {formData.experience.map((job) => (
+                  <div key={job.id} className="job">
+                    <b>
+                      {job.role || 'Job Role'} — {job.company || 'Company Name'}
+                    </b>
+                    <small>
+                      {[job.startDate, job.endDate, job.location].filter(Boolean).join(' • ')}
+                    </small>
+                    {job.bullets?.filter(Boolean).length > 0 && (
+                      <ul>
+                        {job.bullets.filter(Boolean).map((bullet, idx) => (
+                          <li key={idx}>{bullet}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </>
+            ) : !hasContent ? (
+              <>
+                <h2>Experience</h2>
+                <div className="job" style={{ opacity: 0.65 }}>
+                  <b>Senior Engineer — Tech Innovations Inc.</b>
+                  <small>2022 - Present • Remote</small>
+                  <ul>
+                    <li>Spearheaded core application architecture, boosting throughput by 40%.</li>
+                    <li>Mentored team of 6 engineers on scalable patterns and testing hygiene.</li>
+                  </ul>
+                </div>
+                <div className="job" style={{ opacity: 0.65 }}>
+                  <b>Software Developer — Digital Labs Co.</b>
+                  <small>2020 - 2022 • New York, NY</small>
+                  <ul>
+                    <li>Engineered responsive user interfaces and modular microservices.</li>
+                  </ul>
+                </div>
+              </>
+            ) : null}
+
+            {formData.education?.length > 0 ? (
+              <>
+                <h2>Education</h2>
+                {formData.education.map((edu) => (
+                  <div key={edu.id} className="job">
+                    <b>
+                      {edu.degree || 'Degree'} — {edu.institution || 'Institution'}
+                    </b>
+                    <small>
+                      {[edu.startDate, edu.endDate, edu.location].filter(Boolean).join(' • ')}
+                    </small>
+                    {edu.grade && (
+                      <p style={{ margin: '2px 0', fontSize: '12.5px', opacity: 0.85 }}>
+                        Grade / GPA: {edu.grade}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </>
+            ) : !hasContent ? (
+              <>
+                <h2>Education</h2>
+                <div className="job" style={{ opacity: 0.65 }}>
+                  <b>B.S. in Computer Science — State University</b>
+                  <small>2016 - 2020</small>
+                </div>
+              </>
+            ) : null}
+
+            {formData.projects?.length > 0 && (
+              <>
+                <h2>Projects</h2>
+                {formData.projects.map((proj) => (
+                  <div key={proj.id} className="job">
+                    <b>
+                      {proj.name} {proj.role ? `(${proj.role})` : ''}
+                    </b>
+                    {proj.description && (
+                      <p style={{ margin: '3px 0' }}>{proj.description}</p>
+                    )}
+                    {proj.technologies?.length > 0 && (
+                      <p style={{ margin: '3px 0', fontSize: '12px', opacity: 0.85 }}>
+                        Stack: {proj.technologies.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* For horizontal banner templates (t6, t7, t13, t19), show skills in main */}
+            {['t6', 't7', 't13', 't19'].includes(templateClass) &&
+              formData.skills?.length > 0 && (
+                <>
+                  <h2>Skills</h2>
+                  <div>
+                    {formData.skills.map((skill) => (
+                      <span key={skill} className="tag">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+          </main>
+        </article>
+      </div>
     </div>
   )
 }

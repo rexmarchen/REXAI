@@ -1,0 +1,18 @@
+EMILY BLUNT
+emily@blunt.org | (555) 345-9876 | linkedin.com/in/emily-blunt
+
+SUMMARY
+Full Stack Engineer specializing in TypeScript and React.
+
+WORK EXPERIENCE
+Junior Engineer | Startup Alpha (Jan 2016 – Dec 2018)
+• Built responsive landing pages and user onboarding flows.
+
+Senior Engineer | MetaCorp (Jan 2022 – Present)
+• Architected scalable web apps driving 50% revenue growth.
+
+EDUCATION
+BS Computer Engineering (2012 – 2016)
+
+SKILLS
+React, TypeScript, CSS, Node.js

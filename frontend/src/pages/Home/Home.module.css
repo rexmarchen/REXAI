@@ -106,6 +106,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   border-radius: 999px;
   padding: 0.95rem 1.3rem;
   text-decoration: none;
@@ -599,6 +600,17 @@
   margin-top: 0.65rem;
   color: var(--color-text-muted);
   line-height: 1.65;
+}
+
+.toolCardFooter {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.15rem;
+}
+
+.toolHint {
+  color: var(--color-text-subtle);
+  font-size: 0.84rem;
 }
 
 .finalCta {

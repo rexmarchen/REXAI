@@ -1,9 +1,9 @@
 :root {
   --color-bg: #050505;
-  --color-bg-elevated: #0a0d0b;
-  --color-surface: rgba(12, 17, 14, 0.82);
-  --color-surface-strong: #101512;
-  --color-surface-soft: rgba(20, 27, 23, 0.76);
+  --color-bg-elevated: #080a0e;
+  --color-surface: rgba(10, 13, 18, 0.82);
+  --color-surface-strong: #0d1117;
+  --color-surface-soft: rgba(16, 22, 30, 0.76);
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-strong: rgba(255, 255, 255, 0.16);
   --color-primary: #528bff;

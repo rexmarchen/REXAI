@@ -1,0 +1,18 @@
+{
+  "name": "rexion-linkedin-rag-agent",
+  "version": "1.0.0",
+  "description": "Autonomous LinkedIn RAG & Research Agent for developers and students",
+  "main": "index.js",
+  "bin": {
+    "linkedin-rag-agent": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js --auto",
+    "dry-run": "node index.js --auto --dry-run",
+    "ingest": "node ingest.js",
+    "status": "node index.js --status"
+  },
+  "keywords": ["linkedin", "rag", "gemini", "agent", "autonomous", "automation"],
+  "author": "Anshu Pal",
+  "license": "MIT"
+}

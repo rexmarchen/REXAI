@@ -1,0 +1,136 @@
+{
+ "slug": "valid-palindrome",
+ "title": "Valid Palindrome",
+ "difficulty": "EASY",
+ "topics": [
+  "String",
+  "Two Pointers"
+ ],
+ "companies": [],
+ "functionName": "isPalindrome",
+ "checker": "EXACT",
+ "xp": 30,
+ "statement": "After converting all uppercase letters to lowercase and removing every character that is not a letter or digit, a phrase is a palindrome if it reads the same forward and backward. Given a string `s`, return `true` if it is a palindrome, otherwise `false`.\n\nExample 1:\nInput: s = \"A man, a plan, a canal: Panama\"\nOutput: true\n\nExample 2:\nInput: s = \"race a car\"\nOutput: false",
+ "constraints": "1 <= s.length <= 2 * 10^5\ns consists of printable ASCII characters.",
+ "starterCode": {
+  "python": "def isPalindrome(s):\n    # Write your solution here\n    pass\n",
+  "javascript": "function isPalindrome(s) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def isPalindrome(s):\n    t = [c.lower() for c in s if c.isalnum()]\n    return t == t[::-1]\n"
+ },
+ "tests": [
+  {
+   "input": [
+    "A man, a plan, a canal: Panama"
+   ],
+   "expected": true,
+   "isSample": true
+  },
+  {
+   "input": [
+    "race a car"
+   ],
+   "expected": false,
+   "isSample": true
+  },
+  {
+   "input": [
+    " "
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    ",."
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    "b ABbbBA b"
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    " 2,B!B,2 "
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    "AbB1ab1bB1"
+   ],
+   "expected": false,
+   "isSample": false
+  },
+  {
+   "input": [
+    "Ba 1 ! 1 aB"
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    " 2axa2 "
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    "BA2bb2AB"
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    "Aab!baA"
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    ",:ba"
+   ],
+   "expected": false,
+   "isSample": false
+  },
+  {
+   "input": [
+    " : :"
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    ",BABBxBBAB,"
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    "b2bb2b"
+   ],
+   "expected": true,
+   "isSample": false
+  },
+  {
+   "input": [
+    "ABb,!,bBA"
+   ],
+   "expected": true,
+   "isSample": false
+  }
+ ]
+}

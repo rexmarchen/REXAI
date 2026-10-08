@@ -1,0 +1,143 @@
+{
+ "slug": "roman-to-integer",
+ "title": "Roman to Integer",
+ "difficulty": "EASY",
+ "topics": [
+  "Math",
+  "String"
+ ],
+ "companies": [],
+ "functionName": "romanToInt",
+ "checker": "EXACT",
+ "xp": 30,
+ "statement": "Roman numerals use `I=1, V=5, X=10, L=50, C=100, D=500, M=1000`. When a smaller value precedes a larger one it is subtracted (`IV=4`, `IX=9`, `XL=40`, `XC=90`, `CD=400`, `CM=900`). Given a valid Roman numeral `s`, return its integer value.\n\nExample 1:\nInput: s = \"III\"\nOutput: 3\n\nExample 2:\nInput: s = \"LVIII\"\nOutput: 58",
+ "constraints": "1 <= s.length <= 15\ns is a valid Roman numeral in the range [1, 3999].",
+ "starterCode": {
+  "python": "def romanToInt(s):\n    # Write your solution here\n    pass\n",
+  "javascript": "function romanToInt(s) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def romanToInt(s):\n    v = {'I':1,'V':5,'X':10,'L':50,'C':100,'D':500,'M':1000}; t = 0\n    for i, c in enumerate(s):\n        t += -v[c] if i + 1 < len(s) and v[c] < v[s[i+1]] else v[c]\n    return t\n"
+ },
+ "tests": [
+  {
+   "input": [
+    "III"
+   ],
+   "expected": 3,
+   "isSample": true
+  },
+  {
+   "input": [
+    "LVIII"
+   ],
+   "expected": 58,
+   "isSample": true
+  },
+  {
+   "input": [
+    "MCMXCIV"
+   ],
+   "expected": 1994,
+   "isSample": true
+  },
+  {
+   "input": [
+    "MMMCMXCIX"
+   ],
+   "expected": 3999,
+   "isSample": false
+  },
+  {
+   "input": [
+    "I"
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    "CMXXXIV"
+   ],
+   "expected": 934,
+   "isSample": false
+  },
+  {
+   "input": [
+    "MDCCXI"
+   ],
+   "expected": 1711,
+   "isSample": false
+  },
+  {
+   "input": [
+    "MMDCXXV"
+   ],
+   "expected": 2625,
+   "isSample": false
+  },
+  {
+   "input": [
+    "MXX"
+   ],
+   "expected": 1020,
+   "isSample": false
+  },
+  {
+   "input": [
+    "MMDLXXX"
+   ],
+   "expected": 2580,
+   "isSample": false
+  },
+  {
+   "input": [
+    "DCCLI"
+   ],
+   "expected": 751,
+   "isSample": false
+  },
+  {
+   "input": [
+    "DCCLXXXVIII"
+   ],
+   "expected": 788,
+   "isSample": false
+  },
+  {
+   "input": [
+    "MMDCXLI"
+   ],
+   "expected": 2641,
+   "isSample": false
+  },
+  {
+   "input": [
+    "MCCCXX"
+   ],
+   "expected": 1320,
+   "isSample": false
+  },
+  {
+   "input": [
+    "DCXXXVIII"
+   ],
+   "expected": 638,
+   "isSample": false
+  },
+  {
+   "input": [
+    "MMMCCLXVI"
+   ],
+   "expected": 3266,
+   "isSample": false
+  },
+  {
+   "input": [
+    "MMDCCCXVIII"
+   ],
+   "expected": 2818,
+   "isSample": false
+  }
+ ]
+}

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import { ApplyAllMatchedButton } from '@/components/micro-internships/ApplyAllMatchedButton'
 import { ApplyModal } from '@/components/micro-internships/ApplyModal'
 import { GigCard } from '@/components/micro-internships/GigCard'
 import { GigFilters, type GigFilterState } from '@/components/micro-internships/GigFilters'
@@ -31,7 +32,7 @@ export function MicroInternshipsWorkspace({ plan }: { plan: SubscriptionPlan }) 
 
   const filteredGigs = useMemo(
     () =>
-      gigs.filter((gig) => {
+      gigs.filter((gig: MicroGigShape) => {
         if (filters.domain !== 'all' && gig.domain !== filters.domain) return false
         if (filters.duration !== 'all' && gig.duration !== Number(filters.duration)) return false
         if (filters.location !== 'all' && gig.location !== filters.location) return false
@@ -80,17 +81,20 @@ export function MicroInternshipsWorkspace({ plan }: { plan: SubscriptionPlan }) 
             <div className={styles.skeleton} />
           </div>
         ) : (
-          <div className={styles.cards}>
-            {matched.map((item) => (
-              <GigCard
-                key={item.gig.id}
-                gig={item.gig}
-                score={item.score}
-                explanation={item.explanation}
-                onApply={setSelectedGig}
-              />
-            ))}
-          </div>
+          <>
+            <ApplyAllMatchedButton gigs={matched.map((item: any) => item.gig)} />
+            <div className={styles.cards}>
+              {matched.map((item: any) => (
+                <GigCard
+                  key={item.gig.id}
+                  gig={item.gig}
+                  score={item.score}
+                  explanation={item.explanation}
+                  onApply={setSelectedGig}
+                />
+              ))}
+            </div>
+          </>
         )
       ) : (
         <div className={styles.grid}>
@@ -102,7 +106,7 @@ export function MicroInternshipsWorkspace({ plan }: { plan: SubscriptionPlan }) 
                 <div className={styles.skeleton} />
               </>
             ) : filteredGigs.length ? (
-              filteredGigs.map((gig) => <GigCard key={gig.id} gig={gig} onApply={setSelectedGig} />)
+              filteredGigs.map((gig: MicroGigShape) => <GigCard key={gig.id} gig={gig} onApply={setSelectedGig} />)
             ) : (
               <div className={styles.emptyState}>No gigs match those filters right now. Widen the criteria and check again.</div>
             )}

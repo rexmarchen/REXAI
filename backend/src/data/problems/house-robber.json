@@ -1,0 +1,244 @@
+{
+ "slug": "house-robber",
+ "title": "House Robber",
+ "difficulty": "MEDIUM",
+ "topics": [
+  "Array",
+  "Dynamic Programming"
+ ],
+ "companies": [],
+ "functionName": "rob",
+ "checker": "EXACT",
+ "xp": 60,
+ "statement": "`nums[i]` is the money in house `i`. Adjacent houses have linked alarms, so you cannot rob two adjacent houses. Return the maximum amount you can rob.\n\nExample 1:\nInput: nums = [1,2,3,1]\nOutput: 4\n\nExample 2:\nInput: nums = [2,7,9,3,1]\nOutput: 12",
+ "constraints": "1 <= nums.length <= 100\n0 <= nums[i] <= 400",
+ "starterCode": {
+  "python": "def rob(nums):\n    # Write your solution here\n    pass\n",
+  "javascript": "function rob(nums) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def rob(nums):\n    a = b = 0\n    for x in nums: a, b = b, max(b, a + x)\n    return b\n"
+ },
+ "tests": [
+  {
+   "input": [
+    [
+     1,
+     2,
+     3,
+     1
+    ]
+   ],
+   "expected": 4,
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     2,
+     7,
+     9,
+     3,
+     1
+    ]
+   ],
+   "expected": 12,
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     5
+    ]
+   ],
+   "expected": 5,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     0,
+     0
+    ]
+   ],
+   "expected": 0,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     0,
+     17,
+     10,
+     13,
+     6,
+     16,
+     14,
+     9,
+     20,
+     3
+    ]
+   ],
+   "expected": 66,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     6,
+     14,
+     19,
+     16,
+     1,
+     17,
+     1,
+     20,
+     5
+    ]
+   ],
+   "expected": 67,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     7,
+     1,
+     3,
+     2,
+     5,
+     4,
+     3,
+     20,
+     19
+    ]
+   ],
+   "expected": 37,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     11,
+     2,
+     17,
+     14
+    ]
+   ],
+   "expected": 28,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     15,
+     1,
+     6,
+     6,
+     16,
+     4,
+     18
+    ]
+   ],
+   "expected": 55,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     2,
+     17,
+     8,
+     1,
+     1,
+     16
+    ]
+   ],
+   "expected": 34,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     11,
+     18,
+     0,
+     14,
+     1,
+     1,
+     4,
+     17,
+     1
+    ]
+   ],
+   "expected": 50,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     17,
+     3,
+     4
+    ]
+   ],
+   "expected": 21,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     4,
+     19,
+     10,
+     12,
+     7,
+     1
+    ]
+   ],
+   "expected": 32,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     2
+    ]
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     18,
+     15,
+     11,
+     9,
+     3,
+     0,
+     4,
+     13,
+     1,
+     1
+    ]
+   ],
+   "expected": 46,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     10,
+     2,
+     5,
+     8,
+     0,
+     8
+    ]
+   ],
+   "expected": 26,
+   "isSample": false
+  }
+ ]
+}

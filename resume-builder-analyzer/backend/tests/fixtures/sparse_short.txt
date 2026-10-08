@@ -1,0 +1,5 @@
+BOB SHORT
+bob@mail.com
+Summary: Developer.
+Skills: Python, HTML.
+Work: Did programming for small business.

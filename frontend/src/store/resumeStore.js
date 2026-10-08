@@ -172,6 +172,23 @@ const useResumeStore = create(
             activeResumeId: copy.id,
           }
         }),
+      importResumeVersion: (importedData) =>
+        set((state) => {
+          const resumes = ensureResumes(state.resumes)
+          const newResume = normalizeResumeVersion(
+            createResumeSnapshot({
+              ...importedData,
+              id: undefined,
+              name: importedData?.name ? `${importedData.name} (Imported)` : 'Imported Resume',
+              createdAt: undefined,
+              updatedAt: undefined,
+            })
+          )
+          return {
+            resumes: [newResume, ...resumes],
+            activeResumeId: newResume.id,
+          }
+        }),
       deleteActiveResume: () =>
         set((state) => {
           const resumes = ensureResumes(state.resumes)
@@ -491,6 +508,20 @@ const useResumeStore = create(
           updateActiveResume(state, (resume) => ({
             ...resume,
             template,
+          }))
+        ),
+      setCustomAccent: (customAccent) =>
+        set((state) =>
+          updateActiveResume(state, (resume) => ({
+            ...resume,
+            customAccent,
+          }))
+        ),
+      setCustomFont: (customFont) =>
+        set((state) =>
+          updateActiveResume(state, (resume) => ({
+            ...resume,
+            customFont,
           }))
         ),
       setPreviewMode: (previewMode) =>

@@ -4,31 +4,40 @@
   position: fixed;
   inset: 0 0 auto;
   z-index: 100;
-  padding: 18px 20px 0;
+  padding: 16px 24px 0;
+  width: 100%;
 }
 
 .navbarScrolled {
-  padding-top: 12px;
+  padding-top: 10px;
 }
 
 .inner {
-  width: min(100%, var(--content-width));
+  width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 14px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 20px;
+  padding: 12px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  background: rgba(7, 10, 8, 0.74);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+  background: rgba(8, 11, 16, 0.88);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
 }
 
 .navbarScrolled .inner {
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+}
+
+.brandGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .brand {
@@ -75,8 +84,10 @@
   transition: color 0.2s ease, opacity 0.2s ease;
 }
 
-.navLink:hover {
+.navLink:hover,
+.navLinkActive {
   color: var(--color-text);
+  font-weight: 600;
 }
 
 .actions {
@@ -142,6 +153,321 @@
   color: var(--color-text);
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Three Lines Button & Quick Popover */
+.quickMenuWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.threeLinesButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.threeLinesButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.hamburgerLine {
+  display: block;
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.leftFeaturesPanel {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: -20px;
+  width: 330px;
+  max-width: 90vw;
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95), 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #141414;
+  background: #050505;
+}
+
+.panelBadge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #71717a;
+  text-transform: uppercase;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.panelCloseBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #262626;
+  background: #0a0a0a;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.panelCloseBtn:hover {
+  color: #ffffff;
+  background: #171717;
+  border-color: #404040;
+}
+
+.panelContent {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 480px;
+  overflow-y: auto;
+  background: #000000;
+}
+
+.drawerSectionLabel {
+  padding: 10px 10px 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #52525b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.drawerItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.drawerItem:hover {
+  background: #0d0d0d;
+  border-color: #1f1f1f;
+}
+
+.drawerItemIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #0a0a0a;
+  border: 1px solid #1c1c1c;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.drawerItem:hover .drawerItemIcon {
+  color: #ffffff;
+  background: #171717;
+  border-color: #2e2e2e;
+}
+
+.drawerItemIconUpgrade {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #1e3a8a;
+  border: 1px solid #2563eb;
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.drawerUpgradeItem {
+  background: #060b18;
+  border: 1px solid #1d4ed8;
+}
+
+.drawerUpgradeItem:hover {
+  background: #0c1630;
+  border-color: #2563eb;
+}
+
+.drawerItemMeta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.drawerItemMeta strong {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.drawerItemMeta p {
+  font-size: 0.72rem;
+  color: #71717a;
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawerUpgradeTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawerBadgePro {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.drawerBadgeActive {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #0f766e;
+  color: #ccfbf1;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.drawerDivider {
+  height: 1px;
+  background: #141414;
+  margin: 8px 10px;
+}
+
+.drawerFooter {
+  padding: 14px 16px;
+  border-top: 1px solid #141414;
+  background: #050505;
+}
+
+.drawerUserBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drawerUserAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #141414;
+  border: 1px solid #262626;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.drawerUserMeta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.drawerUserMeta strong {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawerUserMeta span {
+  font-size: 0.7rem;
+  color: #71717a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawerSignOutBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid #262626;
+  background: #0a0a0a;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.drawerSignOutBtn:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.drawerLoginBtn {
+  display: block;
+  width: 100%;
+  padding: 9px;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.drawerLoginBtn:hover {
+  background: #1d4ed8;
 }
 
 .mobileMenu {

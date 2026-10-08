@@ -1,0 +1,153 @@
+{
+ "slug": "unique-paths",
+ "title": "Unique Paths",
+ "difficulty": "MEDIUM",
+ "topics": [
+  "Math",
+  "Dynamic Programming",
+  "Combinatorics"
+ ],
+ "companies": [],
+ "functionName": "uniquePaths",
+ "checker": "EXACT",
+ "xp": 60,
+ "statement": "A robot starts at the top-left of an `m x n` grid and can only move right or down. Return the number of unique paths to the bottom-right corner.\n\nExample 1:\nInput: m = 3, n = 7\nOutput: 28\n\nExample 2:\nInput: m = 3, n = 2\nOutput: 3",
+ "constraints": "1 <= m, n <= 18",
+ "starterCode": {
+  "python": "def uniquePaths(m, n):\n    # Write your solution here\n    pass\n",
+  "javascript": "function uniquePaths(m, n) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def uniquePaths(m, n):\n    from math import comb\n    return comb(m + n - 2, m - 1)\n"
+ },
+ "tests": [
+  {
+   "input": [
+    3,
+    7
+   ],
+   "expected": 28,
+   "isSample": true
+  },
+  {
+   "input": [
+    3,
+    2
+   ],
+   "expected": 3,
+   "isSample": true
+  },
+  {
+   "input": [
+    1,
+    1
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    18,
+    18
+   ],
+   "expected": 2333606220,
+   "isSample": false
+  },
+  {
+   "input": [
+    6,
+    3
+   ],
+   "expected": 21,
+   "isSample": false
+  },
+  {
+   "input": [
+    11,
+    8
+   ],
+   "expected": 19448,
+   "isSample": false
+  },
+  {
+   "input": [
+    9,
+    16
+   ],
+   "expected": 490314,
+   "isSample": false
+  },
+  {
+   "input": [
+    7,
+    10
+   ],
+   "expected": 5005,
+   "isSample": false
+  },
+  {
+   "input": [
+    16,
+    4
+   ],
+   "expected": 816,
+   "isSample": false
+  },
+  {
+   "input": [
+    16,
+    11
+   ],
+   "expected": 3268760,
+   "isSample": false
+  },
+  {
+   "input": [
+    4,
+    17
+   ],
+   "expected": 969,
+   "isSample": false
+  },
+  {
+   "input": [
+    18,
+    9
+   ],
+   "expected": 1081575,
+   "isSample": false
+  },
+  {
+   "input": [
+    10,
+    10
+   ],
+   "expected": 48620,
+   "isSample": false
+  },
+  {
+   "input": [
+    5,
+    2
+   ],
+   "expected": 5,
+   "isSample": false
+  },
+  {
+   "input": [
+    7,
+    1
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    2,
+    11
+   ],
+   "expected": 11,
+   "isSample": false
+  }
+ ]
+}

@@ -34,7 +34,7 @@ export async function connectToDatabase() {
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
-      dbName: 'rexion_ai',
+      dbName: process.env.MONGODB_DB_NAME || 'rexion',
     })
   }
 
@@ -54,3 +54,17 @@ export async function safeConnectToDatabase() {
     return null
   }
 }
+
+import { PrismaClient } from '@prisma/client'
+
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined
+}
+
+export const prisma = global.prisma || new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') {
+  global.prisma = prisma
+}
+

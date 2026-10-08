@@ -60,7 +60,7 @@ export const persistAuthSession = (response, remember = true) => {
 
   clearStoredAuth()
   storage.setItem(AUTH_TOKEN_KEY, response.token)
-  storage.setItem(AUTH_USER_KEY, JSON.stringify(response.user))
+  storage.setItem(AUTH_USER_KEY, JSON.stringify(normalizeUserPlan(response.user)))
   emitAuthChange()
 }
 
@@ -74,7 +74,7 @@ export const persistStoredUser = (user) => {
     return
   }
 
-  storage.setItem(AUTH_USER_KEY, JSON.stringify(user))
+  storage.setItem(AUTH_USER_KEY, JSON.stringify(normalizeUserPlan(user)))
   emitAuthChange()
 }
 
@@ -88,20 +88,56 @@ export const getStoredUser = () => {
   }
 
   try {
-    return JSON.parse(rawUser)
+    return normalizeUserPlan(JSON.parse(rawUser))
   } catch {
     return null
   }
 }
 
+const normalizeUserPlan = (user) => {
+  if (!user || typeof user !== 'object') {
+    return user
+  }
+
+  return user.role === 'admin' ? { ...user, plan: 'elite' } : user
+}
+
 export const getAuthErrorMessage = (error, fallbackMessage) => {
-  return (
-    error.response?.data?.message ||
-    (error.code === 'ERR_NETWORK'
-      ? 'Cannot reach the backend. Start it with npm run dev. Use npm run dev:mongo only if you specifically need the Atlas-backed backend.'
-      : error.message) ||
-    fallbackMessage
-    )
+  if (!error) return fallbackMessage || 'An unexpected error occurred.'
+
+  // If backend returned a JSON body with message or error field
+  if (error.response?.data?.message) {
+    return error.response.data.message
+  }
+  if (error.response?.data?.error) {
+    return typeof error.response.data.error === 'string'
+      ? error.response.data.error
+      : error.response.data.message || fallbackMessage
+  }
+
+  // If response data is a string (e.g. Vite proxy error or raw text)
+  if (typeof error.response?.data === 'string') {
+    const dataStr = error.response.data.toLowerCase()
+    if (dataStr.includes('econnrefused') || dataStr.includes('proxy error') || dataStr.includes('connect')) {
+      return 'Cannot connect to backend server. Please verify the dev backend is running on port 5000.'
+    }
+  }
+
+  // Network / connection failures
+  if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+    return 'Cannot reach the backend server. Please make sure the server is started with npm run dev.'
+  }
+
+  // HTTP status codes
+  if (error.response?.status === 503 || error.response?.status === 502 || error.response?.status === 504) {
+    return 'Authentication service is temporarily unavailable. Please try again shortly.'
+  }
+
+  if (error.response?.status === 500) {
+    return 'Server error (500). Please check backend logs or try again shortly.'
+  }
+
+  return error.message || fallbackMessage || 'Unable to sign in. Please try again.'
 }
 
 export const resolveAuthRedirectPath = (candidatePath, fallbackPath = '/dashboard') => {

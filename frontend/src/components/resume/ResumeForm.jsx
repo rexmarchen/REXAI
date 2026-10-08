@@ -13,7 +13,7 @@ import Education from './sections/Education'
 import Projects from './sections/Projects'
 import Certifications from './sections/Certifications'
 
-const ResumeForm = ({ resume }) => {
+const ResumeForm = ({ resume, onDownloadPdf, isExporting = false }) => {
   const [activeStepIndex, setActiveStepIndex] = useState(0)
   const [stepErrors, setStepErrors] = useState({})
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
@@ -226,11 +226,39 @@ const ResumeForm = ({ resume }) => {
           <h2 className={styles.stepTitle}>{currentStep.title}</h2>
           <p className={styles.stepDescription}>{currentStep.description}</p>
         </div>
-        <div className={styles.progressMeta}>
-          <span className={styles.progressValue}>{progressValue}%</span>
-          <span className={styles.progressLabel}>
-            {completedSteps}/{RESUME_STEPS.length} steps validated
-          </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.45rem' }}>
+          <div className={styles.progressMeta}>
+            <span className={styles.progressValue}>{progressValue}%</span>
+            <span className={styles.progressLabel}>
+              {completedSteps}/{RESUME_STEPS.length} steps validated
+            </span>
+          </div>
+          {onDownloadPdf && (
+            <button
+              id="form-quick-download-pdf"
+              type="button"
+              onClick={onDownloadPdf}
+              disabled={isExporting}
+              style={{
+                background: '#FFF5F0',
+                border: '1px solid #FCD9CD',
+                borderRadius: '8px',
+                padding: '0.28rem 0.65rem',
+                color: '#E97852',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                transition: 'all 0.15s ease',
+              }}
+              title="Download Current Resume as PDF"
+            >
+              <span>📥</span>
+              <span>{isExporting ? 'Generating PDF...' : 'Download PDF'}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -290,14 +318,35 @@ const ResumeForm = ({ resume }) => {
           >
             Previous
           </button>
-          <button
-            type="button"
-            className={styles.primaryButton}
-            onClick={handleNext}
-            disabled={activeStepIndex === RESUME_STEPS.length - 1}
-          >
-            {activeStepIndex === RESUME_STEPS.length - 2 ? 'Review Final Step' : 'Next'}
-          </button>
+          {activeStepIndex === RESUME_STEPS.length - 1 ? (
+            <button
+              id="form-final-download-pdf"
+              type="button"
+              className={styles.primaryButton}
+              onClick={onDownloadPdf}
+              disabled={isExporting}
+              style={{
+                background: 'linear-gradient(135deg, #E97852, #D85D35)',
+                boxShadow: '0 4px 14px rgba(233, 120, 82, 0.35)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+              }}
+            >
+              <span>{isExporting ? 'Generating PDF...' : 'Download Resume (PDF)'}</span>
+              <span style={{ fontSize: '1rem' }}>📥</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={handleNext}
+            >
+              {activeStepIndex === RESUME_STEPS.length - 2 ? 'Review Final Step' : 'Next'}
+            </button>
+          )}
         </div>
       </div>
     </section>

@@ -1,0 +1,67 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  backend-tests:
+    name: Backend Pytest & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: resume-builder-analyzer/backend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install email-validator ruff
+
+      - name: Lint with Ruff
+        run: |
+          ruff check app/
+
+      - name: Generate Fixtures and Run Pytest
+        run: |
+          python tests/create_fixtures.py
+          pytest -v --tb=short
+
+  frontend-tests:
+    name: Frontend Build & State Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: resume-builder-analyzer/frontend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: resume-builder-analyzer/frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run TypeScript & Vite Build
+        run: npm run build
+
+      - name: Run Frontend State Tests
+        run: npm test

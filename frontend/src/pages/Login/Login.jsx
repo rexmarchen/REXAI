@@ -5,7 +5,17 @@ import AuthParticleBackground from '../../components/common/AuthParticleBackgrou
 import { useAuth } from '../../context/AuthContext'
 import authApi from '../../services/authApi'
 import { getAuthErrorMessage, resolveAuthRedirectPath } from '../../utils/authSession'
+import { isGoogleAuthConfigured } from '../../config/googleAuth'
 import styles from './Login.module.css'
+
+const getDestinationLabel = (path) => {
+  if (path.startsWith('/resume-predictor')) return 'Resume Predictor'
+  if (path.startsWith('/intern-hunt')) return 'Intern Hunt'
+  if (path.startsWith('/resume')) return 'Resume Builder'
+  if (path.startsWith('/rexcode')) return 'Rexcode'
+  if (path.startsWith('/workspace') || path.startsWith('/dashboard')) return 'Dashboard'
+  return 'REXION'
+}
 
 const Login = () => {
   const navigate = useNavigate()
@@ -50,10 +60,11 @@ const Login = () => {
       ),
     [location.state, searchParams]
   )
+  const destinationLabel = useMemo(() => getDestinationLabel(nextPath), [nextPath])
 
   const completeLogin = (response, remember) => {
     applyAuthResponse(response, remember)
-    setSubmitMessage(response.message || 'Login successful. Redirecting to your dashboard...')
+    setSubmitMessage(response.message || `Login successful. Redirecting to ${destinationLabel}...`)
     setTimeout(() => navigate(nextPath, { replace: true }), 500)
   }
 
@@ -66,10 +77,31 @@ const Login = () => {
 
     setLoading(true)
     try {
-      const response = await authApi.login({
-        email: form.email.trim(),
-        password: form.password
-      })
+      let response
+      try {
+        response = await authApi.login({
+          email: form.email.trim(),
+          password: form.password
+        })
+      } catch (firstErr) {
+        const status = firstErr?.response?.status
+        const isTransient =
+          status === 503 ||
+          status === 502 ||
+          status === 504 ||
+          (status === 500 && (typeof firstErr?.response?.data === 'string' || !firstErr?.response?.data?.message)) ||
+          firstErr?.code === 'ERR_NETWORK'
+
+        if (isTransient) {
+          await new Promise((r) => setTimeout(r, 1200))
+          response = await authApi.login({
+            email: form.email.trim(),
+            password: form.password
+          })
+        } else {
+          throw firstErr
+        }
+      }
 
       completeLogin(response, form.remember)
     } catch (error) {
@@ -108,7 +140,11 @@ const Login = () => {
       <div className={styles.card}>
         <p className={styles.kicker}>REXION AI</p>
         <h1 className={styles.title}>Welcome back.</h1>
-        <p className={styles.subtitle}>Log in to the premium REXION workspace and pick up where your search left off.</p>
+        <p className={styles.subtitle}>
+          {destinationLabel === 'Dashboard'
+            ? 'Log in to open your dashboard and continue your search.'
+            : `Log in to continue to ${destinationLabel}.`}
+        </p>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.field}>
@@ -166,22 +202,26 @@ const Login = () => {
             {loading ? 'Signing In...' : 'Enter Dashboard'}
           </button>
 
-          <div className={styles.authDivider} aria-hidden="true">
-            <span>OR</span>
-          </div>
+          {isGoogleAuthConfigured() && (
+            <>
+              <div className={styles.authDivider} aria-hidden="true">
+                <span>OR</span>
+              </div>
 
-          <GoogleSignInButton
-            text="signin_with"
-            disabled={loading}
-            onCredential={handleGoogleCredential}
-          />
+              <GoogleSignInButton
+                text="signin_with"
+                disabled={loading}
+                onCredential={handleGoogleCredential}
+              />
+            </>
+          )}
 
           {submitMessage && <p className={styles.success}>{submitMessage}</p>}
           {submitError && <p className={styles.error}>{submitError}</p>}
         </form>
 
         <p className={styles.footerText}>
-          Don&apos;t have an account? <Link to="/register">Start free</Link>
+          Don&apos;t have an account? <Link to={`/register?next=${encodeURIComponent(nextPath)}`}>Start free</Link>
         </p>
       </div>
     </section>

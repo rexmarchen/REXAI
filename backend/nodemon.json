@@ -1,0 +1,15 @@
+{
+  "watch": ["server.js", "src/"],
+  "ext": "js,mjs,json",
+  "ignore": [
+    "uploads/*",
+    "logs/*",
+    "data/*",
+    "session-data/*",
+    "scratch/*",
+    "tests/*",
+    "*.sqlite*",
+    "*.log"
+  ],
+  "delay": "500"
+}

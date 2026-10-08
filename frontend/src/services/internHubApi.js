@@ -22,18 +22,56 @@ const INTERNSHIP_QUERY_REGEX = /\b(intern|internship|trainee|apprentice|fellow|c
 const REMOTE_REGEX = /\bremote\b/i
 const inflightSearches = new Map()
 
+const VERIFIED_COMPANY_LINKEDIN = {
+  amazon: 'https://www.linkedin.com/company/amazon/jobs/',
+  google: 'https://www.linkedin.com/company/google/jobs/',
+  microsoft: 'https://www.linkedin.com/company/microsoft/jobs/',
+  zepto: 'https://www.linkedin.com/company/zeptonow/jobs/',
+  palantir: 'https://www.linkedin.com/company/palantir-technologies/jobs/',
+  'palantir technologies': 'https://www.linkedin.com/company/palantir-technologies/jobs/',
+  datadog: 'https://www.linkedin.com/company/datadog/jobs/',
+  postman: 'https://www.linkedin.com/company/postman-platform/jobs/',
+  razorpay: 'https://www.linkedin.com/company/razorpay/jobs/',
+  figma: 'https://www.linkedin.com/company/figma/jobs/',
+  cred: 'https://www.linkedin.com/company/cred-club/jobs/',
+  groww: 'https://www.linkedin.com/company/groww.in/jobs/',
+  swiggy: 'https://www.linkedin.com/company/swiggy-in/jobs/',
+  zomato: 'https://www.linkedin.com/company/zomato/jobs/',
+  phonepe: 'https://www.linkedin.com/company/phonepe-internet/jobs/',
+  duolingo: 'https://www.linkedin.com/company/duolingo/jobs/',
+  discord: 'https://www.linkedin.com/company/discord/jobs/',
+  scaleai: 'https://www.linkedin.com/company/scaleai/jobs/',
+  'scale ai': 'https://www.linkedin.com/company/scaleai/jobs/',
+  canonical: 'https://www.linkedin.com/company/canonical/jobs/',
+  uber: 'https://www.linkedin.com/company/uber-com/jobs/',
+  meta: 'https://www.linkedin.com/company/meta/jobs/',
+  stripe: 'https://www.linkedin.com/company/stripe/jobs/'
+}
+
 export const buildLinkedInSearchUrl = ({ title, company, location, mode }) => {
+  const normComp = String(company || '').trim().toLowerCase()
+  if (VERIFIED_COMPANY_LINKEDIN[normComp]) {
+    return VERIFIED_COMPANY_LINKEDIN[normComp]
+  }
+
   const params = new URLSearchParams()
-  const normalizedTitle = String(title || '').trim()
+  const normalizedTitle = String(title || '')
+    .replace(/\(.*?\)/g, '')
+    .replace(/\[.*?\]/g, '')
+    .replace(/[-–—|/\\].*$/, '')
+    .replace(/[^a-zA-Z0-9\s]/g, ' ')
+    .trim()
+  const normalizedCompany = String(company || '').replace(/[^a-zA-Z0-9\s]/g, ' ').trim()
   const normalizedLocation = String(location || '').trim()
   const normalizedMode = String(mode || '').trim()
 
+  const queryParts = [normalizedCompany, normalizedTitle].filter(Boolean)
+  const query = queryParts.join(' ')
   params.set(
     'keywords',
-    INTERNSHIP_QUERY_REGEX.test(normalizedTitle) ? normalizedTitle : `${normalizedTitle} internship`
+    INTERNSHIP_QUERY_REGEX.test(query) ? query : `${query} internship`
   )
   params.set('f_JT', 'I')
-  params.set('f_TPR', `r${LINKEDIN_LIVE_WINDOW_SECONDS}`)
 
   if (
     normalizedLocation &&

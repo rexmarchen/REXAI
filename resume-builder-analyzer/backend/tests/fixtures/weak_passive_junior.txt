@@ -1,0 +1,16 @@
+JOHN DOE
+john@email.com
+
+ABOUT ME
+I am a hard worker and results-driven team player looking to think outside the box as a rockstar developer.
+
+EXPERIENCE
+Developer | Local Startup (2022 - 2023)
+• Responsible for working on the website front end.
+• Duties included bug fixing and assisting senior devs with tasks.
+• Helped to write some code in JavaScript and HTML.
+• Worked on various customer support issues and tickets.
+
+EDUCATION
+College (2018 - 2022)
+Studied computers and math.

@@ -1,0 +1,449 @@
+{
+ "slug": "merge-intervals",
+ "title": "Merge Intervals",
+ "difficulty": "MEDIUM",
+ "topics": [
+  "Array",
+  "Sorting",
+  "Intervals"
+ ],
+ "companies": [],
+ "functionName": "merge",
+ "checker": "EXACT",
+ "xp": 60,
+ "statement": "Given an array of `intervals` where `intervals[i] = [start, end]`, merge all overlapping intervals (intervals that touch, like `[1,4]` and `[4,5]`, overlap) and return the non-overlapping intervals sorted by start.\n\nExample 1:\nInput: intervals = [[1,3],[2,6],[8,10],[15,18]]\nOutput: [[1,6],[8,10],[15,18]]\n\nExample 2:\nInput: intervals = [[1,4],[4,5]]\nOutput: [[1,5]]",
+ "constraints": "1 <= intervals.length <= 10^4\n0 <= start <= end <= 10^4",
+ "starterCode": {
+  "python": "def merge(intervals):\n    # Write your solution here\n    pass\n",
+  "javascript": "function merge(intervals) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def merge(intervals):\n    out = []\n    for s, e in sorted(intervals):\n        if out and s <= out[-1][1]: out[-1][1] = max(out[-1][1], e)\n        else: out.append([s, e])\n    return out\n"
+ },
+ "tests": [
+  {
+   "input": [
+    [
+     [
+      1,
+      3
+     ],
+     [
+      2,
+      6
+     ],
+     [
+      8,
+      10
+     ],
+     [
+      15,
+      18
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     1,
+     6
+    ],
+    [
+     8,
+     10
+    ],
+    [
+     15,
+     18
+    ]
+   ],
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     [
+      1,
+      4
+     ],
+     [
+      4,
+      5
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     1,
+     5
+    ]
+   ],
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     [
+      1,
+      1
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     1,
+     1
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      0,
+      5
+     ],
+     [
+      1,
+      2
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     0,
+     5
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      1,
+      10
+     ],
+     [
+      0,
+      10
+     ],
+     [
+      8,
+      8
+     ],
+     [
+      3,
+      10
+     ],
+     [
+      4,
+      16
+     ],
+     [
+      6,
+      10
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     0,
+     16
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      3,
+      6
+     ],
+     [
+      17,
+      18
+     ],
+     [
+      1,
+      5
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     1,
+     6
+    ],
+    [
+     17,
+     18
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      1,
+      7
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     1,
+     7
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      1,
+      5
+     ],
+     [
+      9,
+      20
+     ],
+     [
+      19,
+      19
+     ],
+     [
+      2,
+      7
+     ],
+     [
+      9,
+      13
+     ],
+     [
+      6,
+      20
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     1,
+     20
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      6,
+      19
+     ],
+     [
+      15,
+      19
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     6,
+     19
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      7,
+      12
+     ],
+     [
+      10,
+      13
+     ],
+     [
+      10,
+      12
+     ],
+     [
+      11,
+      12
+     ],
+     [
+      3,
+      9
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     3,
+     13
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      9,
+      11
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     9,
+     11
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      7,
+      15
+     ],
+     [
+      4,
+      20
+     ],
+     [
+      5,
+      7
+     ],
+     [
+      0,
+      18
+     ],
+     [
+      14,
+      18
+     ],
+     [
+      13,
+      18
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     0,
+     20
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      19,
+      20
+     ],
+     [
+      10,
+      19
+     ],
+     [
+      20,
+      20
+     ],
+     [
+      1,
+      17
+     ],
+     [
+      5,
+      17
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     1,
+     20
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      3,
+      12
+     ],
+     [
+      5,
+      6
+     ],
+     [
+      19,
+      20
+     ],
+     [
+      3,
+      17
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     3,
+     17
+    ],
+    [
+     19,
+     20
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      4,
+      11
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     4,
+     11
+    ]
+   ],
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     [
+      13,
+      16
+     ]
+    ]
+   ],
+   "expected": [
+    [
+     13,
+     16
+    ]
+   ],
+   "isSample": false
+  }
+ ]
+}

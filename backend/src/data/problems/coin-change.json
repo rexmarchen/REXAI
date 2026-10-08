@@ -1,0 +1,232 @@
+{
+ "slug": "coin-change",
+ "title": "Coin Change",
+ "difficulty": "MEDIUM",
+ "topics": [
+  "Dynamic Programming",
+  "Array"
+ ],
+ "companies": [],
+ "functionName": "coinChange",
+ "checker": "EXACT",
+ "xp": 60,
+ "statement": "Given coin denominations `coins` (unlimited supply of each) and a target `amount`, return the fewest coins needed to make that amount, or `-1` if impossible.\n\nExample 1:\nInput: coins = [1,2,5], amount = 11\nOutput: 3\n\nExample 2:\nInput: coins = [2], amount = 3\nOutput: -1",
+ "constraints": "1 <= coins.length <= 12\n1 <= coins[i] <= 2^31 - 1\n0 <= amount <= 10^4",
+ "starterCode": {
+  "python": "def coinChange(coins, amount):\n    # Write your solution here\n    pass\n",
+  "javascript": "function coinChange(coins, amount) {\n  // Write your solution here\n}\n"
+ },
+ "referenceSolution": {
+  "python": "def coinChange(coins, amount):\n    INF = amount + 1; dp = [0] + [INF] * amount\n    for a in range(1, amount + 1):\n        for c in coins:\n            if c <= a and dp[a - c] + 1 < dp[a]: dp[a] = dp[a - c] + 1\n    return dp[amount] if dp[amount] != INF else -1\n"
+ },
+ "tests": [
+  {
+   "input": [
+    [
+     1,
+     2,
+     5
+    ],
+    11
+   ],
+   "expected": 3,
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     2
+    ],
+    3
+   ],
+   "expected": -1,
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     1
+    ],
+    0
+   ],
+   "expected": 0,
+   "isSample": true
+  },
+  {
+   "input": [
+    [
+     2,
+     5
+    ],
+    1
+   ],
+   "expected": -1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     3,
+     7
+    ],
+    14
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     6,
+     7,
+     2,
+     9
+    ],
+    2
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     7,
+     4,
+     5
+    ],
+    22
+   ],
+   "expected": 4,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     3
+    ],
+    18
+   ],
+   "expected": 6,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     4,
+     9,
+     5,
+     7
+    ],
+    4
+   ],
+   "expected": 1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     2,
+     11,
+     1,
+     4
+    ],
+    8
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     10
+    ],
+    6
+   ],
+   "expected": -1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     2,
+     3
+    ],
+    15
+   ],
+   "expected": 5,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     2,
+     3,
+     1
+    ],
+    17
+   ],
+   "expected": 6,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     3,
+     6
+    ],
+    24
+   ],
+   "expected": 4,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     7
+    ],
+    1
+   ],
+   "expected": -1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     5,
+     6
+    ],
+    14
+   ],
+   "expected": -1,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     10,
+     3
+    ],
+    20
+   ],
+   "expected": 2,
+   "isSample": false
+  },
+  {
+   "input": [
+    [
+     1,
+     2,
+     5,
+     10,
+     20,
+     50,
+     100,
+     200
+    ],
+    10000
+   ],
+   "expected": 50,
+   "isSample": false
+  }
+ ]
+}

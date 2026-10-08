@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apply for Backend Engineer at Fernwood Health</title>
+<style>
+  body { font-family: Georgia, "Times New Roman", serif; max-width: 640px; margin: 40px auto; padding: 0 20px; color: #222; }
+  .company { font-family: Arial, sans-serif; font-weight: 700; color: #2e7d5b; font-size: 15px; letter-spacing: .03em; }
+  h1 { font-family: Arial, sans-serif; font-size: 24px; margin: 6px 0 24px; }
+  h2 { font-family: Arial, sans-serif; font-size: 13px; text-transform: uppercase; color: #555; margin-top: 30px; }
+  label { font-family: Arial, sans-serif; display: block; margin: 12px 0 4px; font-size: 13px; }
+  .required { color: #c0392b; }
+  input, textarea, select {
+    width: 100%; padding: 8px; font-size: 14px; border: 1px solid #bbb; border-radius: 3px; box-sizing: border-box; font-family: Arial, sans-serif;
+  }
+  textarea { min-height: 80px; }
+  .additional-link { display: flex; gap: 8px; margin-bottom: 8px; }
+  .additional-link select { flex: 0 0 130px; }
+  .additional-link input { flex: 1; }
+  button { font-family: Arial, sans-serif; margin-top: 24px; padding: 10px 24px; font-size: 14px; background: #2e7d5b; color: #fff; border: none; border-radius: 3px; cursor: pointer; }
+  #results { font-family: Arial, sans-serif; display: none; margin-top: 26px; padding: 16px; background: #f2f5f3; border-radius: 6px; font-size: 12.5px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<div class="company">FERNWOOD HEALTH</div>
+<h1>Backend Engineer, Payments</h1>
+
+<form id="application-form">
+
+  <h2>Basics</h2>
+  <label for="name">Full name <span class="required">*</span></label>
+  <input type="text" id="name" name="name" required />
+
+  <label for="email">Email <span class="required">*</span></label>
+  <input type="email" id="email" name="email" required />
+
+  <label for="phone">Phone <span class="required">*</span></label>
+  <input type="text" id="phone" name="phone" required />
+
+  <label for="org">Current company</label>
+  <input type="text" id="org" name="org" placeholder="Where do you currently work?" />
+
+  <label for="resume">Resume <span class="required">*</span></label>
+  <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" required />
+
+  <h2>Links</h2>
+  <div class="additional-link">
+    <select disabled><option>LinkedIn</option></select>
+    <input type="text" name="urls[LinkedIn]" placeholder="https://linkedin.com/in/..." />
+  </div>
+  <div class="additional-link">
+    <select disabled><option>GitHub</option></select>
+    <input type="text" name="urls[GitHub]" placeholder="https://github.com/..." />
+  </div>
+  <div class="additional-link">
+    <select disabled><option>Other</option></select>
+    <input type="text" name="urls[Other]" placeholder="Portfolio, blog, etc." />
+  </div>
+
+  <h2>Additional questions</h2>
+
+  <label for="custom_question_1">What is your current or most recent job title?</label>
+  <input type="text" id="custom_question_1" name="custom_question_1" />
+
+  <label for="custom_question_2">How many years of backend engineering experience do you have?</label>
+  <input type="text" id="custom_question_2" name="custom_question_2" />
+
+  <label for="custom_question_3">What city and state are you based in?</label>
+  <input type="text" id="custom_question_3" name="custom_question_3" />
+
+  <label for="custom_question_4">Salary expectations (annual, USD)</label>
+  <input type="text" id="custom_question_4" name="custom_question_4" placeholder="e.g. 160,000 - 180,000" />
+
+  <label for="comments">Additional information / cover note <span style="font-weight:400">(open-ended)</span></label>
+  <textarea id="comments" name="comments"></textarea>
+
+  <button type="submit">Submit application</button>
+</form>
+
+<div id="results"></div>
+
+<script>
+document.getElementById('application-form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const data = new FormData(e.target);
+  const lines = [];
+  for (const [key, value] of data.entries()) {
+    lines.push(`${key}: ${value instanceof File ? (value.name || '(no file selected)') : (value === '' ? '(left blank)' : value)}`);
+  }
+  const results = document.getElementById('results');
+  results.style.display = 'block';
+  results.textContent = 'Submitted values:\n\n' + lines.join('\n');
+});
+</script>
+
+</body>
+</html>

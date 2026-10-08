@@ -1,207 +1,122 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { Eye, Linkedin, Mail } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { useFindContacts } from '@/hooks/useOutreach'
-import { maskEmail } from '@/lib/outreach/contacts'
-import type { CompanyProfile, OutreachContactShape } from '@/types'
-import styles from '@/styles/outreach.module.css'
+import type { OutreachContact } from '@/types/outreach'
+import { ContactRow } from './ContactRow'
+import { ContactTableSkeleton } from './SkeletonLoader'
+import { EmptyState } from './EmptyState'
+import { ErrorState } from './ErrorState'
+import { Users } from 'lucide-react'
 
-type FilterKey = 'all' | 'hr' | 'recruiter' | 'founder' | 'manager'
-
-function matchesFilter(contact: OutreachContactShape, filter: FilterKey) {
-  const role = contact.role.toLowerCase()
-  if (filter === 'all') return true
-  if (filter === 'hr') return role.includes('talent') || role.includes('hr')
-  if (filter === 'recruiter') return role.includes('recruit')
-  if (filter === 'founder') return role.includes('founder')
-  return role.includes('manager')
-}
-
-function avatarClassName(role: string) {
-  const normalized = role.toLowerCase()
-  if (normalized.includes('founder')) {
-    return `${styles.contactAvatar} ${styles.contactAvatarFounder}`
-  }
-  if (normalized.includes('recruit')) {
-    return `${styles.contactAvatar} ${styles.contactAvatarRecruiter}`
-  }
-  return styles.contactAvatar
+interface ContactTableProps {
+  contacts: OutreachContact[]
+  selectedIds: Set<string>
+  onToggle: (contact: OutreachContact) => void
+  onSelectAll: () => void
+  onClearAll: () => void
+  isLoading: boolean
+  isError: boolean
+  onRetry: () => void
+  isFiltered: boolean
+  onClearFilters: () => void
 }
 
 export function ContactTable({
-  company,
-  selectedContacts,
-  onBack,
-  onChange,
-  onNext,
-}: {
-  company: CompanyProfile
-  selectedContacts: OutreachContactShape[]
-  onBack: () => void
-  onChange: (contacts: OutreachContactShape[]) => void
-  onNext: () => void
-}) {
-  const [filter, setFilter] = useState<FilterKey>('all')
-  const [previewContact, setPreviewContact] = useState<OutreachContactShape | null>(null)
-  const { data, isLoading, isError } = useFindContacts(company.name, company.domain, Boolean(company))
+  contacts,
+  selectedIds,
+  onToggle,
+  onSelectAll,
+  onClearAll,
+  isLoading,
+  isError,
+  onRetry,
+  isFiltered,
+  onClearFilters,
+}: ContactTableProps) {
+  const allSelected = contacts.length > 0 && contacts.every((c) => selectedIds.has(c.id))
 
-  const contacts = data || []
-  const filteredContacts = useMemo(
-    () => contacts.filter((contact) => matchesFilter(contact, filter)),
-    [contacts, filter]
-  )
+  if (isLoading) return <ContactTableSkeleton />
+  if (isError) return <ErrorState title="Unable to load contacts" message="Something went wrong while searching for contacts." onRetry={onRetry} />
 
-  const selectedIds = new Set(selectedContacts.map((contact) => contact.id))
-
-  const updateSelection = (contact: OutreachContactShape) => {
-    if (selectedIds.has(contact.id)) {
-      onChange(selectedContacts.filter((item) => item.id !== contact.id))
-      return
-    }
-
-    onChange([...selectedContacts, contact])
-  }
-
-  const selectGroup = (group: FilterKey) => {
-    const groupContacts = contacts.filter((contact) => matchesFilter(contact, group))
-    const merged = new Map(selectedContacts.map((contact) => [contact.id, contact]))
-    groupContacts.forEach((contact) => merged.set(contact.id, contact))
-    onChange([...merged.values()])
+  if (contacts.length === 0) {
+    return (
+      <EmptyState
+        icon={Users}
+        title={isFiltered ? 'No people found' : 'Start searching for people'}
+        description={
+          isFiltered
+            ? 'Try adjusting your role, company, or location filters.'
+            : 'Search for a name, company, or role above.'
+        }
+        action={isFiltered ? { label: 'Clear filters', onClick: onClearFilters } : undefined}
+      />
+    )
   }
 
   return (
-    <section className={styles.surface}>
-      <div className={styles.campaignHeader}>
-        <div>
-          <h2 className={styles.strong}>Finding contacts at {company.name}</h2>
-          <p className={styles.copy}>
-            The table merges Hunter- and Apollo-style contact results, then keeps the strongest record per email.
-          </p>
-        </div>
-        <div className={styles.headerActions}>
-          <button className={styles.buttonGhost} onClick={onBack}>
-            Back
-          </button>
-        </div>
+    <div className="overflow-hidden rounded-xl border border-white/8 bg-[#0b0e13]">
+      {/* Table Header */}
+      <div
+        className="flex items-center gap-4 border-b border-white/8 px-4 py-2"
+        role="row"
+      >
+        <button
+          onClick={allSelected ? onClearAll : onSelectAll}
+          className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border transition ${
+            allSelected ? 'border-[var(--blue)] bg-[var(--blue)]' : 'border-white/20 hover:border-white/40'
+          }`}
+          aria-label={allSelected ? 'Deselect all' : 'Select all'}
+        >
+          {allSelected && (
+            <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+              <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
+        <span className="flex-1 text-[10px] font-medium uppercase tracking-widest text-[var(--text-dim)]">
+          Person
+        </span>
+        <span className="hidden w-40 shrink-0 text-[10px] font-medium uppercase tracking-widest text-[var(--text-dim)] sm:block">
+          Role
+        </span>
+        <span className="hidden w-36 shrink-0 text-[10px] font-medium uppercase tracking-widest text-[var(--text-dim)] md:block">
+          Company
+        </span>
+        <span className="hidden w-32 shrink-0 text-[10px] font-medium uppercase tracking-widest text-[var(--text-dim)] lg:block">
+          Location
+        </span>
+        <span className="hidden flex-1 text-[10px] font-medium uppercase tracking-widest text-[var(--text-dim)] xl:block">
+          Email
+        </span>
+        <span className="shrink-0 text-[10px] font-medium uppercase tracking-widest text-[var(--text-dim)]">
+          Status
+        </span>
       </div>
 
-      <div className={styles.filterRow}>
-        {[
-          ['all', 'All'],
-          ['hr', 'HR'],
-          ['recruiter', 'Recruiters'],
-          ['founder', 'Founders'],
-          ['manager', 'Hiring Managers'],
-        ].map(([value, label]) => (
-          <button
-            key={value}
-            className={filter === value ? styles.button : styles.buttonSubtle}
-            onClick={() => setFilter(value as FilterKey)}
-          >
-            {label}
-          </button>
+      {/* Rows */}
+      <div role="rowgroup">
+        {contacts.map((contact) => (
+          <ContactRow
+            key={contact.id}
+            contact={contact}
+            selected={selectedIds.has(contact.id)}
+            onToggle={onToggle}
+          />
         ))}
       </div>
 
-      <div className={styles.actionRow}>
-        <button className={styles.buttonSubtle} onClick={() => selectGroup('hr')}>
-          Select All HR
-        </button>
-        <button className={styles.buttonSubtle} onClick={() => selectGroup('recruiter')}>
-          Select All Recruiters
-        </button>
-      </div>
-
-      {isLoading ? (
-        <div className={styles.contactGrid}>
-          <div className={styles.skeleton} />
-          <div className={styles.skeleton} />
-          <div className={styles.skeleton} />
+      {/* Footer */}
+      {contacts.length > 0 && (
+        <div className="border-t border-white/8 px-4 py-2">
+          <span className="text-xs text-[var(--text-dim)]">
+            {contacts.length} {contacts.length === 1 ? 'person' : 'people'} found
+            {selectedIds.size > 0 && (
+              <span className="ml-2 text-white">
+                · {selectedIds.size} selected
+              </span>
+            )}
+          </span>
         </div>
-      ) : null}
-
-      {!isLoading && isError ? (
-        <div className={styles.emptyState}>Contact discovery is unavailable right now. Try again in a moment.</div>
-      ) : null}
-
-      {!isLoading ? (
-        <div className={styles.contactGrid}>
-          {filteredContacts.map((contact, index) => (
-            <motion.article
-              key={contact.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.04, duration: 0.2 }}
-              className={styles.contactCard}
-            >
-              <div className={styles.contactHeader}>
-                <div className={styles.metaRow}>
-                  <span className={avatarClassName(contact.role)}>{contact.name.slice(0, 2).toUpperCase()}</span>
-                  <div>
-                    <div className={styles.strong}>{contact.name}</div>
-                    <div className={styles.metaText}>{contact.role}</div>
-                  </div>
-                </div>
-
-                <div className={styles.metaRow}>
-                  <span className={styles.confidenceChip}>{contact.confidence}</span>
-                  <label className={styles.metaRow}>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(contact.id)}
-                      onChange={() => updateSelection(contact)}
-                    />
-                    Select
-                  </label>
-                </div>
-              </div>
-
-              <div className={styles.metaRow}>
-                <span className={styles.metaText}>
-                  <Mail size={14} /> {maskEmail(contact.email)}
-                </span>
-                {contact.linkedinUrl ? (
-                  <a href={contact.linkedinUrl} target="_blank" rel="noreferrer" className={styles.metaText}>
-                    <Linkedin size={14} /> View LinkedIn
-                  </a>
-                ) : null}
-              </div>
-
-              <div className={styles.actionRow}>
-                <button className={styles.buttonSubtle} onClick={() => setPreviewContact(contact)}>
-                  <Eye size={14} /> Preview
-                </button>
-              </div>
-            </motion.article>
-          ))}
-        </div>
-      ) : null}
-
-      {previewContact ? (
-        <div className={styles.previewCard}>
-          <div className={styles.previewHeader}>
-            <div>
-              <div className={styles.strong}>{previewContact.name}</div>
-              <div className={styles.metaText}>{previewContact.role}</div>
-            </div>
-            <span className={styles.confidenceChip}>{previewContact.email}</span>
-          </div>
-        </div>
-      ) : null}
-
-      <div className={styles.stickyBar}>
-        <span className={styles.metaText}>{selectedContacts.length} contacts selected</span>
-        <div className={styles.actionRow}>
-          <button className={styles.buttonGhost} onClick={onBack}>
-            Change Company
-          </button>
-          <button className={styles.button} onClick={onNext} disabled={selectedContacts.length === 0}>
-            Next: Compose Email
-          </button>
-        </div>
-      </div>
-    </section>
+      )}
+    </div>
   )
 }
