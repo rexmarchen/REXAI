@@ -1,32 +1,22 @@
-import fs from 'fs'
-import path from 'path'
+import winston from 'winston'
 
-const logFile = path.join(process.cwd(), 'logs', 'app.log')
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'logs/combined.log' })
+  ]
+})
 
-const ensureLogDir = () => {
-  const logDir = path.dirname(logFile)
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true })
-  }
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple()
+  }))
 }
 
-const log = (level, message) => {
-  ensureLogDir()
-  const timestamp = new Date().toISOString()
-  const logMessage = `[${timestamp}] [${level}] ${message}`
-  console.log(logMessage)
-  try {
-    fs.appendFileSync(logFile, logMessage + '\n')
-  } catch (err) {
-    // Silently fallback to console only if file write is blocked (e.g. OneDrive issues)
-  }
-}
-
-export const logger = {
-  info: (msg) => log('INFO', msg),
-  error: (msg) => log('ERROR', msg),
-  warn: (msg) => log('WARN', msg),
-  debug: (msg) => log('DEBUG', msg)
-}
-
+export { logger }
 export default logger

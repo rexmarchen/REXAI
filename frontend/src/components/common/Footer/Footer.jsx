@@ -33,11 +33,22 @@ const Footer = () => {
             <Link to="/login">Log In</Link>
             <Link to="/register">Start Free</Link>
           </div>
+          <div className={styles.column}>
+            <h3>Legal</h3>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
+          </div>
         </div>
       </div>
 
       <div className={styles.bottomBar}>
-        <p>© {new Date().getFullYear()} REXION AI. Premium frontend refreshed for the unified platform.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '18px' }}>
+          <p style={{ margin: 0, border: 'none', padding: 0 }}>© {new Date().getFullYear()} REXION AI. All rights reserved.</p>
+          <div style={{ display: 'flex', gap: '16px', fontSize: '0.86rem' }}>
+            <Link to="/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Terms of Service</Link>
+          </div>
+        </div>
       </div>
     </footer>
   )

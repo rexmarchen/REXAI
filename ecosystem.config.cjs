@@ -9,7 +9,11 @@ module.exports = {
       name: 'rexion-backend',
       script: 'server.js',
       cwd: './backend',
-      instances: 1,
+      instances: process.env.WEB_CONCURRENCY || 'max',
+      exec_mode: 'cluster',
+      wait_ready: true,
+      listen_timeout: 8000,
+      kill_timeout: 5000,
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
@@ -62,6 +66,26 @@ module.exports = {
       },
       error_file: './agents/rexeditzz-insta-agent/logs/err.log',
       out_file: './agents/rexeditzz-insta-agent/logs/out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss'
+    },
+    {
+      name: 'rexion-linkedin-worker',
+      script: 'src/linkedin-agent/worker.js',
+      cwd: './backend',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      kill_timeout: 15000,
+      env: {
+        NODE_ENV: 'development'
+      },
+      env_production: {
+        NODE_ENV: 'production'
+      },
+      error_file: './backend/logs/li-worker-err.log',
+      out_file: './backend/logs/li-worker-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss'
     }
   ]

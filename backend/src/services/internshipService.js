@@ -196,63 +196,78 @@ export const buildCleanLinkedInSearchUrl = (company, title) => {
   return `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(query)}`
 }
 
+let inFlightFetchPromise = null
+
 async function fetchLiveAtsInternships() {
   const now = Date.now()
   if (cachedAtsInternships.length > 0 && now - lastAtsFetchTime < CACHE_TTL_MS) {
     return cachedAtsInternships
   }
 
-  const liveList = []
+  // Stampede coalescing: return existing in-flight promise to prevent concurrent hammering
+  if (inFlightFetchPromise) {
+    return inFlightFetchPromise
+  }
 
-  // Fetch in parallel from real Greenhouse boards
-  const promises = GREENHOUSE_BOARDS.map(async (board) => {
+  inFlightFetchPromise = (async () => {
     try {
-      const url = `https://boards-api.greenhouse.io/v1/boards/${board.token}/jobs?content=true`
-      const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
-      if (!res.ok) return
-      const data = await res.json()
-      const jobs = Array.isArray(data?.jobs) ? data.jobs : []
+      const liveList = []
 
-      for (const job of jobs) {
-        if (isGenuineInternship(job.title)) {
-          const loc = job.location?.name || 'Remote / Hybrid'
-          const isRemote = /remote/i.test(loc)
-          const domain = inferDomain(job.title)
-          const realUrl = job.absolute_url || `https://boards.greenhouse.io/${board.token}/jobs/${job.id}`
-          const hoursAgo = calculateHoursAgo(job.updated_at)
+      // Fetch in parallel from real Greenhouse boards with bounded timeout (2.5s)
+      const promises = GREENHOUSE_BOARDS.map(async (board) => {
+        try {
+          const url = `https://boards-api.greenhouse.io/v1/boards/${board.token}/jobs?content=true`
+          const res = await fetch(url, { signal: AbortSignal.timeout(2500) })
+          if (!res.ok) return
+          const data = await res.json()
+          const jobs = Array.isArray(data?.jobs) ? data.jobs : []
 
-          liveList.push({
-            id: `ats-${board.token}-${job.id}`,
-            company: board.name,
-            company_stage: board.stage,
-            title: job.title,
-            domain,
-            location: loc,
-            is_remote: isRemote,
-            salary: 'Competitive Tech Stipend',
-            duration: '3 - 6 Months',
-            match_score: '94%',
-            skills: [domain === 'frontend' ? 'React' : (domain === 'ai' ? 'Python' : 'Node.js'), 'Git', 'Software Engineering'],
-            description: `Official ${job.title} position at ${board.name}. Apply directly through the official career portal.`,
-            apply_link: realUrl, // 100% REAL LIVE OFFICIAL APPLICATION URL
-            linkedin_url: buildCleanLinkedInSearchUrl(board.name, job.title),
-            posted_hours_ago: hoursAgo,
-            source: 'Verified ATS Career Portal'
-          })
+          for (const job of jobs) {
+            if (isGenuineInternship(job.title)) {
+              const loc = job.location?.name || 'Remote / Hybrid'
+              const isRemote = /remote/i.test(loc)
+              const domain = inferDomain(job.title)
+              const realUrl = job.absolute_url || `https://boards.greenhouse.io/${board.token}/jobs/${job.id}`
+              const hoursAgo = calculateHoursAgo(job.updated_at)
+
+              liveList.push({
+                id: `ats-${board.token}-${job.id}`,
+                company: board.name,
+                company_stage: board.stage,
+                title: job.title,
+                domain,
+                location: loc,
+                is_remote: isRemote,
+                salary: 'Competitive Tech Stipend',
+                duration: '3 - 6 Months',
+                match_score: '94%',
+                skills: [domain === 'frontend' ? 'React' : (domain === 'ai' ? 'Python' : 'Node.js'), 'Git', 'Software Engineering'],
+                description: `Official ${job.title} position at ${board.name}. Apply directly through the official career portal.`,
+                apply_link: realUrl, // 100% REAL LIVE OFFICIAL APPLICATION URL
+                linkedin_url: buildCleanLinkedInSearchUrl(board.name, job.title),
+                posted_hours_ago: hoursAgo,
+                source: 'Verified ATS Career Portal'
+              })
+            }
+          }
+        } catch (err) {
+          // Bounded silent fallback
         }
-      }
-    } catch (err) {
-      // Continue without breaking
+      })
+
+      await Promise.allSettled(promises)
+
+      // Merge ATS live jobs + verified direct company jobs
+      const combined = [...liveList, ...VERIFIED_CAREER_INTERNSHIPS]
+      cachedAtsInternships = combined
+      lastAtsFetchTime = Date.now()
+      return combined
+    } finally {
+      inFlightFetchPromise = null
     }
-  })
+  })()
 
-  await Promise.allSettled(promises)
-
-  // Merge ATS live jobs + verified direct company jobs
-  const combined = [...liveList, ...VERIFIED_CAREER_INTERNSHIPS]
-  cachedAtsInternships = combined
-  lastAtsFetchTime = now
-  return combined
+  return inFlightFetchPromise
 }
 
 export const getLiveInternships = async (filters = {}) => {

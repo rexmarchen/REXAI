@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const uri = 'mongodb+srv://anshuar9065_db_user:Anshu_90-@cluster0.ytzioe4.mongodb.net/rexion?appName=Cluster0';
+const uri = process.env.MONGO_URI || process.env.MONGODB_URI || '';
 
 async function run() {
   try {

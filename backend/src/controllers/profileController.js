@@ -1,6 +1,7 @@
 import User from '../models/User.js'
 import CandidateProfile from '../models/CandidateProfile.js'
 import AppError from '../utils/AppError.js'
+import { recordActivity } from '../services/activityService.js'
 
 /**
  * GET /api/profile
@@ -11,14 +12,21 @@ export const getProfile = async (req, res, next) => {
     const userId = req.user?._id
     console.log('[PROFILE GET] User:', userId)
 
-    const user = await User.findById(userId).select('+profile name email role plan')
+    const [user, initialCandidate] = await Promise.all([
+      User.findById(userId).select('+profile name email role plan').lean(),
+      CandidateProfile.findOne({
+        $or: [{ userId }, { userId: String(userId) }]
+      }).lean()
+    ])
+
     if (!user) {
       return next(new AppError('User not found.', 404))
     }
 
-    const candidate = await CandidateProfile.findOne({
-      $or: [{ userId }, { userId: String(userId) }, { email: user.email }]
-    }).lean()
+    let candidate = initialCandidate
+    if (!candidate && user.email) {
+      candidate = await CandidateProfile.findOne({ email: user.email }).lean()
+    }
 
     const userProfile = user.profile || {}
     const candidateProfile = candidate || {}
@@ -70,6 +78,7 @@ export const getProfile = async (req, res, next) => {
 
     console.log('[PROFILE GET] Returned profile:', returnedProfile)
 
+    res.setHeader('Cache-Control', 'private, no-cache')
     return res.status(200).json({
       success: true,
       name: user.name,
@@ -97,7 +106,14 @@ export const updateProfile = async (req, res, next) => {
       return next(new AppError('User not found.', 404))
     }
 
-    const incoming = req.body || {}
+    const incoming = { ...(req.body || {}) }
+    delete incoming.role
+    delete incoming.plan
+    delete incoming.password
+    delete incoming.email
+    delete incoming._id
+    delete incoming.authProviders
+
     const existingProfile = user.profile || {}
 
     // Synchronize aliases (github / githubUrl, linkedin / linkedinUrl, etc.)
@@ -175,10 +191,24 @@ export const updateProfile = async (req, res, next) => {
           updatedAt: new Date()
         }
       },
-      { upsert: true, new: true, runValidators: false }
+      { upsert: true, returnDocument: 'after', runValidators: false }
     )
 
     console.log('[PROFILE API] Database result:', updatedProfile)
+
+    recordActivity({
+      userId,
+      type: 'profile_updated',
+      category: 'account',
+      title: 'Profile Updated',
+      description: `Updated profile details (${updatedProfile.headline || updatedProfile.targetRole || 'general information'})`,
+      status: 'completed',
+      metadata: {
+        name: user.name,
+        targetRole: updatedProfile.targetRole,
+        skillsCount: updatedProfile.skills?.length || 0
+      }
+    }).catch(() => {})
 
     return res.status(200).json({
       success: true,

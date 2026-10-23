@@ -2,8 +2,11 @@ import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose'
 import { OAuth2Client } from 'google-auth-library'
 import User from '../models/User.js'
+import FacultyProfile from '../models/FacultyProfile.js'
+import DeveloperProfile from '../models/DeveloperProfile.js'
 import AppError from '../utils/AppError.js'
 import { JWT_SECRET, JWT_EXPIRE, GOOGLE_CLIENT_ID, MONGO_URI } from '../config/env.js'
+import { recordActivity } from '../services/activityService.js'
 
 const signToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRE })
@@ -21,7 +24,7 @@ const ensureDatabaseConnection = async () => {
     process.env.MONGO_URI ||
     process.env.MONGODB_URI ||
     process.env.DATABASE_URL ||
-    'mongodb+srv://anshuar9065_db_user:Anshu_90-@cluster0.ytzioe4.mongodb.net/rexion?appName=Cluster0'
+    ''
 
   if (!mongoUri) {
     return new AppError('Database configuration missing on server.', 500)
@@ -79,8 +82,11 @@ const ensureDatabaseConnection = async () => {
 const buildUserPayload = (user) => ({
   id: String(user._id),
   fullName: user.name,
+  name: user.name,
   email: user.email,
   role: user.role,
+  facultyStatus: user.facultyStatus || 'none',
+  developerStatus: user.developerStatus || 'none',
   plan: user.role === 'admin' ? 'elite' : (user.plan || 'free')
 })
 
@@ -144,16 +150,41 @@ export const register = async (req, res, next) => {
       return next(new AppError('fullName, email and password are required.', 400))
     }
 
+    // Role assignment security: users cannot assign themselves admin privileges
+    const rawAccountType = String(req.body.accountType || req.body.role || 'user').trim().toLowerCase()
+    const isFaculty = rawAccountType === 'faculty' || rawAccountType === 'educator'
+    const role = isFaculty ? 'faculty' : 'user'
+    const facultyStatus = isFaculty ? 'unverified' : 'none'
+
     const existingUser = await User.findOne({ email })
     if (existingUser) {
       return next(new AppError('An account with this email already exists.', 409))
     }
 
-    const user = await User.create({ name, email, password })
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role,
+      facultyStatus,
+      plan: 'free'
+    })
+
+    if (isFaculty) {
+      await FacultyProfile.create({
+        userId: user._id,
+        fullName: name,
+        contactEmail: email,
+        institutionName: String(req.body.institutionName || 'College / University').trim(),
+        department: String(req.body.department || 'Academics').trim(),
+        status: 'unverified'
+      })
+    }
+
     const token = signToken(user._id)
 
     return res.status(201).json({
-      message: 'Account created successfully.',
+      message: isFaculty ? 'Faculty account registered successfully.' : 'Account created successfully.',
       token,
       user: buildUserPayload(user)
     })
@@ -195,6 +226,16 @@ export const login = async (req, res, next) => {
     }
 
     const token = signToken(user._id)
+
+    recordActivity({
+      userId: user._id,
+      type: 'login',
+      category: 'account',
+      title: 'Account Signed In',
+      description: 'Successfully authenticated to REXION platform',
+      status: 'completed',
+      metadata: { method: 'password' }
+    }).catch(() => {})
 
     return res.status(200).json({
       message: 'Login successful.',
@@ -257,6 +298,16 @@ export const googleAuth = async (req, res, next) => {
 
     const token = signToken(user._id)
 
+    recordActivity({
+      userId: user._id,
+      type: 'login',
+      category: 'account',
+      title: 'Account Signed In with Google',
+      description: 'Successfully authenticated via Google OAuth',
+      status: 'completed',
+      metadata: { method: 'google' }
+    }).catch(() => {})
+
     return res.status(statusCode).json({
       message,
       token,
@@ -275,23 +326,51 @@ export const getMe = async (req, res, next) => {
     }
 
     const user = await User.findById(req.user.id)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    // Auto-sync developer status from DeveloperProfile
+    let devStatus = user.developerStatus || 'none'
+    const devProfile = await DeveloperProfile.findOne({ userId: user._id }).select('status').lean()
+    if (devProfile) {
+      devStatus = devProfile.status
+      if (user.developerStatus !== devStatus) {
+        user.developerStatus = devStatus
+        if (devStatus === 'active' && user.role === 'user') {
+          user.role = 'developer'
+        }
+        await user.save()
+      }
+    }
+
+    // Auto-sync faculty status from FacultyProfile
+    let facStatus = user.facultyStatus || 'none'
+    const facProfile = await FacultyProfile.findOne({ userId: user._id }).select('status').lean()
+    if (facProfile) {
+      facStatus = facProfile.status
+      if (user.facultyStatus !== facStatus) {
+        user.facultyStatus = facStatus
+        if (facStatus === 'verified' && user.role === 'user') {
+          user.role = 'faculty'
+        }
+        await user.save()
+      }
+    }
+
+    const payload = {
+      ...buildUserPayload(user),
+      name: user.name,
+      developerStatus: devStatus,
+      facultyStatus: facStatus,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    }
 
     return res.status(200).json({
       success: true,
-      user: user
-        ? {
-            ...buildUserPayload(user),
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt
-          }
-        : null,
-      data: user
-        ? {
-            ...buildUserPayload(user),
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt
-          }
-        : null
+      user: payload,
+      data: payload
     })
   } catch (error) {
     return next(error)

@@ -102,6 +102,7 @@ export default function FeatureSection() {
       }}
       className="rexion-why-rexion-root"
     >
+      <span id="platform" style={{ position: 'absolute', top: 0, left: 0 }} aria-hidden="true" />
       {/* ── Faint Pine Trees & Mountain Ridge Silhouette Illustration (Matches Bottom-Left Mockup) ── */}
       <svg
         viewBox="0 0 460 220"

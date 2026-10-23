@@ -16,8 +16,8 @@ Ensure the following variables are defined in your local `.env` file (never hard
 
 ```env
 # Database Connections (MongoDB is utilized via Prisma)
-MONGODB_URI=mongodb+srv://anshuar9065_db_user:Anshu_90-@cluster0.ytzioe4.mongodb.net/rexion?appName=Cluster0
-DATABASE_URL=mongodb+srv://anshuar9065_db_user:Anshu_90-@cluster0.ytzioe4.mongodb.net/rexion?appName=Cluster0
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.example.mongodb.net/rexion?appName=Cluster0
+DATABASE_URL=mongodb+srv://<username>:<password>@cluster0.example.mongodb.net/rexion?appName=Cluster0
 
 # Redis connection for BullMQ
 REDIS_URL=redis://localhost:6379

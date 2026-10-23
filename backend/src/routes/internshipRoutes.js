@@ -14,8 +14,8 @@ const router = express.Router()
 // Public / Candidate query endpoints
 router.get('/', optionalProtect, getInternships)
 router.get('/search', optionalProtect, getInternships)
-router.get('/sync', triggerLiveSync)
-router.post('/sync', triggerLiveSync)
+router.get('/sync', protect, restrictTo('admin'), triggerLiveSync)
+router.post('/sync', protect, restrictTo('admin'), triggerLiveSync)
 router.get('/:id', optionalProtect, getInternshipById)
 router.post('/:id/click', trackApplyClick)
 

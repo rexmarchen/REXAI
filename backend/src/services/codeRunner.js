@@ -135,8 +135,54 @@ async function runOneJudge0(language, code, fn, args, limits = { sec: 2, kb: 128
   }
 }
 
+const DISALLOWED_PYTHON_PATTERNS = [
+  /\bimport\s+(os|sys|subprocess|shutil|socket|pty|commands|ctypes|urllib|requests|http|posix|winreg|multiprocessing|threading|builtins)\b/i,
+  /\bfrom\s+(os|sys|subprocess|shutil|socket|pty|commands|ctypes|urllib|requests|http|posix|winreg|multiprocessing|threading|builtins)\b/i,
+  /\b(__import__|open|eval|exec|compile|input|globals|locals)\s*\(/i,
+  /\b(__subclasses__|__bases__|__mro__|__globals__|__code__|__builtins__)\b/i
+]
+
+const DISALLOWED_JS_PATTERNS = [
+  /\b(child_process|fs|cluster|worker_threads|net|dgram|dns|http|https|tls|vm|v8)\b/i,
+  /\bprocess\s*\.\s*(exit|kill|env|mainModule|binding|dlopen|reallyExit|abort)/i,
+  /\b(require\s*\(\s*['"`]|import\s*\(|import\s+.*\s+from)\b/i,
+  /\b(eval\s*\(|Function\s*\()\b/i
+]
+
+export function validateSafeCode(language, code) {
+  if (!code || typeof code !== 'string') {
+    return { safe: false, reason: 'Invalid code input' }
+  }
+
+  if (code.length > 50000) {
+    return { safe: false, reason: 'Code exceeds maximum permitted length of 50KB' }
+  }
+
+  const patterns = language === 'python' ? DISALLOWED_PYTHON_PATTERNS : DISALLOWED_JS_PATTERNS
+  for (const pattern of patterns) {
+    if (pattern.test(code)) {
+      return {
+        safe: false,
+        reason: 'Restricted module or system access call detected'
+      }
+    }
+  }
+
+  return { safe: true }
+}
+
 // Production Local Sandbox Runner
 async function runOneLocal(language, code, fn, args, limits = { sec: 2 }) {
+  const safetyCheck = validateSafeCode(language, code)
+  if (!safetyCheck.safe) {
+    return {
+      status: 'runtime',
+      stdout: '',
+      stderr: `SecurityViolation: ${safetyCheck.reason}. Sandbox policy forbids system/network/file access.`,
+      timeMs: 0
+    }
+  }
+
   const fileExt = language === 'python' ? 'py' : 'cjs'
   const filePath = path.join(
     sandboxDir,
@@ -244,16 +290,27 @@ async function runOneLocal(language, code, fn, args, limits = { sec: 2 }) {
   })
 }
 
-// Generic runOne that prefers Judge0 if configured, otherwise uses isolated local sandbox
+// Generic runOne. Judge0 is required for code execution; local fallback is
+// intentionally removed to prevent arbitrary host execution.
 export async function runOne(language, code, fn, args, limits = { sec: 2, kb: 128000 }) {
-  if (JUDGE0_URL) {
-    try {
-      return await runOneJudge0(language, code, fn, args, limits)
-    } catch (err) {
-      console.warn('Judge0 failed, falling back to local runner:', err.message)
+  if (!JUDGE0_URL) {
+    return {
+      status: 'runtime',
+      stdout: '',
+      stderr: 'Code execution is unavailable: Judge0 sandbox not configured.',
+      timeMs: 0
     }
   }
-  return await runOneLocal(language, code, fn, args, limits)
+  try {
+    return await runOneJudge0(language, code, fn, args, limits)
+  } catch (err) {
+    return {
+      status: 'runtime',
+      stdout: '',
+      stderr: `Code execution failed: ${err.message}`,
+      timeMs: 0
+    }
+  }
 }
 
 // Concurrency pool runner

@@ -6,15 +6,15 @@ import CandidateProfile from '../models/CandidateProfile.js'
 import { ProblemSubmission } from '../models/ProblemSubmission.js'
 import { QuizAttempt } from '../models/Quiz.js'
 import { TopicMastery } from '../models/TutorQuiz.js'
-import { optionalProtect } from '../middleware/authMiddleware.js'
+import { protect } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
 // GET /api/skill-gap/user-skills-summary - Real production calculated statistics
-router.get('/user-skills-summary', optionalProtect, async (req, res) => {
+router.get('/user-skills-summary', protect, async (req, res) => {
   try {
     const roleId = req.query.roleId || 'ai-engineer'
-    const userId = req.user?._id || req.user?.id || req.headers['x-user-id'] || req.query.userId || null
+    const userId = req.user?._id?.toString() || req.user?.id?.toString() || null
     const quizScores = req.query.quizScores || null
     const solvedSlugs = req.query.solvedSlugs || null
 
@@ -45,7 +45,7 @@ router.get('/roles', (req, res) => {
 })
 
 // GET /api/skill-gap/graph
-router.get('/graph', optionalProtect, async (req, res) => {
+router.get('/graph', protect, async (req, res) => {
   try {
     const roleId = req.query.roleId || 'ai-engineer'
     let userSkills = []
@@ -54,7 +54,7 @@ router.get('/graph', optionalProtect, async (req, res) => {
     let quizAttempts = []
     let topicMasteries = []
     let timeSpentSecs = 0
-    const userId = req.user?._id || req.user?.id || req.headers['x-user-id'] || req.query.userId || null
+    const userId = req.user?._id?.toString() || req.user?.id?.toString() || null
 
     // Check if client provided local/guest solves via query
     if (req.query.solvedSlugs) {
@@ -142,7 +142,7 @@ router.get('/graph', optionalProtect, async (req, res) => {
 })
 
 // POST /api/skill-gap/generate-custom-path - On-demand AI path synthesizer
-router.post('/generate-custom-path', optionalProtect, async (req, res) => {
+router.post('/generate-custom-path', protect, async (req, res) => {
   try {
     const { roleTitle } = req.body
     if (!roleTitle || !roleTitle.trim()) {
@@ -161,7 +161,7 @@ router.post('/generate-custom-path', optionalProtect, async (req, res) => {
     let quizAttempts = []
     let topicMasteries = []
     let timeSpentSecs = 0
-    const userId = req.user?._id || req.user?.id || req.headers['x-user-id'] || req.body?.userId || null
+    const userId = req.user?._id?.toString() || req.user?.id?.toString() || null
 
     if (userId && String(userId) !== 'guest') {
       try {
@@ -208,7 +208,7 @@ router.post('/generate-custom-path', optionalProtect, async (req, res) => {
 })
 
 // POST /api/skill-gap (standard route matching user's provided route.ts)
-router.post('/', optionalProtect, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const { role = 'frontend-developer', skills = [] } = req.body
     const result = await analyzeSkillGap({
@@ -223,7 +223,7 @@ router.post('/', optionalProtect, async (req, res) => {
 })
 
 // POST /api/skill-gap/analyze
-router.post('/analyze', optionalProtect, async (req, res) => {
+router.post('/analyze', protect, async (req, res) => {
   try {
     const { roleId = 'frontend-developer', skills = [] } = req.body
     const result = await analyzeSkillGap({
@@ -241,7 +241,7 @@ router.post('/analyze', optionalProtect, async (req, res) => {
 })
 
 // GET /api/skill-gap/profile-skills
-router.get('/profile-skills', optionalProtect, async (req, res) => {
+router.get('/profile-skills', protect, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(200).json({ success: true, skills: ['React', 'JavaScript', 'HTML/CSS', 'Git', 'TypeScript'] })

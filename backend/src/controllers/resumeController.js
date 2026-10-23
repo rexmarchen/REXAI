@@ -12,6 +12,7 @@ import {
 import { catchAsync } from '../utils/catchAsync.js'
 import AppError from '../utils/AppError.js'
 import { logger } from '../utils/logger.js'
+import { recordActivity } from '../services/activityService.js'
 
 const getUserId = (req) => req.user?.id || req.user?._id || null
 
@@ -47,6 +48,16 @@ export const uploadResume = catchAsync(async (req, res, next) => {
     size,
     mimetype
   })
+
+  recordActivity({
+    userId,
+    type: 'resume_uploaded',
+    category: 'resume',
+    title: 'Resume Uploaded',
+    description: `Uploaded resume file ${filename}`,
+    status: 'completed',
+    metadata: { resumeId: resume._id, filename, size }
+  }).catch(() => {})
 
   res.status(201).json({
     success: true,
@@ -117,6 +128,21 @@ export const predictResume = catchAsync(async (req, res, next) => {
       })
 
       predictionId = String(prediction._id)
+
+      recordActivity({
+        userId,
+        type: 'resume_analyzed',
+        category: 'resume',
+        title: 'AI Resume Analysis Completed',
+        description: `Your resume was analyzed for ${mlPrediction.career_path || 'Career Match'} role`,
+        status: 'completed',
+        metadata: {
+          predictionId,
+          careerPath: mlPrediction.career_path,
+          confidence: mlPrediction.confidence,
+          atsScore: mlPrediction.ats_score
+        }
+      }).catch(() => {})
     }
 
     // Return response with ML service data
@@ -237,6 +263,19 @@ export const auditResume = catchAsync(async (req, res) => {
     targetRole: targetRole || ''
   })
 
+  const userId = getUserId(req)
+  if (userId) {
+    recordActivity({
+      userId,
+      type: 'ats_audited',
+      category: 'resume',
+      title: 'AI Resume ATS Audit Completed',
+      description: `ATS analysis completed for ${targetRole || 'target role'}. Score: ${report.overallScore || 0}%`,
+      status: 'completed',
+      metadata: { targetRole, overallScore: report.overallScore }
+    }).catch(() => {})
+  }
+
   res.status(200).json({
     success: true,
     data: report
@@ -291,6 +330,20 @@ export const searchJobs = catchAsync(async (req, res) => {
     refresh
   })
 
+  const userId = getUserId(req)
+  if (userId) {
+    const count = Array.isArray(jobSearchPayload?.jobs) ? jobSearchPayload.jobs.length : 0
+    recordActivity({
+      userId,
+      type: 'job_match',
+      category: 'jobs',
+      title: 'New Job Match Found',
+      description: `${count} new matches found based on your profile search for "${query}"`,
+      status: 'completed',
+      metadata: { query, location, matchCount: count }
+    }).catch(() => {})
+  }
+
   res.status(200).json({
     success: true,
     query,
@@ -318,6 +371,17 @@ export const getPrediction = catchAsync(async (req, res, next) => {
 
   if (!prediction) {
     return next(new AppError('Prediction not found', 404))
+  }
+
+  // Prevent IDOR: users can only view their own predictions (admins can view all)
+  if (req.user) {
+    const ownerId = prediction.user?._id ? String(prediction.user._id) : String(prediction.user || '')
+    const requesterId = String(req.user._id || req.user.id || '')
+    const isOwner = ownerId && ownerId === requesterId
+    const isAdmin = req.user.role === 'admin'
+    if (!isOwner && !isAdmin) {
+      return next(new AppError('You do not have permission to view this prediction.', 403))
+    }
   }
 
   const details = prediction.details && typeof prediction.details === 'object'

@@ -7,7 +7,7 @@ import { AuthError, publishToInstagram, QuotaError } from "./instagram.js";
 import { draft, approve } from "./posts.js";
 import { notify, sendDraft } from "./bot.js";
 import { formatIdeas, generateIdeas } from "./brain.js";
-import { formatLocal } from "./scheduler.js";
+import { deferOverduePosts, formatLocal } from "./scheduler.js";
 import { log } from "./log.js";
 import { errMsg } from "./util.js";
 
@@ -95,6 +95,13 @@ export async function draftNew() {
 /** Publishes the next approved post whose slot has arrived. */
 export async function publishDue() {
   if (getSetting("paused") === "1") return;
+  const deferred = deferOverduePosts();
+  if (deferred.length) {
+    const ids = deferred.map(({ id }) => `#${id}`).join(", ");
+    log.warn({ posts: deferred }, "significantly overdue posts moved to future slots");
+    await notify(`⏰ ${deferred.length} overdue post(s) moved to future publishing slots to avoid a catch-up burst: ${ids}`);
+  }
+
   const approved = db.prepare("SELECT * FROM posts WHERE status = 'approved' ORDER BY scheduled_at").all() as Post[];
   const due = approved.find((p) => new Date(p.scheduled_at!) <= new Date());
   if (!due) return;

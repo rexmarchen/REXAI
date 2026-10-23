@@ -7,7 +7,7 @@ const guestSolvedSet = new Set()
 
 export async function getChallengesList(req, res) {
   try {
-    const userId = req.user?._id || req.query.userId || 'guest'
+    const userId = req.user?._id?.toString() || req.user?.id?.toString() || null
 
     // Compute category counts
     const categoryCounts = {
@@ -150,7 +150,8 @@ export async function runChallenge(req, res) {
 export async function submitChallenge(req, res) {
   try {
     const { id } = req.params
-    const { language = 'python', code, userId } = req.body
+    const { language = 'python', code } = req.body
+    const userId = req.user?._id?.toString() || req.user?.id?.toString() || null
 
     const challenge = DEDICATED_CHALLENGES.find((ch) => ch.id === id || ch.slug === id)
     if (!challenge) {
@@ -171,10 +172,8 @@ export async function submitChallenge(req, res) {
     let xpAwarded = 0
     if (result.verdict === 'ACCEPTED') {
       xpAwarded = challenge.xp || 50
-      guestSolvedSet.add(challenge.slug)
-      guestSolvedSet.add(challenge.id)
 
-      if (userId && userId !== 'guest') {
+      if (userId) {
         try {
           await ProblemSubmission.create({
             userId,

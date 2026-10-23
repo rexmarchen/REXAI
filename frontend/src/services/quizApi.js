@@ -40,16 +40,22 @@ const quizApi = {
    * @param {string} idOrSlug
    * @param {Array}  answers   - [{ questionId, selectedIndex }]
    * @param {number} timeTaken - seconds taken
-   * @param {string} dailyDate - 'YYYY-MM-DD' from server (prevent clock mismatch)
+   * @param {string|object} dailyDate - 'YYYY-MM-DD' or options object
+   * @param {object} options   - { preview: boolean, ... }
    */
-  submitQuiz(idOrSlug, answers, timeTaken = 0, dailyDate = '') {
+  submitQuiz(idOrSlug, answers, timeTaken = 0, dailyDate = '', options = {}) {
     const clientUserId = getClientUserId()
+    const isBoolPreview = options === true || dailyDate === true
+    const extra = typeof dailyDate === 'object' ? { ...dailyDate } : (typeof options === 'object' ? { ...options } : {})
+    if (isBoolPreview) extra.preview = true
+    const realDailyDate = typeof dailyDate === 'string' ? dailyDate : ''
     return apiClient.post(`/quizzes/${idOrSlug}/submit`, {
       answers,
       timeTaken,
-      dailyDate,
+      dailyDate: realDailyDate,
       clientUserId,
-      userId: clientUserId
+      userId: clientUserId,
+      ...extra
     })
   },
 

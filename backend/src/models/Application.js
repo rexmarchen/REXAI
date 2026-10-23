@@ -186,5 +186,10 @@ const applicationSchema = new mongoose.Schema(
 applicationSchema.index({ user: 1, canonicalJobIdentity: 1 }, { unique: true, sparse: true })
 applicationSchema.index({ user: 1, platform: 1, externalJobId: 1 }, { sparse: true })
 
+// Composite indexes for user application history, status filtering, and batch updates
+applicationSchema.index({ user: 1, createdAt: -1 })
+applicationSchema.index({ user: 1, status: 1, createdAt: -1 })
+applicationSchema.index({ batchId: 1, status: 1 })
+
 const Application = mongoose.models.Application || mongoose.model('Application', applicationSchema)
 export default Application

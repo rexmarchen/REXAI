@@ -171,6 +171,8 @@ export default function Footer() {
               <span style={{ cursor: 'pointer' }} onClick={() => navigate('/resume-analyser')}>Press</span>
               <span style={{ cursor: 'pointer' }} onClick={() => navigate('/skill-graph')}>Guides</span>
               <span style={{ cursor: 'pointer' }} onClick={() => navigate('/ai-tutor')}>Help Center</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => navigate('/privacy')}>Privacy Policy</span>
+              <span style={{ cursor: 'pointer' }} onClick={() => navigate('/terms')}>Terms of Service</span>
             </div>
           </div>
 
@@ -336,6 +338,10 @@ export default function Footer() {
           }}
         >
           <div>© 2026 REXION. All rights reserved.</div>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <Link to="/privacy" style={{ color: 'rgba(255, 255, 255, 0.55)', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/terms" style={{ color: 'rgba(255, 255, 255, 0.55)', textDecoration: 'none' }}>Terms of Service</Link>
+          </div>
           <div>Build Skills • Get Opportunities • Shape Your Future</div>
         </div>
       </div>

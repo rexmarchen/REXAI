@@ -2,8 +2,11 @@ import dotenv from 'dotenv'
 dotenv.config()
 dotenv.config({ path: '.env.local', override: true })
 import './src/config/telemetry.js'
+import { validateProductionEnvironment } from './src/config/env.js'
 import mongoose from 'mongoose'
 import app from './src/app.js'
+
+validateProductionEnvironment()
 
 const PORT = process.env.PORT || 5000
 
@@ -213,10 +216,15 @@ export async function findLatestResumePrediction() {
   return null
 }
 
+let server = null
+
 setImmediate(() => {
   if (app && typeof app.listen === 'function') {
-    app.listen(PORT, '0.0.0.0', () => {
+    server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`)
+      if (typeof process.send === 'function') {
+        process.send('ready')
+      }
     })
   }
 })
@@ -225,17 +233,20 @@ const mongoUri =
   process.env.MONGO_URI ||
   process.env.MONGODB_URI ||
   process.env.DATABASE_URL ||
-  'mongodb+srv://anshuar9065_db_user:Anshu_90-@cluster0.ytzioe4.mongodb.net/rexion?appName=Cluster0'
+  ''
 
 const mongoOptions = {
-  serverSelectionTimeoutMS: 15000,
-  socketTimeoutMS: 45000,
-  maxPoolSize: 10,
-  minPoolSize: 1
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 10000,
+  socketTimeoutMS: 30000,
+  maxPoolSize: parseInt(process.env.MONGO_MAX_POOL || process.env.MONGO_MAX_POOL_SIZE || '20', 10),
+  minPoolSize: parseInt(process.env.MONGO_MIN_POOL_SIZE || '5', 10),
+  maxIdleTimeMS: 30000,
+  waitQueueTimeoutMS: 5000
 }
 
 mongoose.connection.on('connected', () => {
-  console.log('[MongoDB] Connected to MongoDB Atlas successfully')
+  console.log(`[MongoDB] Connected to MongoDB Atlas successfully (Pool: min=${mongoOptions.minPoolSize}, max=${mongoOptions.maxPoolSize})`)
 })
 
 mongoose.connection.on('error', (err) => {
@@ -261,3 +272,37 @@ if (mongoUri) {
       console.warn('Database initial connection warning:', err.message)
     })
 }
+
+// Graceful shutdown handling for zero-downtime rolling deploys & auto-scaling
+let isShuttingDown = false
+async function gracefulShutdown(signal) {
+  if (isShuttingDown) return
+  isShuttingDown = true
+  console.log(`[Server] Received ${signal}. Starting graceful drainage...`)
+
+  if (server) {
+    server.close(async () => {
+      console.log('[Server] HTTP listener closed. Draining database connections...')
+      try {
+        if (mongoose.connection.readyState !== 0) {
+          await mongoose.connection.close(false)
+          console.log('[MongoDB] Connection pool closed safely.')
+        }
+      } catch (dbCloseErr) {
+        console.warn('[MongoDB] Error during close:', dbCloseErr.message)
+      }
+      process.exit(0)
+    })
+
+    // Fallback timer: force exit if drainage takes longer than 8 seconds
+    setTimeout(() => {
+      console.warn('[Server] Graceful shutdown timed out (8s). Forcing process exit.')
+      process.exit(1)
+    }, 8000).unref()
+  } else {
+    process.exit(0)
+  }
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))

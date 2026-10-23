@@ -19,28 +19,28 @@ import {
 
 const PRICING_STATS = [
   {
-    icon: TrendingUp,
-    value: '4.8x',
-    label: 'Faster Offer Velocity',
-    detail: 'Average 25 days to offer vs 120 days industry benchmark'
+    icon: Zap,
+    value: 'Zero Latency',
+    label: 'Instant ATS Feedback',
+    detail: 'Deterministic keyword & section scoring across technical domains'
   },
   {
-    icon: Users,
-    value: '10,000+',
-    label: 'Candidates Powered',
-    detail: 'Active learners and applicants landing roles across top tech'
+    icon: ShieldCheck,
+    value: '100% Private',
+    label: 'Student Data Isolation',
+    detail: 'Resumes, submissions, and credentials are never resold or shared'
   },
   {
     icon: Award,
-    value: '94%',
-    label: 'Interview Conversion',
-    detail: 'For candidates utilizing tailored ATS and direct recruiter outreach'
+    value: 'Verified',
+    label: 'Faculty & Creator Assessments',
+    detail: 'All coding challenges & quizzes authored by verified university educators'
   },
   {
-    icon: Sparkles,
-    value: '₹14.2L',
-    label: 'Avg Starting Package',
-    detail: 'Verified average entry package across verified micro-gigs & roles'
+    icon: RefreshCw,
+    value: 'Live Freshness',
+    label: 'Real-Time Job Indexing',
+    detail: 'Aggregated internships verified directly with active recruiter endpoints'
   }
 ]
 

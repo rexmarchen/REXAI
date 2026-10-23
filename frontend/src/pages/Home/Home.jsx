@@ -10,7 +10,6 @@ import PricingSection from './components/PricingSection'
 import FinalCTA from './components/FinalCTA'
 import Footer from './components/Footer'
 import DemoModal from './components/DemoModal'
-import CustomCursor from './components/CustomCursor'
 
 export default function Home() {
   const [demoOpen, setDemoOpen] = useState(false)
@@ -56,9 +55,6 @@ export default function Home() {
       {showIntro && (
         <OpeningAnimation onComplete={handleIntroComplete} />
       )}
-
-      {/* Subtle Custom Cursor for Desktop */}
-      <CustomCursor />
 
       {/* Floating Pill Navigation */}
       <Navbar onOpenDemo={() => setDemoOpen(true)} />

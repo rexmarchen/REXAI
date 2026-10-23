@@ -132,7 +132,63 @@ const Navbar = () => {
                 </div>
 
                 <div className={styles.panelContent}>
+                  {user?.role === 'admin' && (
+                    <>
+                      <div className={styles.drawerSectionLabel} style={{ color: '#E07A5F', fontWeight: 800, letterSpacing: '0.05em' }}>
+                        Super Admin Access
+                      </div>
+                      <Link
+                        to="/admin"
+                        className={styles.drawerItem}
+                        style={{
+                          background: 'rgba(224, 122, 95, 0.1)',
+                          border: '1px solid rgba(224, 122, 95, 0.35)',
+                          borderRadius: '12px',
+                          marginBottom: '10px'
+                        }}
+                        onClick={() => setQuickMenuOpen(false)}
+                      >
+                        <div className={styles.drawerItemIcon} style={{ color: '#E07A5F' }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                          </svg>
+                        </div>
+                        <div className={styles.drawerItemMeta}>
+                          <strong style={{ color: '#E07A5F', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span>Admin Control Center</span>
+                            <span style={{ fontSize: '0.68rem', padding: '1px 6px', background: '#E07A5F', color: '#FFF', borderRadius: '4px', fontWeight: 800 }}>PRO</span>
+                          </strong>
+                          <p>Manage users, roles, subscriptions, automation & logs</p>
+                        </div>
+                      </Link>
+                      <div className={styles.drawerDivider} />
+                    </>
+                  )}
+
                   <div className={styles.drawerSectionLabel}>Core Tools</div>
+
+                  <Link
+                    to={canOpenProtectedRoutes ? '/activity' : buildLoginPath('/activity')}
+                    className={styles.drawerItem}
+                    style={{
+                      background: 'rgba(224, 122, 95, 0.08)',
+                      border: '1px solid rgba(224, 122, 95, 0.25)',
+                      borderRadius: '12px',
+                      marginBottom: '8px'
+                    }}
+                    onClick={() => setQuickMenuOpen(false)}
+                  >
+                    <div className={styles.drawerItemIcon} style={{ color: '#E07A5F' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                    </div>
+                    <div className={styles.drawerItemMeta}>
+                      <strong style={{ color: '#E07A5F' }}>Activity Tracker</strong>
+                      <p>View your live activity timeline, history & progress stats</p>
+                    </div>
+                  </Link>
 
                   <Link
                     to={canOpenProtectedRoutes ? '/resume' : buildLoginPath('/resume')}
@@ -202,6 +258,92 @@ const Navbar = () => {
                       <p>Curated roles & AI skill-gap analyzer</p>
                     </div>
                   </Link>
+
+                  <div className={styles.drawerDivider} />
+                  <div className={styles.drawerSectionLabel}>Technical Author & Developer</div>
+
+                  <Link
+                    to={canOpenProtectedRoutes ? (user?.role === 'developer' || user?.developerStatus === 'active' ? '/developer' : '/developer/apply') : buildLoginPath('/developer/apply')}
+                    className={styles.drawerItem}
+                    onClick={() => setQuickMenuOpen(false)}
+                  >
+                    <div className={styles.drawerItemIcon} style={{ color: '#F97316' }}>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                      </svg>
+                    </div>
+                    <div className={styles.drawerItemMeta}>
+                      <strong style={{ color: '#F97316' }}>
+                        {user?.role === 'developer' || user?.developerStatus === 'active'
+                          ? 'Developer Portal'
+                          : user?.developerStatus === 'pending'
+                          ? 'Developer Status: Under Review'
+                          : user?.developerStatus === 'suspended'
+                          ? 'Developer Access Suspended'
+                          : 'Create Developer Account'}
+                      </strong>
+                      <p>Author technical quizzes, question banks & code challenges</p>
+                    </div>
+                  </Link>
+
+                  {user?.role === 'admin' && (
+                    <Link
+                      to="/admin/developers"
+                      className={styles.drawerItem}
+                      onClick={() => setQuickMenuOpen(false)}
+                    >
+                      <div className={styles.drawerItemIcon} style={{ color: '#38BDF8' }}>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                      </div>
+                      <div className={styles.drawerItemMeta}>
+                        <strong style={{ color: '#38BDF8' }}>Developer Moderation</strong>
+                        <p>Review developer applications & grant privileges</p>
+                      </div>
+                    </Link>
+                  )}
+
+                  <div className={styles.drawerDivider} />
+                  <div className={styles.drawerSectionLabel}>Educator & Administration</div>
+
+                  {user?.role === 'faculty' && (
+                    <Link
+                      to="/faculty"
+                      className={styles.drawerItem}
+                      onClick={() => setQuickMenuOpen(false)}
+                    >
+                      <div className={styles.drawerItemIcon} style={{ color: '#FBBF24' }}>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                          <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                        </svg>
+                      </div>
+                      <div className={styles.drawerItemMeta}>
+                        <strong style={{ color: '#FBBF24' }}>Faculty Portal</strong>
+                        <p>Quiz authoring, question banks & educator verification</p>
+                      </div>
+                    </Link>
+                  )}
+
+                  {user?.role === 'admin' && (
+                    <Link
+                      to="/admin/faculty"
+                      className={styles.drawerItem}
+                      onClick={() => setQuickMenuOpen(false)}
+                    >
+                      <div className={styles.drawerItemIcon} style={{ color: '#34D399' }}>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                      </div>
+                      <div className={styles.drawerItemMeta}>
+                        <strong style={{ color: '#34D399' }}>Faculty Moderation</strong>
+                        <p>Review educator dossiers & grant quiz publishing</p>
+                      </div>
+                    </Link>
+                  )}
 
                   <div className={styles.drawerDivider} />
                   <div className={styles.drawerSectionLabel}>Account & System</div>
@@ -342,18 +484,56 @@ const Navbar = () => {
           <Link to={dashboardHref} className={styles.navLink}>
             Dashboard
           </Link>
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className={`${styles.navLink} ${location.pathname.startsWith('/admin') ? styles.navLinkActive : ''}`}
+              style={{
+                color: '#E07A5F',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>Admin</span>
+            </Link>
+          )}
         </nav>
 
         <div className={styles.actions}>
           {userLabel && <span className={styles.userBadge}>{userLabel}</span>}
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className={styles.ghostButton}
+              style={{
+                borderColor: 'rgba(224, 122, 95, 0.45)',
+                color: '#E07A5F',
+                background: 'rgba(224, 122, 95, 0.08)',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>Admin Panel</span>
+            </Link>
+          )}
           {canOpenProtectedRoutes ? (
             <Link to="/dashboard" className={styles.ghostButton}>
               Open Dashboard
             </Link>
           ) : (
-            <a href="/#tools" className={styles.ghostButton}>
-              Explore Tools
-            </a>
+            <Link to="/login" className={styles.ghostButton}>
+              Log In
+            </Link>
           )}
           {canOpenProtectedRoutes ? (
             <button type="button" className={styles.primaryButton} onClick={handleSignOut}>
@@ -361,7 +541,7 @@ const Navbar = () => {
             </button>
           ) : (
             <Link to="/register" className={styles.primaryButton}>
-              Start Free
+              Sign Up
             </Link>
           )}
 
@@ -387,6 +567,17 @@ const Navbar = () => {
             transition={menuTransition}
           >
             <div className={styles.mobileLinks}>
+              {user?.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  className={styles.mobileLink}
+                  style={{ color: '#E07A5F', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span>🛡️</span>
+                  <span>Admin Control Center</span>
+                </Link>
+              )}
               {NAV_LINKS.map((link) =>
                 link.isRoute ? (
                   <Link

@@ -10,6 +10,9 @@ import util from 'util'
 
 import mongoose from 'mongoose'
 import { DatabaseSync } from 'node:sqlite'
+import { canPublishToLinkedIn, canUseFeature } from '../entitlementService.js'
+import { pauseUserAutomationAndQueuedPosts } from '../expiryCleanupService.js'
+import { Schedule as LiAgentSchedule } from '../../linkedin-agent/models.js'
 
 const execPromise = util.promisify(exec)
 
@@ -630,6 +633,17 @@ export async function publishUserPostLive(userId, platform, postId) {
     throw new Error('No post found in queue to publish')
   }
 
+  // MANDATORY ENTITLEMENT GATE
+  if (platform === 'linkedin') {
+    const gate = await canPublishToLinkedIn(userId, account._id)
+    if (!gate.allowed) {
+      post.status = 'paused_subscription'
+      post.error = `Blocked by subscription gate: ${gate.message} (${gate.reason})`
+      await post.save()
+      throw new Error(`Subscription Entitlement Denied: ${gate.message} (${gate.reason})`)
+    }
+  }
+
   post.status = 'publishing'
   await post.save()
 
@@ -857,6 +871,18 @@ export async function ensureContinuousScheduleBuffer(userId, platform = 'instagr
  * Detects and safely processes any missed, overdue, or due posts
  */
 export async function processMissedAndDuePosts(userId, platform) {
+  if (platform === 'linkedin') {
+    const gate = await canPublishToLinkedIn(userId)
+    if (!gate.allowed) {
+      console.warn(`[ZeroMissed] Publishing skipped for user ${userId} on ${platform}: ${gate.message}`)
+      await SocialAutomationPost.updateMany(
+        { userId, platform, status: 'approved', scheduledAt: { $lte: new Date() } },
+        { $set: { status: 'paused_subscription', error: `Blocked from publishing: ${gate.message} (${gate.reason})` } }
+      )
+      return [{ success: false, reason: gate.reason, message: gate.message }]
+    }
+  }
+
   const now = new Date()
 
   const overduePosts = await SocialAutomationPost.find({
@@ -924,6 +950,17 @@ export async function exchangeForLongLivedToken(shortLivedToken) {
  * Toggles user autopilot state
  */
 export async function toggleUserAutopilot(userId, platform, enable) {
+  if (enable && platform === 'linkedin') {
+    const featureCheck = await canUseFeature(userId, 'linkedin_automation')
+    if (!featureCheck.allowed) {
+      return {
+        success: false,
+        code: featureCheck.reason,
+        message: featureCheck.message || 'LinkedIn Autopilot requires an active Pro or Elite subscription.'
+      }
+    }
+  }
+
   const account = await SocialAutomationAccount.findOneAndUpdate(
     { userId, platform },
     {
@@ -989,6 +1026,22 @@ export async function runMultiUserSocialScheduler() {
 
     for (const acc of activeAccounts) {
       try {
+        if (acc.platform === 'linkedin') {
+          // Check if this user is managed by the dedicated LinkedIn Agent
+          const hasLiAgent = await LiAgentSchedule.findOne({ userId: acc.userId, enabled: true }).lean()
+          if (hasLiAgent) {
+            console.log(`[ZeroMissedScheduler] User ${acc.userId} has dedicated LinkedIn agent enabled. Skipping legacy scheduler.`)
+            continue
+          }
+
+          const gate = await canPublishToLinkedIn(acc.userId, acc._id)
+          if (!gate.allowed) {
+            console.warn(`[ZeroMissedScheduler] Account for user ${acc.userId} on ${acc.platform} is ineligible (${gate.reason}). Pausing automation.`)
+            await pauseUserAutomationAndQueuedPosts(acc.userId, gate.message)
+            continue
+          }
+        }
+
         // 1. Process any missed, backlog, or due posts
         await processMissedAndDuePosts(acc.userId, acc.platform)
 

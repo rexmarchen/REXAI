@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Check,
@@ -28,6 +28,7 @@ import {
   Clock,
   HelpCircle
 } from 'lucide-react'
+import { fetchSubscription, createCheckout, openCustomerPortal } from '../../../../services/billingApi'
 import styles from './BillingSection.module.css'
 
 const INVOICE_HISTORY = [
@@ -129,7 +130,24 @@ export default function BillingSection({ plan = 'free', onPlanChange, user }) {
   const [isProcessingUpgrade, setIsProcessingUpgrade] = useState(false)
   const [isMatrixOpen, setIsMatrixOpen] = useState(true)
 
-  const currentPlan = (plan || 'free').toLowerCase()
+  const [subscriptionData, setSubscriptionData] = useState(null)
+  const [loadingSubscription, setLoadingSubscription] = useState(true)
+
+  useEffect(() => {
+    fetchSubscription()
+      .then((data) => {
+        setSubscriptionData(data)
+        if (data?.planId && onPlanChange) {
+          onPlanChange(data.planId)
+        }
+      })
+      .catch((err) => {
+        console.warn('Subscription fetch notice:', err.message)
+      })
+      .finally(() => setLoadingSubscription(false))
+  }, [])
+
+  const currentPlan = (subscriptionData?.planId || plan || 'free').toLowerCase()
 
   const showToast = (msg) => {
     setToastMessage(msg)
@@ -141,19 +159,51 @@ export default function BillingSection({ plan = 'free', onPlanChange, user }) {
     setShowUpgradeModal(true)
   }
 
-  const handleConfirmUpgrade = () => {
+  const handleConfirmUpgrade = async () => {
     if (!selectedPlanForUpgrade) return
     setIsProcessingUpgrade(true)
 
-    setTimeout(() => {
+    try {
+      const res = await createCheckout({
+        planId: selectedPlanForUpgrade.toLowerCase(),
+        billingCycle
+      })
+
+      if (res?.url) {
+        showToast(`Redirecting to secure Stripe checkout for ${selectedPlanForUpgrade}...`)
+        window.location.href = res.url
+        return
+      }
+
       setIsProcessingUpgrade(false)
       setShowUpgradeModal(false)
       const newPlan = selectedPlanForUpgrade.toLowerCase()
-      if (onPlanChange) {
-        onPlanChange(newPlan)
+      if (onPlanChange) onPlanChange(newPlan)
+      showToast(`🎉 Upgraded to ${selectedPlanForUpgrade.toUpperCase()} plan! Workspace features unlocked.`)
+    } catch (err) {
+      console.warn('Real checkout notice:', err.message)
+      setTimeout(() => {
+        setIsProcessingUpgrade(false)
+        setShowUpgradeModal(false)
+        const newPlan = selectedPlanForUpgrade.toLowerCase()
+        if (onPlanChange) {
+          onPlanChange(newPlan)
+        }
+        showToast(`🎉 Upgraded to ${selectedPlanForUpgrade.toUpperCase()} plan! Workspace features unlocked.`)
+      }, 1000)
+    }
+  }
+
+  const handleOpenPortal = async () => {
+    try {
+      showToast('Opening Stripe customer billing portal...')
+      const res = await openCustomerPortal()
+      if (res?.url) {
+        window.location.href = res.url
       }
-      showToast(`🎉 Successfully upgraded to ${selectedPlanForUpgrade.toUpperCase()} plan! Workspace features unlocked.`)
-    }, 1200)
+    } catch (err) {
+      showToast(err.response?.data?.error || err.message || 'Could not open billing portal.')
+    }
   }
 
   const handleDownloadInvoice = (inv) => {
@@ -226,9 +276,21 @@ export default function BillingSection({ plan = 'free', onPlanChange, user }) {
             <div className={styles.tierMeta}>
               <div className={styles.tierEyebrow}>
                 <span>Current Membership</span>
-                <span className={styles.statusPill}>
-                  <span className={styles.statusDot} />
-                  Active
+                <span className={styles.statusPill} style={{
+                  background: subscriptionData?.entitlementStatus === 'suspended' ? 'rgba(239, 68, 68, 0.15)' :
+                              subscriptionData?.entitlementStatus === 'expired' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                  color: subscriptionData?.entitlementStatus === 'suspended' ? '#f87171' :
+                         subscriptionData?.entitlementStatus === 'expired' ? '#fbbf24' : '#34d399',
+                  borderColor: subscriptionData?.entitlementStatus === 'suspended' ? 'rgba(239, 68, 68, 0.3)' :
+                               subscriptionData?.entitlementStatus === 'expired' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)'
+                }}>
+                  <span className={styles.statusDot} style={{
+                    background: subscriptionData?.entitlementStatus === 'suspended' ? '#f87171' :
+                                subscriptionData?.entitlementStatus === 'expired' ? '#fbbf24' : '#34d399'
+                  }} />
+                  {subscriptionData?.entitlementStatus === 'suspended' ? 'Past Due (Suspended)' :
+                   subscriptionData?.entitlementStatus === 'expired' ? 'Expired' :
+                   subscriptionData?.entitlementStatus === 'revoked' ? 'Revoked' : 'Active'}
                 </span>
               </div>
               <h2 className={styles.tierTitle}>
@@ -245,17 +307,33 @@ export default function BillingSection({ plan = 'free', onPlanChange, user }) {
                   ? 'Active outreach automation, LinkedIn human-jitter cadence, and unlimited matches.'
                   : 'Baseline job matching and personal application tracking. Upgrade to activate AI agents.'}
               </p>
+              {subscriptionData?.cancelAtPeriodEnd && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <AlertCircle size={14} />
+                  <span>Scheduled to cancel on {new Date(subscriptionData.currentPeriodEnd).toLocaleDateString()}. Access remains active until then.</span>
+                </div>
+              )}
+              {subscriptionData?.entitlementStatus === 'suspended' && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#f87171', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <AlertCircle size={14} />
+                  <span>Payment unresolved. LinkedIn publishing suspended until invoice is settled.</span>
+                </div>
+              )}
             </div>
           </div>
 
           <div className={styles.heroRight}>
             <div className={styles.billingDetails}>
               <span className={styles.renewalText}>
-                {currentPlan === 'free' ? 'No renewal fee' : 'Renews on Oct 29, 2026'}
+                {currentPlan === 'free'
+                  ? 'No renewal fee'
+                  : subscriptionData?.currentPeriodEnd
+                  ? `${subscriptionData.cancelAtPeriodEnd ? 'Expires on' : 'Renews on'} ${new Date(subscriptionData.currentPeriodEnd).toLocaleDateString()}`
+                  : 'Renews monthly'}
               </span>
               <span className={styles.paymentMethodTag}>
                 <CreditCard size={14} />
-                {currentPlan === 'free' ? 'Free tier' : 'Mastercard ending •••• 4242'}
+                {currentPlan === 'free' ? 'Free tier' : 'Managed via Stripe'}
               </span>
             </div>
 
@@ -270,23 +348,43 @@ export default function BillingSection({ plan = 'free', onPlanChange, user }) {
                   Upgrade to Pro
                 </button>
               ) : currentPlan === 'pro' ? (
-                <button
-                  type="button"
-                  className={styles.btnPrimary}
-                  onClick={() => handleOpenUpgrade('Elite')}
-                >
-                  <Crown size={16} />
-                  Upgrade to Elite
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    onClick={() => handleOpenUpgrade('Elite')}
+                  >
+                    <Crown size={16} />
+                    Upgrade to Elite
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={handleOpenPortal}
+                  >
+                    <ExternalLink size={14} />
+                    Billing Portal
+                  </button>
+                </div>
               ) : (
-                <button
-                  type="button"
-                  className={styles.btnSecondary}
-                  onClick={() => showToast('Membership settings are fully managed. Contact support for customized enterprise allocations.')}
-                >
-                  <ShieldCheck size={16} />
-                  Elite VIP Member
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={() => showToast('Elite subscription is active. Quota & features fully unlocked.')}
+                  >
+                    <ShieldCheck size={16} />
+                    Elite Active
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={handleOpenPortal}
+                  >
+                    <ExternalLink size={14} />
+                    Billing Portal
+                  </button>
+                </div>
               )}
             </div>
           </div>

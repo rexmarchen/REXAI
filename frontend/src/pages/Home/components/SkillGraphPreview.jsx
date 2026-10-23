@@ -19,6 +19,7 @@ export default function SkillGraphPreview() {
       }}
       className="rexion-skills-preview-root"
     >
+      <span id="proof" style={{ position: 'absolute', top: 0, left: 0 }} aria-hidden="true" />
       <div
         style={{
           maxWidth: '1360px',

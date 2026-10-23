@@ -15,7 +15,7 @@ import SocialAutomationPost from '../backend/src/models/SocialAutomationPost.js'
 const mongoUri =
   process.env.MONGO_URI ||
   process.env.MONGODB_URI ||
-  'mongodb+srv://anshuar9065_db_user:Anshu_90-@cluster0.ytzioe4.mongodb.net/rexion?appName=Cluster0'
+  ''
 
 async function runTests() {
   console.log('====================================================')

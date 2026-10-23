@@ -5,6 +5,7 @@ import {
   clearStoredAuth,
   getStoredToken,
   getStoredUser,
+  hasStoredAuth,
   persistAuthSession,
   persistStoredUser
 } from '../utils/authSession'
@@ -22,8 +23,9 @@ export const useAuth = () => {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
-  const [isReady, setIsReady] = useState(false)
+  // Synchronous initialization prevents flash of unauthenticated UI
+  const [user, setUser] = useState(() => getStoredUser())
+  const [isReady, setIsReady] = useState(() => !hasStoredAuth() || Boolean(getStoredUser()))
 
   const syncFromStorage = () => {
     setUser(getStoredUser())
@@ -32,11 +34,13 @@ export const AuthProvider = ({ children }) => {
   const applyAuthResponse = (response, remember = true) => {
     persistAuthSession(response, remember)
     setUser(response.user || null)
+    setIsReady(true)
   }
 
   const logout = () => {
     clearStoredAuth()
     setUser(null)
+    setIsReady(true)
   }
 
   const refreshSession = async () => {
@@ -50,12 +54,18 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await authApi.me()
-      persistStoredUser(response.user)
-      setUser(response.user || null)
-      return response.user || null
-    } catch {
-      clearStoredAuth()
-      setUser(null)
+      const fetchedUser = response?.user || response?.data || null
+      if (fetchedUser) {
+        persistStoredUser(fetchedUser)
+        setUser(fetchedUser)
+      }
+      return fetchedUser
+    } catch (err) {
+      // Invalidate stored session only if explicitly rejected by server (401/403)
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
+        clearStoredAuth()
+        setUser(null)
+      }
       return null
     } finally {
       setIsReady(true)
@@ -92,3 +102,5 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
+
+export default AuthContext

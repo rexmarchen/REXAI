@@ -142,7 +142,7 @@ JSON schema:
     await Problem.findOneAndUpdate(
       { slug: parsed.slug },
       { ...parsed, published: true },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     ).catch(() => {})
 
     return parsed

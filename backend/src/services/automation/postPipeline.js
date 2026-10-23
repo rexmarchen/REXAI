@@ -4,6 +4,7 @@ import { getOrCreateSettings } from './settingsService.js'
 import { retrieveContext } from './knowledgeService.js'
 import { callGeminiJson } from './geminiService.js'
 import { publishLinkedInPostForUser } from './linkedinTokenService.js'
+import { canPublishToLinkedIn } from '../entitlementService.js'
 
 function fallbackPost(topic, context) {
   const detail = context
@@ -132,6 +133,18 @@ export async function publishDraftForUser(userId, draftId) {
     throw new Error(`Draft cannot be published from status "${draft.status}".`)
   }
 
+  // MANDATORY ENTITLEMENT GATE
+  const gate = await canPublishToLinkedIn(userId)
+  if (!gate.allowed) {
+    await db.query(
+      `UPDATE automation_post_drafts
+       SET status = 'paused_subscription', error = $1
+       WHERE user_id = $2 AND id = $3`,
+      [`Entitlement Denied: ${gate.message} (${gate.reason})`, userId, draftId]
+    ).catch(() => {})
+    throw new Error(`Entitlement Denied: ${gate.message} (${gate.reason})`)
+  }
+
   await db.query(
     `UPDATE automation_post_drafts
      SET status = 'approved', approved_at = COALESCE(approved_at, now()), error = null
@@ -208,6 +221,11 @@ export async function runAutomationForUser(userId, { reason = 'scheduled', topic
   const draft = await generateDraftForUser(userId, { topic, sourceType: reason })
 
   if (settings.full_auto_enabled && settings.approval_mode === 'auto_publish') {
+    const gate = await canPublishToLinkedIn(userId)
+    if (!gate.allowed) {
+      console.warn(`[runAutomationForUser] Auto-publish blocked: ${gate.message} for user ${userId}`)
+      return draft
+    }
     return publishDraftForUser(userId, draft.id)
   }
 

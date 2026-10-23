@@ -2,11 +2,24 @@ import re
 import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from pathlib import Path
+
 class FeatureExtractor:
     def __init__(self, vectorizer_path: str = None):
         self.vectorizer = None
         if vectorizer_path:
-            self.vectorizer = joblib.load(vectorizer_path)
+            p = Path(vectorizer_path)
+            if p.exists():
+                try:
+                    self.vectorizer = joblib.load(p)
+                except Exception:
+                    self.vectorizer = None
+        if self.vectorizer is None:
+            self.fit([
+                "python javascript react node express mongodb sql docker aws kubernetes html css typescript",
+                "machine learning data science pytorch tensorflow natural language processing pandas numpy",
+                "full stack software engineer backend frontend cloud devops database system design api"
+            ])
 
     @staticmethod
     def clean_text(text: str) -> str:

@@ -1,4 +1,5 @@
 import express from 'express'
+import { protect } from '../middleware/authMiddleware.js'
 import {
   getChallengesList,
   getChallengeById,
@@ -10,7 +11,7 @@ const router = express.Router()
 
 router.get('/', getChallengesList)
 router.get('/:id', getChallengeById)
-router.post('/:id/run', runChallenge)
-router.post('/:id/submit', submitChallenge)
+router.post('/:id/run', protect, runChallenge)
+router.post('/:id/submit', protect, submitChallenge)
 
 export default router

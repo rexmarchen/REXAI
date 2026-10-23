@@ -45,12 +45,14 @@ export function initInternshipQueue() {
     startFallbackScheduler()
   }
 
-  // Also run an initial seed ingestion on boot asynchronously
-  setTimeout(() => {
-    runInternshipIngestion().catch((e) => {
-      logger.warn(`[InternshipQueue] Initial boot ingestion note: ${e.message}`)
-    })
-  }, 3000)
+  // Also run an initial seed ingestion on boot asynchronously (skip in tests/load-testing)
+  if (process.env.NODE_ENV !== 'test' && process.env.SKIP_BOOT_INGESTION !== 'true') {
+    setTimeout(() => {
+      runInternshipIngestion().catch((e) => {
+        logger.warn(`[InternshipQueue] Initial boot ingestion note: ${e.message}`)
+      })
+    }, 3000)
+  }
 }
 
 function setupBullMQ() {

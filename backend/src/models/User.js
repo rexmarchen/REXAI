@@ -22,8 +22,18 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'faculty', 'developer', 'admin'],
     default: 'user'
+  },
+  facultyStatus: {
+    type: String,
+    enum: ['none', 'unverified', 'pending', 'verified', 'rejected', 'suspended'],
+    default: 'none'
+  },
+  developerStatus: {
+    type: String,
+    enum: ['none', 'pending', 'active', 'suspended', 'revoked'],
+    default: 'none'
   },
   plan: {
     type: String,
@@ -34,13 +44,17 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {}
   },
+  authProviders: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 }, {
   timestamps: true,
-  strict: false
+  strict: true
 })
 
 userSchema.pre('save', async function() {

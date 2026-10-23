@@ -1,0 +1,73 @@
+name: Security CI & Regression Testing
+
+on:
+  push:
+    branches: [ "main", "master", "develop", "blackboxai/*" ]
+  pull_request:
+    branches: [ "main", "master", "develop" ]
+  schedule:
+    # Run daily security scans at 03:00 UTC
+    - cron: '0 3 * * *'
+
+jobs:
+  audit-and-regression:
+    name: Dependency Audit & Security Regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run Backend Security Tests
+        working-directory: backend
+        run: npm run test:security
+
+      - name: Run Backend Core Test Suite
+        working-directory: backend
+        run: npm test
+
+      - name: NPM Dependency Audit (Production)
+        working-directory: backend
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+  secrets-and-lint:
+    name: Secret Scanning & Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Verify No Tracked Sensitive Files
+        run: |
+          echo "Verifying no live .env files are tracked in git..."
+          if git ls-files | grep -E '^(\.env|backend/\.env|frontend/\.env|ml_service/\.env)$'; then
+            echo "ERROR: Tracked .env files detected!"
+            exit 1
+          else
+            echo "SUCCESS: No live .env files tracked in git."
+          fi

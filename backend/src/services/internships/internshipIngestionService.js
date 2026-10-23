@@ -7,6 +7,7 @@ import {
   inferDomain
 } from './internshipNormalizer.js'
 import logger from '../../utils/logger.js'
+import cacheManager from '../../utils/cacheManager.js'
 
 let lastIngestionMetrics = {
   lastRunStartedAt: null,
@@ -196,6 +197,10 @@ export async function runInternshipIngestion(options = {}) {
   }
 
   logger.info(`[InternshipIngestion] Completed in ${metrics.durationMs}ms: ${metrics.inserted} inserted, ${metrics.updated} updated, ${metrics.fresh48h} fresh (<48h), ${metrics.duplicates} duplicates, ${metrics.errors} errors`)
+
+  if (metrics.inserted > 0 || metrics.updated > 0) {
+    cacheManager.invalidateTag('internships')
+  }
 
   return metrics
 }

@@ -1,0 +1,317 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: #F8F4EE;
+  color: #231C16;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  position: relative;
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.sidebar {
+  width: 270px;
+  background: #FFFFFF;
+  border-right: 1px solid #ECE4D8;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 20;
+}
+
+.sidebarTop {
+  padding: 24px 18px 16px;
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 22px;
+  text-decoration: none;
+}
+
+.brandMark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #EEF4FD;
+  color: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.brandName {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #231C16;
+  line-height: 1.1;
+}
+
+.brandSub {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #2563EB;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.statusBadgeWrap {
+  margin-bottom: 20px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusVerified {
+  background: #ECFDF5;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #065F46;
+}
+
+.statusPending {
+  background: #FEF9E7;
+  border: 1px solid rgba(180, 136, 5, 0.25);
+  color: #92400E;
+}
+
+.statusUnverified {
+  background: #FCEFEB;
+  border: 1px solid rgba(224, 90, 71, 0.25);
+  color: #991B1B;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.statusDotVerified {
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.statusDotPending {
+  background: #F59E0B;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+.statusDotUnverified {
+  background: #EF4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.statusBadgeText {
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.navSectionLabel {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8C7B6D;
+  margin: 16px 0 8px 8px;
+}
+
+.navMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: #5C4D40;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.navItem:hover {
+  background: #F4EFE6;
+  color: #231C16;
+}
+
+.navItemActive {
+  background: #EEF4FD;
+  color: #1D4ED8;
+  font-weight: 700;
+}
+
+.navItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebarBottom {
+  padding: 16px 18px 24px;
+  border-top: 1px solid #ECE4D8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  background: #F8F4EE;
+}
+
+.userAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #2563EB;
+  color: #FFF;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.userInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.userName {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #231C16;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userRole {
+  font-size: 0.7rem;
+  color: #8C7B6D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.returnHubBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid #E2D9CC;
+  color: #5C4D40;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.returnHubBtn:hover {
+  background: #F4EFE6;
+  color: #231C16;
+}
+
+/* ── MAIN CONTENT AREA ───────────────────────────────────── */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topBar {
+  height: 64px;
+  border-bottom: 1px solid #ECE4D8;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+}
+
+.topBarTitle {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #231C16;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topBarActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quickCreateBtn {
+  background: #2563EB;
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.quickCreateBtn:hover {
+  background: #1D4ED8;
+}
+
+.contentWrapper {
+  padding: 32px;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 860px) {
+  .shell {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid #ECE4D8;
+  }
+  .contentWrapper {
+    padding: 20px 16px;
+  }
+}

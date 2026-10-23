@@ -20,7 +20,7 @@ const socialAutomationPostSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'new', 'approved', 'publishing', 'published', 'failed'],
+      enum: ['draft', 'new', 'approved', 'publishing', 'published', 'failed', 'paused_subscription'],
       default: 'approved',
       index: true
     },

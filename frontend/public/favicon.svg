@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="rexionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7A50" />
+      <stop offset="50%" stop-color="#E97852" />
+      <stop offset="100%" stop-color="#C8522A" />
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141916" />
+      <stop offset="100%" stop-color="#070908" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bgGrad)" />
+  <rect x="2" y="2" width="60" height="60" rx="14" stroke="rgba(255, 255, 255, 0.12)" stroke-width="2" />
+  <!-- Stylized R -->
+  <path d="M20 16H34C40.6274 16 46 21.3726 46 28C46 33.3934 42.4419 37.9547 37.5252 39.4678L46.8 50H37.8L29.5 39.5H27.5V50H20V16ZM27.5 33H34C36.7614 33 39 30.7614 39 28C39 25.2386 36.7614 23 34 23H27.5V33Z" fill="url(#rexionGrad)" />
+</svg>

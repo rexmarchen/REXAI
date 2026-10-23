@@ -256,7 +256,7 @@ export const searchContacts = async (req, res, next) => {
               verified: person.verified ?? true,
               linkedinUrl: finalLinkedinUrl
             },
-            { upsert: true, returnDocument: 'after', new: true }
+            { upsert: true, returnDocument: 'after' }
           )
           savedContacts.push(contact)
         } catch (upsertErr) {
@@ -304,7 +304,7 @@ export const searchContacts = async (req, res, next) => {
               verified: true,
               linkedinUrl: item.linkedinUrl || 'https://www.linkedin.com'
             },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
           )
           savedContacts.push(contact)
         } catch (e) {
@@ -993,7 +993,7 @@ export const trackUnsubscribe = async (req, res, next) => {
         reason: 'unsubscribed',
         addedAt: new Date()
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
 
     res.send(`

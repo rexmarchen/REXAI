@@ -1,0 +1,283 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #231C16;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #6E5E52;
+  margin: 0;
+}
+
+.toolbar {
+  background: #FFFFFF;
+  border: 1px solid #EAE4DA;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  border-radius: 8px;
+  padding: 8px 12px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.searchIcon {
+  color: #8E7E70;
+}
+
+.searchInput {
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  color: #231C16;
+  width: 100%;
+}
+
+.selectGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.select {
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  color: #40342B;
+  outline: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.questionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  background: #FFFFFF;
+  border: 1px solid #EAE4DA;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.15s ease;
+}
+
+.card:hover {
+  border-color: #D5C8B8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pillRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.typePill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #D96B43;
+  background: #FEF3EB;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.diffPill {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #5C4D40;
+  background: #F4EFEA;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.marksPill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #065F46;
+  background: #ECFDF5;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.topicPill {
+  font-size: 0.68rem;
+  color: #6E5E52;
+  background: #FAF8F5;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #EAE4DA;
+}
+
+.quizRefPill {
+  font-size: 0.68rem;
+  color: #8E7E70;
+  font-style: italic;
+}
+
+.copyBtn {
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  color: #40342B;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.copyBtn:hover {
+  background: #EFE8DE;
+}
+
+.qText {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #231C16;
+  line-height: 1.4;
+}
+
+.codeBlock {
+  background: #1E1E1E;
+  color: #4AF626;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.78rem;
+  margin: 0;
+  overflow-x: auto;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+}
+
+.optionChip {
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.correctChip {
+  background: #F0FDF4;
+  border-color: #10B981;
+  color: #065F46;
+  font-weight: 600;
+}
+
+.letter {
+  font-family: monospace;
+  font-weight: 700;
+  color: #8E7E70;
+}
+
+.correctChip .letter {
+  color: #065F46;
+}
+
+.correctIcon {
+  margin-left: auto;
+  color: #10B981;
+}
+
+.shortAnswerReveal {
+  background: #ECFDF5;
+  color: #065F46;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.explanationBox {
+  background: #FEF9E7;
+  color: #854D0E;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.loadingWrapper, .errorWrapper, .emptyWrapper {
+  background: #FFFFFF;
+  border: 1px dashed #D5C8B8;
+  border-radius: 16px;
+  padding: 60px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.spin {
+  animation: rotate 1s linear infinite;
+  color: #D96B43;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.retryBtn {
+  background: #231C16;
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}

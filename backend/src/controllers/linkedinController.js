@@ -1,7 +1,7 @@
 import { qualifyContact, filterAndRankCandidates } from '../utils/qualifyContact.js'
 
 const UNIPILE_DSN = process.env.UNIPILE_DSN || 'api62.unipile.com:19261'
-const UNIPILE_API_KEY = process.env.UNIPILE_API_KEY || 'wPBskp4M.NDi8BlLY9Xrtxgh78JD6q/PAcdjZh2Ft+Q5oPhiDOjM='
+const UNIPILE_API_KEY = process.env.UNIPILE_API_KEY || ''
 const APP_URL = process.env.APP_URL || 'http://localhost:3000'
 
 const baseUrl = UNIPILE_DSN.startsWith('http') ? UNIPILE_DSN : `https://${UNIPILE_DSN}`

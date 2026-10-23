@@ -14,12 +14,20 @@ try {
   redisConnection = new IORedis(REDIS_URL, {
     maxRetriesPerRequest: null,
     connectTimeout: 5000,
-    lazyConnect: true
+    lazyConnect: true,
+    retryStrategy: (times) => {
+      if (times > 3) return null
+      return Math.min(times * 500, 2000)
+    }
   })
 
+  let loggedRedisWarning = false
   // Silent error catch to prevent crash if Redis is not available
   redisConnection.on('error', (err) => {
-    console.warn('Redis Connection Error (BullMQ disabled):', err.message)
+    if (!loggedRedisWarning) {
+      loggedRedisWarning = true
+      console.warn('Redis Connection Warning (BullMQ queue offline, graceful fallback):', err.message)
+    }
   })
 
   // Attempt connection

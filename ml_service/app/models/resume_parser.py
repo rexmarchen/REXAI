@@ -1,6 +1,9 @@
 import io
 from typing import Optional
-import PyPDF2
+try:
+    import pypdf as PyPDF2
+except ImportError:
+    import PyPDF2
 import pdfplumber
 from docx import Document
 import re

@@ -15,6 +15,7 @@ import adzunaProvider from '../services/jobs/adzunaProvider.js'
 import linkedinProvider from '../services/jobs/linkedinProvider.js'
 import { APPLICATION_STATES } from '../config/constants.js'
 import logger from '../utils/logger.js'
+import { recordActivity } from '../services/activityService.js'
 
 const router = express.Router()
 
@@ -22,14 +23,14 @@ const router = express.Router()
  * Helper to get active userId from auth or mock fallback for testing/demo
  */
 function resolveUserId(req) {
-  return req.user?._id || req.user?.id || req.body?.userId || req.query?.userId || 'guest_user_123'
+  return req.user?._id?.toString() || req.user?.id?.toString() || null
 }
 
 /**
  * POST /api/applications/resume/upload
  * Semantic resume ingestion, token chunking, domain intelligence extraction
  */
-router.post('/resume/upload', optionalProtect, upload.single('resume'), async (req, res, next) => {
+router.post('/resume/upload', protect, upload.single('resume'), async (req, res, next) => {
   try {
     const userId = resolveUserId(req)
     const file = req.file
@@ -53,6 +54,18 @@ router.post('/resume/upload', optionalProtect, upload.single('resume'), async (r
       })
     } else {
       return res.status(400).json({ success: false, message: 'No resume file or rawText provided' })
+    }
+
+    if (userId) {
+      recordActivity({
+        userId,
+        type: 'resume_uploaded',
+        category: 'resume',
+        title: 'Resume Ingested & Analyzed',
+        description: `Parsed profile skills and domain: ${profile.primaryDomain || 'Fullstack'}`,
+        status: 'completed',
+        metadata: { profileId: profile._id, skillsCount: profile.skills?.length || 0 }
+      }).catch(() => {})
     }
 
     res.status(200).json({
@@ -88,29 +101,16 @@ router.post('/resume/upload', optionalProtect, upload.single('resume'), async (r
  * GET /api/applications/profile
  * Get current candidate profile
  */
-router.get('/profile', optionalProtect, async (req, res, next) => {
+router.get('/profile', protect, async (req, res, next) => {
   try {
     const userId = resolveUserId(req)
-    let profile = await CandidateProfile.findOne({ userId })
-    if (!profile) {
-      profile = await CandidateProfile.findOne().sort({ updatedAt: -1 })
-    }
-    if (!profile) {
-      return res.status(200).json({
-        success: true,
-        data: {
-          fullName: 'Anshu',
-          contactInfo: { fullName: 'Anshu', email: 'anshu.dev@rexion.ai', phone: '+91 98765 43210' },
-          primaryDomain: ['Full Stack Engineer'],
-          skills: ['Python', 'React', 'PostgreSQL', 'MongoDB', 'Next.js'],
-          experienceYears: 3
-        }
-      })
-    }
+    const profile = await CandidateProfile.findOne({
+      $or: [{ userId }, { userId: String(userId) }, { email: req.user?.email }]
+    })
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      data: profile
+      data: profile || null
     })
   } catch (err) {
     next(err)
@@ -121,15 +121,19 @@ router.get('/profile', optionalProtect, async (req, res, next) => {
  * PUT /api/applications/profile
  * Update contact info / preferences
  */
-router.put('/profile', optionalProtect, async (req, res, next) => {
+router.put('/profile', protect, async (req, res, next) => {
   try {
     const userId = resolveUserId(req)
-    const updates = req.body
+    const updates = { ...(req.body || {}) }
+    delete updates._id
+    delete updates.userId
+    delete updates.role
+    delete updates.plan
 
     const profile = await CandidateProfile.findOneAndUpdate(
-      { userId },
-      { $set: updates },
-      { new: true, upsert: true }
+      { $or: [{ userId }, { email: req.user?.email }] },
+      { $set: { ...updates, userId, email: req.user?.email } },
+      { returnDocument: 'after', upsert: true }
     )
 
     res.status(200).json({
@@ -145,14 +149,15 @@ router.put('/profile', optionalProtect, async (req, res, next) => {
  * POST /api/applications/discover
  * Discover fresh jobs (<= 48 hours old) and calculate explainable match scores
  */
-router.post('/discover', optionalProtect, async (req, res, next) => {
+router.post('/discover', protect, async (req, res, next) => {
   try {
     const userId = resolveUserId(req)
-    let profile = await CandidateProfile.findOne({ userId })
+    let profile = null
+    if (userId) {
+      profile = await CandidateProfile.findOne({ userId })
+    }
     if (!profile && req.body?.candidateProfile) {
       profile = req.body.candidateProfile
-    } else if (!profile) {
-      profile = await CandidateProfile.findOne().sort({ updatedAt: -1 })
     }
 
     const { query, location, domain, hoursMax, limit = 25, candidateSkills, candidateProfile } = req.body || {}
@@ -424,7 +429,7 @@ router.post('/discover', optionalProtect, async (req, res, next) => {
  * POST /api/applications/apply-one-click
  * Initialize 1-Click apply workflow with 16-state machine
  */
-router.post('/apply-one-click', optionalProtect, async (req, res, next) => {
+router.post('/apply-one-click', protect, async (req, res, next) => {
   try {
     const userId = resolveUserId(req)
     const { job, options = {} } = req.body
@@ -487,6 +492,24 @@ router.post('/apply-one-click', optionalProtect, async (req, res, next) => {
     // Run orchestrator workflow
     const executedApplication = await runApplicationWorkflow(application._id, options)
 
+    if (userId) {
+      recordActivity({
+        userId,
+        type: 'application_submitted',
+        category: 'applications',
+        title: `Applied for ${job.title || 'Role'}`,
+        description: `Application submitted to ${job.company || 'Company'}`,
+        status: 'completed',
+        metadata: {
+          applicationId: executedApplication._id,
+          company: job.company,
+          title: job.title,
+          state: executedApplication.state,
+          url: job.applyUrl || job.url
+        }
+      }).catch(() => {})
+    }
+
     res.status(200).json({
       success: true,
       message: `Workflow executed. Application state: ${executedApplication.state || executedApplication.status}`,
@@ -509,11 +532,17 @@ router.post('/apply-one-click', optionalProtect, async (req, res, next) => {
  * GET /api/applications/status/:id
  * Get application details and audit trail
  */
-router.get('/status/:id', optionalProtect, async (req, res, next) => {
+router.get('/status/:id', protect, async (req, res, next) => {
   try {
     const application = await Application.findById(req.params.id)
     if (!application) {
       return res.status(404).json({ success: false, message: 'Application not found' })
+    }
+
+    const appUser = String(application.user || application.userId || '')
+    const currentUserId = String(req.user?._id || req.user?.id || '')
+    if (appUser && appUser !== currentUserId && req.user?.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied to this application' })
     }
 
     res.status(200).json({
@@ -529,7 +558,7 @@ router.get('/status/:id', optionalProtect, async (req, res, next) => {
  * GET /api/applications/metrics
  * Get reporting metrics and dashboard analytics
  */
-router.get('/metrics', optionalProtect, async (req, res, next) => {
+router.get('/metrics', protect, async (req, res, next) => {
   try {
     const userId = resolveUserId(req)
     const report = await getCandidateApplicationReport(userId)
@@ -546,7 +575,7 @@ router.get('/metrics', optionalProtect, async (req, res, next) => {
  * GET /api/applications/tracker
  * Real-time live application tracker list fetched directly from MongoDB
  */
-router.get('/tracker', optionalProtect, async (req, res, next) => {
+router.get('/tracker', protect, async (req, res, next) => {
   try {
     const userId = resolveUserId(req)
     const orConditions = []
@@ -560,11 +589,8 @@ router.get('/tracker', optionalProtect, async (req, res, next) => {
       }
     }
 
-    const query = orConditions.length > 0 ? { $or: orConditions } : {}
-    let docs = await Application.find(query).sort({ submittedAt: -1, createdAt: -1 }).limit(100).lean()
-    if (!docs || docs.length === 0) {
-      docs = await Application.find({}).sort({ submittedAt: -1, createdAt: -1 }).limit(100).lean()
-    }
+    const query = orConditions.length > 0 ? { $or: orConditions } : { user: '__never_match__' }
+    const docs = await Application.find(query).sort({ submittedAt: -1, createdAt: -1 }).limit(100).lean()
 
     const items = docs.map((doc) => {
       const isSubmitted = doc.status === 'SUBMITTED' || doc.state === 'SUBMITTED' || Boolean(doc.submittedAt)

@@ -59,7 +59,7 @@ const saveMailbox = async ({ userId, provider, email, accessToken, refreshToken,
   const mailbox = await OutreachMailbox.findOneAndUpdate(
     { userId, email: email.toLowerCase() },
     { $set: { provider, status: 'active', accessTokenEncrypted: encrypt(accessToken), refreshTokenEncrypted: encrypt(refreshToken), tokenExpiresAt: expiresAt, connectedAt: new Date() } },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
+    { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
   )
   return toPublicMailbox(mailbox)
 }

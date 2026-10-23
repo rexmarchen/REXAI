@@ -21,3 +21,8 @@ class PredictionResponse(BaseModel):
     confidence: float
     ats_score: float
     jobs: List[JobSchema] = Field(default_factory=list)
+
+
+class MatchRequest(BaseModel):
+    job_description: str = Field(..., min_length=10)
+    resume_ids: Optional[List[str]] = None

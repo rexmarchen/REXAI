@@ -70,7 +70,7 @@ router.post('/signup', async (req, res) => {
     }
 
     console.error('Connect signup error:', err)
-    return res.status(500).send(`Something went wrong creating your account: ${escapeHtml(err.message)}`)
+    return res.status(500).send('Something went wrong creating your account. Please try again.')
   }
 })
 

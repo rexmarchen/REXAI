@@ -18,5 +18,6 @@ const ProblemSubmissionSchema = new mongoose.Schema({
 
 ProblemSubmissionSchema.index({ userId: 1, problemSlug: 1 })
 ProblemSubmissionSchema.index({ problemSlug: 1, verdict: 1 })
+ProblemSubmissionSchema.index({ userId: 1, createdAt: -1 })
 
 export const ProblemSubmission = mongoose.models.ProblemSubmission || mongoose.model('ProblemSubmission', ProblemSubmissionSchema)

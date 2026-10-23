@@ -10,6 +10,18 @@ import './styles/globals.css'
 import './styles/variables.css'
 import './styles/animations.css'
 
+// Enforce HTTPS in production environments
+if (
+  typeof window !== 'undefined' &&
+  window.location.protocol === 'http:' &&
+  window.location.hostname !== 'localhost' &&
+  window.location.hostname !== '127.0.0.1'
+) {
+  window.location.replace(
+    `https://${window.location.host}${window.location.pathname}${window.location.search}${window.location.hash}`
+  )
+}
+
 const appTree = (
   <React.StrictMode>
     <BrowserRouter

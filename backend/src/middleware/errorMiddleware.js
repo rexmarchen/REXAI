@@ -5,37 +5,44 @@ export const errorHandler = (err, req, res, next) => {
     return next(err)
   }
 
+  const isProduction = process.env.NODE_ENV === 'production'
   err.statusCode = err.statusCode || 500
-  err.message = err.message || 'Internal Server Error'
 
-  console.error(err.message)
-  logger.error(`${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`)
+  // Log error internally with stack trace and request correlation ID
+  const reqId = req.id || req.headers['x-request-id'] || 'no-req-id'
+  logger.error(
+    `[${reqId}] ${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}${
+      err.stack ? `\n${err.stack}` : ''
+    }`
+  )
+
+  let safeMessage = err.message || 'Internal Server Error'
 
   if (err.code === 11000) {
     err.statusCode = 400
-    err.message = 'Duplicate field value entered'
-  }
-
-  if (err.name === 'ValidationError') {
+    safeMessage = 'A resource with this identifier already exists.'
+  } else if (err.name === 'ValidationError') {
     err.statusCode = 400
-    err.message = Object.values(err.errors).map(val => val.message).join(', ')
-  }
-
-  if (err.name === 'JsonWebTokenError') {
+    safeMessage = Object.values(err.errors || {}).map((val) => val.message).join(', ') || 'Validation error'
+  } else if (err.name === 'JsonWebTokenError') {
     err.statusCode = 401
-    err.message = 'Invalid token. Please log in again.'
-  }
-
-  if (err.name === 'TokenExpiredError') {
+    safeMessage = 'Invalid authentication token. Please log in again.'
+  } else if (err.name === 'TokenExpiredError') {
     err.statusCode = 401
-    err.message = 'Your token has expired. Please log in again.'
+    safeMessage = 'Your session has expired. Please log in again.'
+  } else if (err.statusCode === 500 && isProduction) {
+    // Conceal sensitive internal server / database errors in production
+    safeMessage = 'An internal server error occurred. Please try again later.'
   }
 
   res.status(err.statusCode).json({
-    error: err.message,
     success: false,
-    message: err.message,
-    details: err.details || undefined,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    requestId: reqId !== 'no-req-id' ? reqId : undefined,
+    error: safeMessage,
+    message: safeMessage,
+    details: !isProduction && err.details ? err.details : undefined,
+    stack: !isProduction ? err.stack : undefined
   })
 }
+
+export default errorHandler

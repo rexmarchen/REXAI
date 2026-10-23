@@ -9,8 +9,9 @@
 import mongoose from 'mongoose'
 import { Quiz, QuizAttempt, UserXP } from '../models/Quiz.js'
 import User from '../models/User.js'
-import CandidateProfile from '../models/CandidateProfile.js'
 import { refreshQuizQuestionPool, generateFreshQuestionsForTopic, getOrProvisionQuizWithAI } from '../services/aiQuizService.js'
+import cacheManager from '../utils/cacheManager.js'
+import { recordActivity } from '../services/activityService.js'
 
 /* ═══════════════════════════════════════════════════════════════
    DAILY ROTATION UTILITY
@@ -325,7 +326,7 @@ async function ensureSeed(force = false) {
             questionPool: pool
           }
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       )
     }
     console.log('[QUIZZES] ✅ Quiz catalog seeded with full question banks.')
@@ -342,9 +343,6 @@ function getUserId(req) {
   return (
     req.user?._id?.toString() ||
     req.user?.id?.toString() ||
-    req.headers?.['x-user-id'] ||
-    req.query?.userId ||
-    req.body?.userId ||
     null
   )
 }
@@ -353,15 +351,15 @@ function mapQuestion(q) {
   return {
     id: q.id,
     question: q.question,
+    type: q.type || 'multiple_choice',
     code: q.code || '',
     language: q.language || '',
-    options: q.options,
-    correct: q.correctIndex,
-    correctIndex: q.correctIndex,
-    tip: q.explanation || '',
-    explanation: q.explanation || '',
+    options: q.options || [],
+    // Redact answers and explanations before quiz submission to prevent cheating
     difficulty: q.difficulty || 'Medium',
-    tags: q.tags || []
+    tags: q.tags || [],
+    marks: q.marks !== undefined ? q.marks : 1,
+    order: q.order !== undefined ? q.order : 0
   }
 }
 
@@ -425,75 +423,9 @@ async function updateUserXP(userId, userName, xpEarned, score) {
    ROUTE HANDLERS
    ═══════════════════════════════════════════════════════════════ */
 
-/** GET /api/quizzes — Hub listing with real metrics and leaderboard */
-export const getQuizzes = async (req, res) => {
-  try {
-    await ensureSeed()
-    const { category, search } = req.query
-    const userId = getUserId(req)
-
-    let filter = {}
-    if (category && category !== 'All') {
-      const cleanCat = category.replace(/^[\p{Emoji}\s]+/u, '').trim()
-      filter.category = { $regex: cleanCat, $options: 'i' }
-    }
-    if (search) filter.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { topic: { $regex: search, $options: 'i' } }
-    ]
-
-    const quizzes = await Quiz.find(filter).select('-questionPool').lean()
-
-    // Real user metrics from DB
-    let metrics = {
-      totalQuizzes: await Quiz.countDocuments(),
-      completed: 0,
-      inProgress: 0,
-      notStarted: 0,
-      averageScore: 0,
-      totalQuestionsAnswered: 0,
-      totalCorrect: 0
-    }
-    let userStats = { totalXP: 0, quizzesDone: 0, bestScore: 0 }
-
-    if (userId) {
-      const attempts = await QuizAttempt.find({ userId }).lean()
-      const completedSlugs = new Set(attempts.filter(a => a.scorePercentage >= 60).map(a => a.quizSlug))
-      const allAttemptedSlugs = new Set(attempts.map(a => a.quizSlug))
-
-      metrics.completed = completedSlugs.size
-      metrics.inProgress = Math.max(0, allAttemptedSlugs.size - completedSlugs.size)
-      metrics.notStarted = Math.max(0, metrics.totalQuizzes - allAttemptedSlugs.size)
-      metrics.averageScore = attempts.length > 0
-        ? Math.round(attempts.reduce((s, a) => s + (a.scorePercentage || 0), 0) / attempts.length)
-        : 0
-      metrics.totalQuestionsAnswered = attempts.reduce((s, a) => s + (a.totalQuestions || 0), 0)
-      metrics.totalCorrect = attempts.reduce((s, a) => s + (a.correctCount || 0), 0)
-
-      const xpRecord = await UserXP.findOne({ userId }).lean()
-      if (xpRecord) {
-        userStats = {
-          totalXP: xpRecord.totalXP || 0,
-          quizzesDone: Math.max(xpRecord.quizzesDone || 0, completedSlugs.size),
-          bestScore: xpRecord.bestScore || (attempts.length ? Math.max(...attempts.map(a => a.scorePercentage || 0)) : 0)
-        }
-      }
-    }
-
-    const POPULAR_TOPICS = [
-      { id:'python',  title:'Python',          desc:'Variables, OOP, generators, async & more.',    quizCount:5, difficulty:'Easy - Hard',   icon:'python',    color:'#3776AB', bg:'#EEF4FD', slug:'python-basics' },
-      { id:'js',      title:'JavaScript',      desc:'Closures, async, ES6+, event loop & DOM.',     quizCount:5, difficulty:'Easy - Hard',   icon:'javascript',color:'#B48805', bg:'#FEF9E7', slug:'javascript-modern' },
-      { id:'react',   title:'React',           desc:'Hooks, state, context, concurrency & more.',   quizCount:5, difficulty:'Easy - Hard',   icon:'react',     color:'#0284C7', bg:'#EEF7FF', slug:'react-components-hooks' },
-      { id:'sql',     title:'SQL',             desc:'JOINs, aggregation, window functions & ACID.',  quizCount:5, difficulty:'Easy - Hard',   icon:'database',  color:'#2563EB', bg:'#EFF4FE', slug:'sql-mastery' },
-      { id:'git',     title:'Git & GitHub',    desc:'Branching, rebase, cherry-pick & bisect.',     quizCount:5, difficulty:'Easy - Medium', icon:'git',       color:'#DC2626', bg:'#FEF2F2', slug:'git-workflows' },
-      { id:'ml',      title:'Machine Learning',desc:'Backprop, regularization, evaluation & DP.',   quizCount:5, difficulty:'Medium - Hard', icon:'brain',     color:'#7C3AED', bg:'#F5F3FF', slug:'machine-learning-fundamentals' },
-      { id:'rag',     title:'RAG',             desc:'Embeddings, vector DBs, chunking & re-ranking.',quizCount:5, difficulty:'Medium - Hard', icon:'search-ai', color:'#059669', bg:'#ECFDF5', slug:'rag-vector-search' },
-      { id:'dsa',     title:'DSA',             desc:'Trees, graphs, DP, sorting & search.',         quizCount:5, difficulty:'Medium - Hard', icon:'code',      color:'#D96B43', bg:'#FEF3EB', slug:'dsa-algorithms' }
-    ]
-
-    const todayQuiz = quizzes.find(q => q.isDaily) || quizzes[0]
-
-    // Fetch live leaderboard
+/** Helper to fetch and cache the global top-10 leaderboard */
+async function fetchGlobalLeaderboard() {
+  return cacheManager.getOrCompute('quizzes:leaderboard:global', async () => {
     let board = await UserXP.find({ totalXP: { $gt: 0 } }).sort({ totalXP: -1 }).limit(10).lean()
     if (board.length === 0) {
       const benchmarkData = [
@@ -509,6 +441,93 @@ export const getQuizzes = async (req, res) => {
       } catch (_) {}
       board = await UserXP.find({ totalXP: { $gt: 0 } }).sort({ totalXP: -1 }).limit(10).lean()
     }
+    return board
+  }, { ttlMs: 30000, tags: ['leaderboard'] })
+}
+
+/** GET /api/quizzes — Hub listing with real metrics, caching, and leaderboard */
+export const getQuizzes = async (req, res) => {
+  try {
+    await ensureSeed()
+    const { category, search, difficulty } = req.query
+    const userId = getUserId(req)
+
+    const cacheKey = cacheManager.createKey('quizzes:catalog', {
+      cat: category || 'all',
+      diff: difficulty || 'all',
+      q: (search || '').trim().toLowerCase()
+    })
+
+    // 1. Get or compute filtered public quiz catalog
+    const catalogData = await cacheManager.getOrCompute(cacheKey, async () => {
+      let filter = {
+        status: { $in: ['published', null, undefined] },
+        visibility: { $ne: 'private' }
+      }
+      if (category && category !== 'All') {
+        const cleanCat = category.replace(/^[\p{Emoji}\s]+/u, '').trim()
+        filter.category = { $regex: cleanCat, $options: 'i' }
+      }
+      if (difficulty && difficulty !== 'All') {
+        filter.difficulty = difficulty
+      }
+      if (search && search.trim()) {
+        const s = search.trim()
+        filter.$or = [
+          { title: { $regex: s, $options: 'i' } },
+          { topic: { $regex: s, $options: 'i' } },
+          { technicalDomain: { $regex: s, $options: 'i' } },
+          { technologies: { $regex: s, $options: 'i' } },
+          { tags: { $regex: s, $options: 'i' } }
+        ]
+      }
+
+      const [quizzes, totalCount] = await Promise.all([
+        Quiz.find(filter).select('-questionPool').sort({ createdAt: -1 }).lean(),
+        Quiz.countDocuments({ status: { $in: ['published', null, undefined] }, visibility: { $ne: 'private' } })
+      ])
+
+      const todayQuiz = quizzes.find(q => q.isDaily) || quizzes[0] || null
+
+      return {
+        quizzes,
+        totalQuizzes: totalCount,
+        todayQuiz
+      }
+    }, { ttlMs: 30000, tags: ['quizzes'] })
+
+    // 2. Real user metrics from DB (parallel query execution)
+    let metrics = {
+      totalQuizzes: catalogData.totalQuizzes,
+      completed: 0,
+      inProgress: 0,
+      notStarted: catalogData.totalQuizzes,
+      averageScore: 0,
+      totalQuestionsAnswered: 0,
+      totalCorrect: 0
+    }
+
+    if (userId) {
+      const [attempts, xpRecord] = await Promise.all([
+        QuizAttempt.find({ userId, isRealAttempt: true }).lean(),
+        UserXP.findOne({ userId }).lean()
+      ])
+
+      const completedSlugs = new Set(attempts.filter(a => a.scorePercentage >= 60).map(a => a.quizSlug))
+      const allAttemptedSlugs = new Set(attempts.map(a => a.quizSlug))
+
+      metrics.completed = completedSlugs.size
+      metrics.inProgress = Math.max(0, allAttemptedSlugs.size - completedSlugs.size)
+      metrics.notStarted = Math.max(0, catalogData.totalQuizzes - allAttemptedSlugs.size)
+      metrics.averageScore = attempts.length > 0
+        ? Math.round(attempts.reduce((s, a) => s + (a.scorePercentage || 0), 0) / attempts.length)
+        : 0
+      metrics.totalQuestionsAnswered = attempts.reduce((s, a) => s + (a.totalQuestions || 0), 0)
+      metrics.totalCorrect = attempts.reduce((s, a) => s + (a.correctCount || 0), 0)
+    }
+
+    // 3. Fetch cached global top 10 leaderboard
+    const board = await fetchGlobalLeaderboard()
 
     let userInTop = false
     const leaderboard = board.map((e, i) => {
@@ -525,8 +544,10 @@ export const getQuizzes = async (req, res) => {
     })
 
     if (userId && !userInTop) {
-      const myXP = await UserXP.findOne({ userId }).lean()
-      const u = await User.findById(userId).lean()
+      const [myXP, u] = await Promise.all([
+        UserXP.findOne({ userId }).lean(),
+        User.findById(userId).select('fullName name').lean()
+      ])
       const myName = myXP?.userName || u?.fullName || u?.name || 'You'
       const myPts = myXP?.totalXP || 0
       const higherCount = await UserXP.countDocuments({ totalXP: { $gt: myPts } })
@@ -539,6 +560,12 @@ export const getQuizzes = async (req, res) => {
         bestScore: myXP?.bestScore || 0
       })
     }
+
+    // Appropriate HTTP Cache-Control header
+    res.setHeader(
+      'Cache-Control',
+      userId ? 'private, no-cache' : 'public, max-age=30, stale-while-revalidate=60'
+    )
 
     return res.json({
       success: true,
@@ -557,15 +584,28 @@ export const getQuizzes = async (req, res) => {
         '🎨 Product / Design',
         '💼 Career Skills'
       ],
-      recentlyAdded: [
-        { id:'rest-api', title:'REST API Fundamentals', category:'Backend', questionsCount:5, durationMinutes:12, slug:'javascript-modern', icon:'code', color:'#9E6848', bg:'#FDF6EC' },
-        { id:'docker', title:'Docker Basics', category:'DevOps', questionsCount:5, durationMinutes:15, slug:'git-workflows', icon:'terminal', color:'#0EA5E9', bg:'#F0F9FF' },
-        { id:'prompt-eng', title:'Prompt Engineering', category:'AI / LLMs', questionsCount:5, durationMinutes:14, slug:'rag-vector-search', icon:'search-ai', color:'#8B5CF6', bg:'#F5F3FF' },
-        { id:'dsa-arr', title:'Data Structures - Arrays', category:'DSA', questionsCount:5, durationMinutes:14, slug:'dsa-algorithms', icon:'code', color:'#D96B43', bg:'#FEF3EB' }
-      ],
-      todayQuiz,
+      recentlyAdded: (await Quiz.find({
+        status: { $in: ['published', null, undefined] },
+        visibility: { $ne: 'private' }
+      })
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .limit(6)
+      .select('title category topic difficulty durationMinutes questionsCount slug authorName author iconType accentColor')
+      .lean()).map(q => ({
+        id: q.slug || String(q._id),
+        title: q.title,
+        category: q.category || 'Development',
+        questionsCount: q.questionsCount || 5,
+        durationMinutes: q.durationMinutes || 15,
+        slug: q.slug,
+        icon: q.iconType || (q.category?.toLowerCase().includes('data') ? 'brain' : (q.category?.toLowerCase().includes('ai') ? 'search-ai' : 'code')),
+        color: q.accentColor || '#D96B43',
+        bg: '#FEF3EB',
+        authorName: q.authorName
+      })),
+      todayQuiz: catalogData.todayQuiz,
       leaderboard,
-      quizzes
+      quizzes: catalogData.quizzes
     })
   } catch (err) {
     console.error('[QUIZZES] getQuizzes:', err)
@@ -573,27 +613,11 @@ export const getQuizzes = async (req, res) => {
   }
 }
 
-/** GET /api/quizzes/leaderboard — Real XP-ranked leaderboard */
+/** GET /api/quizzes/leaderboard — Real XP-ranked leaderboard with caching */
 export const getLeaderboard = async (req, res) => {
   try {
     const userId = getUserId(req)
-    let board = await UserXP.find({ totalXP: { $gt: 0 } }).sort({ totalXP: -1 }).limit(10).lean()
-
-    // Initialize initial realistic benchmark users if collection is empty
-    if (board.length === 0) {
-      const benchmarkData = [
-        { userId: new mongoose.Types.ObjectId(), userName: 'Priya Sharma', totalXP: 1450, quizzesDone: 15, bestScore: 100 },
-        { userId: new mongoose.Types.ObjectId(), userName: 'Arjun Kapoor', totalXP: 1280, quizzesDone: 13, bestScore: 95 },
-        { userId: new mongoose.Types.ObjectId(), userName: 'Marcus Vance', totalXP: 1120, quizzesDone: 11, bestScore: 90 },
-        { userId: new mongoose.Types.ObjectId(), userName: 'Neha Tiwari', totalXP: 940, quizzesDone: 9, bestScore: 88 },
-        { userId: new mongoose.Types.ObjectId(), userName: 'Rohit Mehta', totalXP: 780, quizzesDone: 8, bestScore: 85 },
-        { userId: new mongoose.Types.ObjectId(), userName: 'Ananya Patel', totalXP: 640, quizzesDone: 6, bestScore: 80 }
-      ]
-      try {
-        await UserXP.insertMany(benchmarkData, { ordered: false })
-      } catch (_) {}
-      board = await UserXP.find({ totalXP: { $gt: 0 } }).sort({ totalXP: -1 }).limit(10).lean()
-    }
+    const board = await fetchGlobalLeaderboard()
 
     let userInTop = false
     const result = board.map((e, i) => {
@@ -611,8 +635,10 @@ export const getLeaderboard = async (req, res) => {
 
     // If logged-in user is not in top 10, calculate their rank and append
     if (userId && !userInTop) {
-      const myXP = await UserXP.findOne({ userId }).lean()
-      const u = await User.findById(userId).lean()
+      const [myXP, u] = await Promise.all([
+        UserXP.findOne({ userId }).lean(),
+        User.findById(userId).select('fullName name').lean()
+      ])
       const myName = myXP?.userName || u?.fullName || u?.name || 'You'
       const myPts = myXP?.totalXP || 0
       const higherCount = await UserXP.countDocuments({ totalXP: { $gt: myPts } })
@@ -625,6 +651,11 @@ export const getLeaderboard = async (req, res) => {
         bestScore: myXP?.bestScore || 0
       })
     }
+
+    res.setHeader(
+      'Cache-Control',
+      userId ? 'private, no-cache' : 'public, max-age=30, stale-while-revalidate=60'
+    )
 
     return res.json({ success: true, leaderboard: result })
   } catch (err) {
@@ -708,33 +739,91 @@ export const getQuizById = async (req, res) => {
   try {
     await ensureSeed()
     const { id } = req.params
+    const isPreview = req.query.preview === 'true'
+    const userId = getUserId(req)
     let quiz = await findQuizByFlexibleId(id)
 
-    // If quiz is not found in seed, auto-provision it with AI
-    if (!quiz) {
+    // If quiz is not found in seed, auto-provision it with AI (unless id is ObjectId)
+    if (!quiz && !id.match(/^[0-9a-fA-F]{24}$/)) {
       quiz = await getOrProvisionQuizWithAI(id, id, 'Development')
     }
     if (!quiz) return res.status(404).json({ success: false, message: 'Quiz not found' })
 
-    // If pool has fewer than 4 questions, enrich pool with AI
-    if (!quiz.questionPool || quiz.questionPool.length < 4) {
-      await refreshQuizQuestionPool(quiz.slug, 5)
-      quiz = await Quiz.findOne({ slug: quiz.slug }).lean()
+    // Non-published protection: only author or admin can view drafts/archived quizzes
+    const isAuthor = Boolean(userId && quiz.author && quiz.author.toString() === userId.toString())
+    const isAdmin = Boolean(req.user && req.user.role === 'admin')
+
+    if (quiz.status && quiz.status !== 'published') {
+      if (!isAuthor && !isAdmin && !isPreview) {
+        return res.status(404).json({ success: false, message: 'Quiz is not publicly available.' })
+      }
     }
 
-    // Pick questions from the pool
-    const pool = quiz.questionPool || []
-    const todayQs = getDailyQuestions(pool, quiz.questionsCount || 5)
+    // Availability window and attempt limits for students
+    const now = new Date()
+    if (!isAuthor && !isAdmin && !isPreview) {
+      if (quiz.availabilityStart && now < new Date(quiz.availabilityStart)) {
+        return res.status(403).json({
+          success: false,
+          code: 'QUIZ_NOT_STARTED',
+          message: `This quiz is not open yet. It will open on ${new Date(quiz.availabilityStart).toLocaleString()}.`
+        })
+      }
+      if (quiz.availabilityEnd && now > new Date(quiz.availabilityEnd)) {
+        return res.status(403).json({
+          success: false,
+          code: 'QUIZ_EXPIRED',
+          message: `This quiz window closed on ${new Date(quiz.availabilityEnd).toLocaleString()}.`
+        })
+      }
+      if (quiz.maxAttempts && quiz.maxAttempts > 0 && userId) {
+        const attemptCount = await QuizAttempt.countDocuments({ userId, quizSlug: quiz.slug, isRealAttempt: true })
+        if (attemptCount >= quiz.maxAttempts) {
+          return res.status(403).json({
+            success: false,
+            code: 'MAX_ATTEMPTS_REACHED',
+            message: `You have reached the maximum allowed attempts (${quiz.maxAttempts}) for this quiz.`
+          })
+        }
+      }
+    }
+
+    let questionsToShow = []
+    if (quiz.author && quiz.questionPool && quiz.questionPool.length > 0) {
+      // Author custom quiz: use author questions, preserving ordering or randomization
+      questionsToShow = [...quiz.questionPool]
+      if (quiz.randomizeQuestions) {
+        questionsToShow.sort(() => Math.random() - 0.5)
+      } else {
+        questionsToShow.sort((a, b) => (a.order || 0) - (b.order || 0))
+      }
+      if (quiz.questionsCount && quiz.questionsCount > 0 && quiz.questionsCount < questionsToShow.length) {
+        questionsToShow = questionsToShow.slice(0, quiz.questionsCount)
+      }
+    } else {
+      // Seeded/AI quiz: enrich pool if needed and pick daily questions
+      if (!quiz.questionPool || quiz.questionPool.length < 4) {
+        await refreshQuizQuestionPool(quiz.slug, 5)
+        quiz = await Quiz.findOne({ slug: quiz.slug }).lean()
+      }
+      const pool = quiz.questionPool || []
+      questionsToShow = getDailyQuestions(pool, quiz.questionsCount || 5)
+    }
 
     const mapped = {
       _id: quiz._id,
       slug: quiz.slug,
       title: quiz.title,
+      description: quiz.description || '',
+      instructions: quiz.instructions || '',
       topic: quiz.topic,
       category: quiz.category,
       difficulty: quiz.difficulty,
       durationMinutes: quiz.durationMinutes,
-      questionsCount: todayQs.length,
+      questionsCount: questionsToShow.length,
+      passingScore: quiz.passingScore || 60,
+      negativeMarking: quiz.negativeMarking || false,
+      showExplanations: quiz.showExplanations !== false,
       iconType: quiz.iconType,
       accentColor: quiz.accentColor,
       coverTopics: quiz.coverTopics || [],
@@ -742,8 +831,18 @@ export const getQuizById = async (req, res) => {
       todayDate: todayStr(),
       aiVersion: quiz.aiVersion || 1,
       lastAIGeneratedAt: quiz.lastAIGeneratedAt || null,
-      isAIPowered: true,
-      questions: todayQs.map(mapQuestion)
+      isAIPowered: !quiz.author,
+      isCommunity: Boolean(quiz.author),
+      authorName: quiz.authorName || 'REXION Team',
+      authorRole: quiz.authorRole || (quiz.author ? 'faculty' : 'system'),
+      isVerifiedFaculty: Boolean(quiz.isVerifiedFaculty),
+      institutionName: quiz.institutionName || '',
+      targetAudience: quiz.targetAudience || 'All Students',
+      availabilityStart: quiz.availabilityStart || null,
+      availabilityEnd: quiz.availabilityEnd || null,
+      maxAttempts: quiz.maxAttempts || 0,
+      status: quiz.status || 'published',
+      questions: questionsToShow.map(mapQuestion)
     }
 
     return res.json({ success: true, quiz: mapped })
@@ -757,8 +856,10 @@ export const getQuizById = async (req, res) => {
 export const submitQuiz = async (req, res) => {
   try {
     const { id } = req.params
-    const { answers, timeTaken = 0, dailyDate } = req.body
+    const { answers, timeTaken = 0, dailyDate, preview } = req.body
+    const isPreview = Boolean(preview || req.query.preview === 'true')
     const userId = getUserId(req)
+    const today = dailyDate || todayStr()
 
     let quiz = await findQuizByFlexibleId(id)
     if (!quiz) {
@@ -766,36 +867,102 @@ export const submitQuiz = async (req, res) => {
     }
     if (!quiz) return res.status(404).json({ success: false, message: 'Quiz not found' })
 
-    // Get the exact same daily questions that were shown to user
-    const pool = quiz.questionPool || []
-    const today = dailyDate || todayStr()
-    const seed = parseInt(today.replace(/-/g, ''), 10)
-    const todayQs = seededShuffle([...pool], seed).slice(0, quiz.questionsCount || 5)
+    const isAuthor = Boolean(userId && quiz.author && quiz.author.toString() === userId.toString())
+    const isAdmin = Boolean(req.user && req.user.role === 'admin')
+    const now = new Date()
 
-    const totalQuestions = todayQs.length
+    if (!isAuthor && !isAdmin && !isPreview) {
+      if (quiz.availabilityStart && now < new Date(quiz.availabilityStart)) {
+        return res.status(403).json({ success: false, message: 'This quiz is not currently open for submissions.' })
+      }
+      if (quiz.availabilityEnd && now > new Date(quiz.availabilityEnd)) {
+        return res.status(403).json({ success: false, message: 'The submission window for this quiz has closed.' })
+      }
+      if (quiz.maxAttempts && quiz.maxAttempts > 0 && userId) {
+        const attemptCount = await QuizAttempt.countDocuments({ userId, quizSlug: quiz.slug, isRealAttempt: true })
+        if (attemptCount >= quiz.maxAttempts) {
+          return res.status(403).json({ success: false, message: `Attempt limit (${quiz.maxAttempts}) reached for this quiz.` })
+        }
+      }
+    }
+
+    const pool = quiz.questionPool || []
+    let targetQuestions = []
+    if (quiz.author && pool.length > 0) {
+      targetQuestions = pool
+    } else {
+      const seed = parseInt(today.replace(/-/g, ''), 10)
+      targetQuestions = seededShuffle([...pool], seed).slice(0, quiz.questionsCount || 5)
+    }
+
     let correctCount = 0
+    let totalMarks = 0
+    let earnedMarks = 0
     const processedAnswers = []
 
     if (Array.isArray(answers)) {
       answers.forEach(ans => {
-        const q = todayQs.find(item => item.id === ans.questionId) || pool.find(item => item.id === ans.questionId)
-        const isCorrect = q !== undefined && q.correctIndex === ans.selectedIndex
-        if (isCorrect) correctCount++
+        const q = targetQuestions.find(item => item.id === ans.questionId) || pool.find(item => item.id === ans.questionId)
+        const qMarks = q ? (q.marks !== undefined ? Number(q.marks) : 1) : 1
+        const qNegMarks = q ? (q.negativeMarks !== undefined ? Number(q.negativeMarks) : 0) : 0
+        totalMarks += qMarks
+
+        let isCorrect = false
+        if (q) {
+          const type = q.type || 'multiple_choice'
+          if (type === 'multiple_choice' || type === 'true_false') {
+            isCorrect = Number(ans.selectedIndex) === Number(q.correctIndex)
+          } else if (type === 'multiple_select') {
+            const userIndices = Array.isArray(ans.selectedIndices)
+              ? ans.selectedIndices.map(Number).sort()
+              : (ans.selectedIndex !== undefined && ans.selectedIndex >= 0 ? [ans.selectedIndex] : [])
+            const correctIndices = Array.isArray(q.correctIndices)
+              ? q.correctIndices.map(Number).sort()
+              : [q.correctIndex || 0]
+            isCorrect = userIndices.length === correctIndices.length && userIndices.every((val, i) => val === correctIndices[i])
+          } else if (type === 'short_answer' || type === 'code') {
+            const userText = String(ans.textAnswer || '').trim().toLowerCase()
+            const correctText = String(q.correctAnswer || '').trim().toLowerCase()
+            isCorrect = userText.length > 0 && userText === correctText
+          }
+        }
+
+        let questionEarnedMarks = 0
+        if (isCorrect) {
+          correctCount++
+          questionEarnedMarks = qMarks
+        } else if (quiz.negativeMarking && qNegMarks > 0) {
+          questionEarnedMarks = -qNegMarks
+        }
+        earnedMarks += questionEarnedMarks
+
         processedAnswers.push({
           questionId: ans.questionId,
+          questionType: q?.type || 'multiple_choice',
           selectedIndex: ans.selectedIndex,
+          selectedIndices: ans.selectedIndices,
+          textAnswer: ans.textAnswer,
           correctIndex: q?.correctIndex,
+          correctIndices: q?.correctIndices,
+          correctAnswer: q?.correctAnswer,
           isCorrect,
-          explanation: q?.explanation || ''
+          marksEarned: questionEarnedMarks,
+          explanation: (quiz.showExplanations !== false) ? (q?.explanation || '') : ''
         })
       })
     }
 
-    const scorePercentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
+    const totalQuestions = answers && answers.length ? answers.length : (targetQuestions.length || 1)
+    const scorePercentage = totalMarks > 0
+      ? Math.max(0, Math.min(100, Math.round((earnedMarks / totalMarks) * 100)))
+      : (totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0)
+
+    const passingThreshold = quiz.passingScore !== undefined ? quiz.passingScore : 60
+    const passed = scorePercentage >= passingThreshold
     const xpEarned = Math.round((quiz.xpReward || 100) * (scorePercentage / 100))
 
     let userName = 'Learner'
-    if (userId) {
+    if (userId && !isPreview) {
       try {
         if (typeof userId === 'string' && userId.match(/^[0-9a-fA-F]{24}$/)) {
           const u = await User.findById(userId).lean()
@@ -803,25 +970,49 @@ export const submitQuiz = async (req, res) => {
         }
       } catch (_) {}
 
-      // Record this attempt in QuizAttempt
       await QuizAttempt.create({
         userId,
         quizId: quiz._id,
         quizSlug: quiz.slug,
+        quizVersion: quiz.version || 1,
         scorePercentage,
         totalQuestions,
         correctCount,
+        totalMarks,
+        earnedMarks,
+        passed,
         timeTaken,
         answers: processedAnswers,
         xpEarned,
         status: 'completed',
-        dailyDate: today
+        dailyDate: dailyDate || todayStr(),
+        isRealAttempt: true
       })
 
-      await updateUserXP(userId, userName, xpEarned, scorePercentage)
+      recordActivity({
+        userId,
+        type: 'quiz_completed',
+        category: 'learning',
+        title: 'Quiz Completed',
+        description: `${quiz.title} completed with ${scorePercentage}% score`,
+        status: passed ? 'completed' : 'failed',
+        metadata: {
+          quizId: quiz._id,
+          quizSlug: quiz.slug,
+          quizTitle: quiz.title,
+          scorePercentage,
+          correctCount,
+          totalQuestions,
+          timeTaken,
+          passed
+        }
+      }).catch(() => {})
 
-      // Automatically update CandidateProfile skills on success (>= 60%)
-      if (scorePercentage >= 60) {
+      await updateUserXP(userId, userName, xpEarned, scorePercentage)
+      cacheManager.invalidateTag('leaderboard')
+
+      // Automatically update CandidateProfile skills on success (>= passing threshold)
+      if (passed) {
         try {
           const skillsToAdd = [quiz.topic, quiz.title, quiz.category].filter(Boolean)
           await CandidateProfile.findOneAndUpdate(
@@ -833,11 +1024,12 @@ export const submitQuiz = async (req, res) => {
       }
     }
 
-    // 🚀 CONTINUOUS AI QUESTION REFRESH:
-    // Generate fresh questions for this topic so consecutive attempts have brand new questions
-    refreshQuizQuestionPool(quiz.slug, 5).catch(e => {
-      console.warn('[AI_QUIZ] Async refresh pool warning:', e.message)
-    })
+    // Refresh questions pool only for AI generated legacy quizzes, never developer custom quizzes
+    if (!quiz.author) {
+      refreshQuizQuestionPool(quiz.slug, 5).catch(e => {
+        console.warn('[AI_QUIZ] Async refresh pool warning:', e.message)
+      })
+    }
 
     // Compute updated live metrics for the user to return immediately
     let liveMetrics = {

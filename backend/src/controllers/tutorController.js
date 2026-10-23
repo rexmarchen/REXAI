@@ -5,6 +5,7 @@ import {
   generatePracticeQuiz,
   gradeQuizSubmission
 } from '../services/aiTutorService.js'
+import { recordActivity } from '../services/activityService.js'
 
 // POST /api/tutor/chat
 // Supports both Server-Sent Events (SSE) streaming and standard JSON
@@ -73,6 +74,23 @@ export async function chatWithTutor(req, res) {
     })
     session.updatedAt = new Date()
     await session.save()
+
+    if (userId && userId !== 'guest_user') {
+      recordActivity({
+        userId,
+        type: 'ai_request',
+        category: 'ai',
+        title: 'AI Assistant Consultation',
+        description: `Asked AI Assistant about "${message.slice(0, 60)}${message.length > 60 ? '...' : ''}"`,
+        status: 'completed',
+        metadata: {
+          sessionId: session._id,
+          mode,
+          level,
+          careerPath
+        }
+      }).catch(() => {})
+    }
 
     const lastMsg = session.messages[session.messages.length - 1]
 
@@ -150,7 +168,8 @@ export async function getSessions(req, res) {
 export async function getSession(req, res) {
   try {
     const { sessionId } = req.params
-    const session = await TutorSession.findById(sessionId)
+    const userId = String(req.user?._id || req.user?.id || '')
+    const session = await TutorSession.findOne({ _id: sessionId, userId })
     if (!session) {
       return res.status(404).json({ success: false, error: 'Session not found' })
     }
@@ -297,17 +316,18 @@ export async function rateMessage(req, res) {
   try {
     const { id } = req.params
     const { rating, sessionId } = req.body
+    const userId = String(req.user?._id || req.user?.id || '')
 
     const numRating = (rating === 'up' || rating === 1) ? 1 : (rating === 'down' || rating === -1) ? -1 : null
 
     if (sessionId) {
       await TutorSession.updateOne(
-        { _id: sessionId, 'messages._id': id },
+        { _id: sessionId, userId, 'messages._id': id },
         { $set: { 'messages.$.rating': numRating } }
       )
     } else {
       await TutorSession.updateOne(
-        { 'messages._id': id },
+        { userId, 'messages._id': id },
         { $set: { 'messages.$.rating': numRating } }
       )
     }
@@ -315,6 +335,6 @@ export async function rateMessage(req, res) {
     res.json({ success: true, message: 'Rating recorded' })
   } catch (err) {
     console.error('[TutorController] rateMessage error:', err)
-    res.status(500).json({ success: false, error: err.message })
+    res.status(500).json({ success: false, error: 'Failed to record rating.' })
   }
 }

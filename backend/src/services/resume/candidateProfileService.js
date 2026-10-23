@@ -197,7 +197,7 @@ export async function createOrUpdateCandidateProfile({
   const updatedProfile = await CandidateProfile.findOneAndUpdate(
     { userId },
     { $set: profileData },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   )
 
   logger.info(`Candidate profile updated for userId ${userId}: ${fullName} (${email}), primary domain: ${profileData.primaryDomain}`)

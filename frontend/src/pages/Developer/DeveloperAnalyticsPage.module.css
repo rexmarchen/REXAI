@@ -1,0 +1,337 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #231C16;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #6E5E52;
+  margin: 0;
+}
+
+.selectorWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FFFFFF;
+  border: 1px solid #EAE4DA;
+  border-radius: 10px;
+  padding: 8px 14px;
+}
+
+.selectorWrap label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6E5E52;
+}
+
+.quizSelect {
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #231C16;
+  outline: none;
+}
+
+.analyticsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.metricCard {
+  background: #FFFFFF;
+  border: 1px solid #EAE4DA;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.metricIconWrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metricInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.metricVal {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #231C16;
+  line-height: 1.2;
+}
+
+.metricLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #40342B;
+}
+
+.metricSub {
+  font-size: 0.72rem;
+  color: #8E7E70;
+  margin-top: 2px;
+}
+
+.sectionCard {
+  background: #FFFFFF;
+  border: 1px solid #EAE4DA;
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionHeader h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #231C16;
+  margin: 0;
+}
+
+/* Score Distribution */
+.distributionChart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 160px;
+  padding-top: 20px;
+  border-bottom: 1px solid #EAE4DA;
+}
+
+.barColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 70px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.barTrack {
+  width: 36px;
+  height: 110px;
+  background: #F8F4EE;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.barFill {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.3s ease;
+}
+
+.barCount {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #231C16;
+}
+
+.barLabel {
+  font-size: 0.72rem;
+  color: #6E5E52;
+  font-weight: 600;
+}
+
+/* Question Performance */
+.questionPerfList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perfItem {
+  background: #FAF8F5;
+  border: 1px solid #EAE4DA;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.perfItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.qNum {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #8E7E70;
+  background: #F0EBE3;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.qDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qText {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #231C16;
+}
+
+.qSub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #8E7E70;
+}
+
+.perfItemRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+}
+
+.progressWrap {
+  flex: 1;
+  height: 8px;
+  background: #EAE4DA;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.accuracyVal {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #231C16;
+  white-space: nowrap;
+}
+
+/* Attempts Table */
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.table th {
+  padding: 10px 14px;
+  color: #8E7E70;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid #EAE4DA;
+}
+
+.table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #F4EFEA;
+  color: #231C16;
+}
+
+.tableBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.badgePassed {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.badgeFailed {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.noSubmissions {
+  color: #8E7E70;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0;
+}
+
+.loadingWrapper, .errorWrapper, .emptyWrapper {
+  background: #FFFFFF;
+  border: 1px dashed #D5C8B8;
+  border-radius: 16px;
+  padding: 60px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.spin {
+  animation: rotate 1s linear infinite;
+  color: #D96B43;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

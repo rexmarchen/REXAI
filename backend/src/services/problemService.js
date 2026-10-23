@@ -110,7 +110,7 @@ export async function syncProblemsToDatabase() {
             companies: p.companies || []
           }
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       )
     }
     console.log(`[CodeArena] Synced ${problems.length} problems with MongoDB collection.`)

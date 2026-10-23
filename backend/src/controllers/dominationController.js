@@ -14,6 +14,7 @@ import {
   findApplicationBatchById,
   findApplicationsByBatchId
 } from '../../server.js'
+import Application from '../models/Application.js'
 
 const logDominationWorkflowFailure = (route, step, webhookAlias, error) => {
   const logContext = buildDominationWorkflowErrorLogContext(error, {
@@ -135,11 +136,24 @@ export const getDominationBatchStatus = catchAsync(async (req, res) => {
 
 export const getDominationEvidence = catchAsync(async (req, res) => {
   const { filename } = req.params
-  const safeFilename = path.basename(filename)
-  const evidencePath = path.resolve(process.cwd(), 'uploads', 'evidence', safeFilename)
+  const safeFilename = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '')
+  const evidenceDir = path.resolve(process.cwd(), 'uploads', 'evidence')
+  const evidencePath = path.resolve(evidenceDir, safeFilename)
 
-  if (!fs.existsSync(evidencePath)) {
+  if (!evidencePath.startsWith(evidenceDir) || !fs.existsSync(evidencePath)) {
     throw new AppError('Evidence file not found.', 404)
+  }
+
+  // Enforce ownership: user must own an application referencing this evidence, or be admin
+  if (req.user?.role !== 'admin') {
+    const userId = req.user?._id || req.user?.id
+    const hasApplication = await Application.findOne({
+      $or: [{ user: userId }, { userId: String(userId) }],
+      evidenceScreenshot: { $regex: safeFilename }
+    })
+    if (!hasApplication) {
+      throw new AppError('Access denied: You do not have permission to access this evidence.', 403)
+    }
   }
 
   if (req.query.download === 'true') {
@@ -151,11 +165,21 @@ export const getDominationEvidence = catchAsync(async (req, res) => {
 
 export const getDominationEmail = catchAsync(async (req, res) => {
   const { filename } = req.params
-  const safeFilename = path.basename(filename)
-  const emailPath = path.resolve(process.cwd(), 'uploads', 'emails', safeFilename)
+  const safeFilename = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '')
+  const emailsDir = path.resolve(process.cwd(), 'uploads', 'emails')
+  const emailPath = path.resolve(emailsDir, safeFilename)
 
-  if (!fs.existsSync(emailPath)) {
+  if (!emailPath.startsWith(emailsDir) || !fs.existsSync(emailPath)) {
     throw new AppError('Email file not found.', 404)
+  }
+
+  // Enforce ownership: user must be the intended recipient/sender or admin
+  if (req.user?.role !== 'admin') {
+    const userEmail = req.user?.email ? req.user.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : ''
+    const isRecipient = userEmail && safeFilename.toLowerCase().includes(userEmail)
+    if (!isRecipient) {
+      throw new AppError('Access denied: You do not have permission to view this email.', 403)
+    }
   }
 
   res.sendFile(emailPath)

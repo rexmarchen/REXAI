@@ -32,5 +32,8 @@ const resumeSchema = new mongoose.Schema({
   }
 })
 
+// Composite index for rapid user resume lookup ordered by recency
+resumeSchema.index({ user: 1, uploadedAt: -1 })
+
 const Resume = mongoose.model('Resume', resumeSchema)
 export default Resume

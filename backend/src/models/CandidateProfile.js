@@ -175,6 +175,9 @@ const candidateProfileSchema = new mongoose.Schema(
   }
 )
 
+// Index for candidate lookup by user ID or email
+candidateProfileSchema.index({ userId: 1, email: 1 })
+
 const CandidateProfile =
   mongoose.models.CandidateProfile ||
   mongoose.model('CandidateProfile', candidateProfileSchema)

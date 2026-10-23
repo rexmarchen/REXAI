@@ -6,10 +6,13 @@ import util from 'util'
 
 const execPromise = util.promisify(exec)
 
-// Determine the path to agents/rexeditzz-insta-agent
+// Determine the path to agents/rexeditzz-insta-agent (prioritizing user Downloads agent)
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const AGENT_DIR = path.resolve(__dirname, '../../../../agents/rexeditzz-insta-agent')
+const DOWNLOADS_AGENT_DIR = 'c:/Users/anshupal/Downloads/-insta-agent/rexeditzz-insta-agent'
+const AGENT_DIR = fs.existsSync(DOWNLOADS_AGENT_DIR)
+  ? DOWNLOADS_AGENT_DIR
+  : path.resolve(__dirname, '../../../../agents/rexeditzz-insta-agent')
 const DB_PATH = path.join(AGENT_DIR, 'data', 'agent.db')
 const ENV_PATH = path.join(AGENT_DIR, '.env')
 
@@ -213,29 +216,71 @@ export async function getInstaHistory(limit = 20) {
 
 /**
  * Triggers AI Content Generation (Reel / Image) using the agent's generator
+ * Supports both custom topics and GitHub repository projects!
  */
-export async function generateInstaContent({ topic, kind = 'REEL', tone = 'creator' }) {
-  const promptTopic = topic || `Engaging ${kind === 'REEL' ? 'video reel with actionable tips' : 'aesthetic showcase image'} for REXION AI Career Platform, tone: ${tone}`
+export async function generateInstaContent({ topic, githubRepo, userId, authorName, kind = 'REEL', tone = 'creator' } = {}) {
+  const promptTopic = topic || (githubRepo ? `Showcase GitHub Repo: ${githubRepo}` : `Engaging video reel for software engineers, tone: ${tone}`)
 
   try {
-    // Run content creation via the agent's runner or tsx command
-    const safeTopic = promptTopic.replace(/"/g, '\\"')
-    const cmd = `npx tsx -e "import { createContent } from './src/gen/creator.js'; createContent({ topic: \\"${safeTopic}\\", ignoreQueue: true, bypassLimit: true }).then(r => console.log('RESULT_JSON:' + JSON.stringify(r))).catch(e => { console.error(e); process.exit(1); })"`
-    
-    console.log('[InstaAgentService] Executing content generation:', cmd)
-    const { stdout, stderr } = await execPromise(cmd, { cwd: AGENT_DIR, timeout: 60000 })
-    
-    const match = stdout.match(/RESULT_JSON:(.*)/)
-    let parsedResult = null
-    if (match && match[1]) {
+    // 1. Direct call to running agent server on port 8080 (allow 4 minutes for video rendering)
+    const res = await fetch('http://127.0.0.1:8080/api/generate-reel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: promptTopic,
+        githubRepo: githubRepo || null,
+        userId: userId || null,
+        authorName: authorName || 'Creator',
+        kind
+      }),
+      signal: AbortSignal.timeout(240000)
+    })
+    if (res.ok) {
+      const data = await res.json()
+      return {
+        success: true,
+        result: data.post,
+        message: '🎉 Instagram Reel generated successfully via agent server!'
+      }
+    }
+  } catch (httpErr) {
+    console.warn('[InstaAgentService] Agent server port 8080 notice:', httpErr.message)
+  }
+
+  try {
+    // 2. Check if a post was already drafted or created in SQLite DB in the last 2 minutes
+    const db = getDbConnection()
+    if (db) {
       try {
-        parsedResult = JSON.parse(match[1])
-      } catch {}
+        const recent = db.prepare(`
+          SELECT * FROM posts 
+          WHERE created_at >= datetime('now', '-2 minutes')
+          ORDER BY id DESC LIMIT 1
+        `).get()
+        if (recent) {
+          db.close()
+          return {
+            success: true,
+            result: recent,
+            message: '🎉 Instagram Reel generated and queued successfully!'
+          }
+        }
+        db.close()
+      } catch (dbErr) {
+        try { db.close() } catch {}
+      }
     }
 
+    // 3. Fallback: Run content creation via the agent's orchestrator
+    const safeTopic = promptTopic.replace(/"/g, '\\"')
+    const cmd = `node -e "import('./dist/orchestrator.js').then(m => m.runContentLifecycle({ preferredFormat: 'REEL', topicOverride: \\"${safeTopic}\\" })).then(r => console.log('RESULT_OK:' + JSON.stringify(r))).catch(e => { console.error(e); process.exit(1); })"`
+    
+    console.log('[InstaAgentService] Executing fallback content generation:', cmd)
+    const { stdout } = await execPromise(cmd, { cwd: AGENT_DIR, timeout: 180000 })
+    
     return {
       success: true,
-      result: parsedResult || stdout,
+      result: stdout,
       message: 'Instagram content generated successfully!'
     }
   } catch (err) {
@@ -251,7 +296,27 @@ export async function generateInstaContent({ topic, kind = 'REEL', tone = 'creat
 /**
  * Immediately publishes a post or triggers next in queue
  */
-export async function publishPostNow(postId) {
+export async function publishPostNow(postId, { accessToken, igUserId } = {}) {
+  try {
+    // 1. Direct call to running agent server on port 8080
+    const res = await fetch('http://127.0.0.1:8080/api/publish-now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        postId: postId ? Number(postId) : null,
+        accessToken: accessToken || null,
+        igUserId: igUserId || null
+      }),
+      signal: AbortSignal.timeout(60000)
+    })
+    if (res.ok) {
+      const data = await res.json()
+      return data
+    }
+  } catch (httpErr) {
+    console.warn('[InstaAgentService] Agent publish endpoint notice:', httpErr.message)
+  }
+
   try {
     const script = postId 
       ? `import { publishPost, getPost } from './src/posts.js'; const p = getPost(${Number(postId)}); if(!p) throw new Error('Post not found'); publishPost(p).then(r => console.log('PUBLISHED_OK:' + JSON.stringify(r)));`

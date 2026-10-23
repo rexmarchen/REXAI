@@ -7,11 +7,12 @@ import {
 } from '../services/problemService.js'
 import { executeProblemTests } from '../services/codeRunner.js'
 import { synthesizeAndValidateChallenge } from '../services/challengeScraperService.js'
+import { recordActivity } from '../services/activityService.js'
 
 // GET /api/code-arena/overview
 export async function getOverview(req, res) {
   try {
-    const userId = req.user?._id || req.query.userId || 'guest'
+    const userId = req.user?._id?.toString() || req.user?.id?.toString() || 'guest'
     const data = await getChallengesOverview(userId)
     res.json({ success: true, ...data })
   } catch (err) {
@@ -114,7 +115,8 @@ export async function runCode(req, res) {
 export async function submitCode(req, res) {
   try {
     const { slug } = req.params
-    const { language = 'python', code, userId } = req.body
+    const { language = 'python', code } = req.body
+    const userId = req.user?._id?.toString() || req.user?.id?.toString() || 'guest'
 
     if (!code || typeof code !== 'string') {
       return res.status(400).json({ success: false, error: 'Code is required' })
@@ -142,7 +144,7 @@ export async function submitCode(req, res) {
     }
 
     const submission = await recordSubmission({
-      userId: userId || req.user?._id || 'guest',
+      userId,
       problemSlug: slug,
       language,
       code,
@@ -152,6 +154,26 @@ export async function submitCode(req, res) {
       runtimeMs: result.runtimeMs,
       xpAwarded
     })
+
+    if (userId && userId !== 'guest') {
+      recordActivity({
+        userId,
+        type: 'code_submitted',
+        category: 'learning',
+        title: result.verdict === 'ACCEPTED' ? 'Code Challenge Solved' : 'Code Challenge Attempted',
+        description: `${rawProblem.title || slug} (${result.passed}/${result.total} tests passed)`,
+        status: result.verdict === 'ACCEPTED' ? 'completed' : 'failed',
+        metadata: {
+          problemSlug: slug,
+          language,
+          verdict: result.verdict,
+          passed: result.passed,
+          total: result.total,
+          runtimeMs: result.runtimeMs,
+          xpAwarded
+        }
+      }).catch(() => {})
+    }
 
     res.json({
       success: true,

@@ -614,6 +614,7 @@ export default function CareerPage() {
   ]
 
   const MORE_NAV = [
+    { id: 'developer', label: 'Developer Portal', icon: Terminal, route: '/developer' },
     { id: 'settings', label: 'Settings', icon: Settings, route: '/profile' },
     { id: 'help', label: 'Help & Support', icon: Headphones, route: '/ai-tutor' }
   ]
@@ -695,6 +696,7 @@ export default function CareerPage() {
           duration: `${q.durationMinutes || 12} min`,
           questions: `${q.questionsCount || 5} Qs`,
           score: userScore,
+          authorName: q.authorName,
           color: q.accentColor || COLOR_PALETTE[idx % COLOR_PALETTE.length]
         }
       })
@@ -1389,6 +1391,12 @@ export default function CareerPage() {
                           <span>🕒 {quiz.duration}</span>
                           <span>•</span>
                           <span>{quiz.questions}</span>
+                          {quiz.authorName && (
+                            <>
+                              <span>•</span>
+                              <span style={{ color: '#D96B43', fontWeight: 600 }}>By {quiz.authorName}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -19,9 +19,10 @@ OpenAI / Groq)          +--> Branded Reel (FFmpeg tips & quote templates) |
 
 ## ⚡ Super-Human Features
 
-1. **Autonomous Daily Posting at 7:00 PM IST**:
-   - `TIMEZONE=Asia/Kolkata`, `POST_SLOTS=19:00`, `AUTOPILOT=true`.
-   - When the queue is empty, the AI Creative Director automatically plans, generates an image or branded reel, writes an SEO-optimized caption with hooks and hashtags, and publishes it at 7:00 PM IST every single day.
+1. **Autonomous Daily Posting**:
+   - `TIMEZONE=Asia/Kolkata`, `POST_IMAGE_SLOT=17:00`, `POST_REEL_SLOT=19:00`, `AUTOPILOT=true`.
+   - The AI Creative Director automatically fills upcoming slots with an image or branded reel and an SEO-optimized caption; images publish at 5:00 PM IST and reels at 7:00 PM IST.
+   - Posts more than two hours late are moved to future free slots rather than being published in a catch-up burst.
 
 2. **Natural Language Telegram Control**:
    - You can text your Telegram bot anything in plain English:

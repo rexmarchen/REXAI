@@ -285,7 +285,7 @@ export async function scrapeMultiSource(options = {}) {
             await Internship.findOneAndUpdate(
               { contentHash },
               { $set: docData },
-              { upsert: true, new: true }
+              { upsert: true, returnDocument: 'after' }
             ).catch((err) => logger.warn(`[MultiSourceScraper] Upsert note: ${err.message}`))
           }
         }
@@ -451,7 +451,7 @@ export async function scrapeMultiSource(options = {}) {
     await Internship.findOneAndUpdate(
       { contentHash },
       { $set: doc },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     ).catch(() => {})
   }
 

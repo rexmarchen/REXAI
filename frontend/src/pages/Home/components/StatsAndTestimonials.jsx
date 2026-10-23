@@ -1,51 +1,34 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Star, Users, Building, HeartHandshake, ChevronLeft, ChevronRight } from 'lucide-react'
-import AnimatedCounter from './AnimatedCounter'
+import React from 'react'
+import { motion } from 'framer-motion'
+import { ShieldCheck, Terminal, Award, Lock, Cpu, Database, CheckCircle2 } from 'lucide-react'
 
 export default function StatsAndTestimonials() {
-  const [currentIdx, setCurrentIdx] = useState(0)
-
-  const stats = [
-    { target: 10000, suffix: '+', decimals: 0, label: 'Active Students', icon: Users, iconColor: '#E97852', iconBg: '#FFEDE5' },
-    { target: 500, suffix: '+', decimals: 0, label: 'Hiring Partners', icon: Building, iconColor: '#B9633F', iconBg: '#FFEDE5' },
-    { target: 95, suffix: '%', decimals: 0, label: 'Career Support', icon: HeartHandshake, iconColor: '#E97852', iconBg: '#FFEDE5' },
-    { target: 4.8, suffix: '/5', decimals: 1, label: 'User Rating', icon: Star, iconColor: '#E97852', iconBg: '#FFEDE5' }
-  ]
-
-  const testimonials = [
+  const pillars = [
     {
-      name: 'Priyanshu Sharma',
-      role: 'B.Tech CSE – CGC University',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      quote: 'REXION helped me understand exactly what I needed to improve before applying.',
-      stars: 5
+      title: 'Academic Faculty Quality',
+      desc: 'Quizzes and assessment sets authored and reviewed by verified university educators with institutional credentials.',
+      icon: Award,
+      badge: 'VERIFIED CONTENT'
     },
     {
-      name: 'Aarav Patel',
-      role: 'Software Engineer Intern',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      quote: 'The ATS analysis and automated application tracking saved me over 30 hours during hiring season.',
-      stars: 5
+      title: 'Sandboxed Code Arena',
+      desc: 'Multi-language code execution engine testing syntax, performance, and edge cases in isolated environments.',
+      icon: Terminal,
+      badge: 'LIVE RUNTIME'
     },
     {
-      name: 'Sneha Roy',
-      role: 'AI / ML Track – IIT Delhi',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-      quote: 'The personalized career paths and real skill verification challenges gave me proof employers cared about.',
-      stars: 5
+      title: 'Zero-Trust Data Privacy',
+      desc: 'Strict candidate data protection. Your resumes, code submissions, and profiles are never resold or shared with third parties.',
+      icon: Lock,
+      badge: 'DATA PROTECTION'
+    },
+    {
+      title: 'Direct ATS Integration',
+      desc: 'Deterministic keyword, section, and semantic match scoring calibrated against actual job requirements.',
+      icon: ShieldCheck,
+      badge: 'REAL ATS METRICS'
     }
   ]
-
-  const nextTestimonial = () => {
-    setCurrentIdx((prev) => (prev + 1) % testimonials.length)
-  }
-
-  const prevTestimonial = () => {
-    setCurrentIdx((prev) => (prev - 1 + testimonials.length) % testimonials.length)
-  }
-
-  const activeT = testimonials[currentIdx]
 
   return (
     <section
@@ -76,7 +59,7 @@ export default function StatsAndTestimonials() {
               marginBottom: '10px'
             }}
           >
-            REAL PEOPLE. REAL PROGRESS.
+            ENGINEERED FOR ACCURACY · ZERO FABRICATION
           </div>
 
           <h2
@@ -90,101 +73,123 @@ export default function StatsAndTestimonials() {
               color: '#161616'
             }}
           >
-            Trusted by 10,000+ Students
+            Verifiable Skills. Real Production Standards.
           </h2>
+          <p
+            style={{
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: '1rem',
+              color: '#655E57',
+              marginTop: '10px',
+              maxWidth: '680px',
+              lineHeight: 1.55
+            }}
+          >
+            REXION replaces inflated marketing metrics with verifiable engineering standards.
+            Every score, quiz, and candidate evaluation is backed by transparent, deterministic evaluation models.
+          </p>
         </div>
 
-        {/* ── Main Row: 4 Metric Cards (Left) + Testimonial Card with Arrows (Right) ── */}
+        {/* ── Main Row: 4 Architecture Pillar Cards (Left) + Transparency Box (Right) ── */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)',
+            gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)',
             gap: '24px',
             alignItems: 'stretch'
           }}
           className="rexion-trust-composite-grid"
         >
-          {/* 4 Stat Cards in a Single Row */}
+          {/* 4 Pillar Cards Grid */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '14px'
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '16px'
             }}
             className="rexion-stats-four-grid"
           >
-            {stats.map((st, i) => {
-              const Icon = st.icon
+            {pillars.map((p, i) => {
+              const Icon = p.icon
               return (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.45, delay: i * 0.06 }}
+                  transition={{ duration: 0.45, delay: i * 0.08 }}
                   style={{
                     backgroundColor: '#FFFFFF',
                     border: '1px solid #ECE3D7',
                     borderRadius: '18px',
-                    padding: '20px 14px',
+                    padding: '24px 20px',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center',
+                    justifyContent: 'space-between',
                     boxShadow: '0 4px 16px rgba(160, 130, 100, 0.04)'
                   }}
                 >
-                  <div
-                    style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '12px',
-                      backgroundColor: st.iconBg,
-                      color: st.iconColor,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: '12px'
-                    }}
-                  >
-                    <Icon size={18} strokeWidth={2.2} />
-                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                      <div
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '12px',
+                          backgroundColor: '#FFEDE5',
+                          color: '#E97852',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Icon size={20} strokeWidth={2.2} />
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.62rem',
+                          fontWeight: 800,
+                          letterSpacing: '0.06em',
+                          color: '#B9633F',
+                          backgroundColor: '#FAF5EE',
+                          padding: '3px 8px',
+                          borderRadius: '6px'
+                        }}
+                      >
+                        {p.badge}
+                      </span>
+                    </div>
 
-                  <div
-                    style={{
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: '1.45rem',
-                      fontWeight: 800,
-                      color: '#161616',
-                      lineHeight: 1.1,
-                      marginBottom: '4px'
-                    }}
-                  >
-                    <AnimatedCounter
-                      target={st.target}
-                      suffix={st.suffix}
-                      decimals={st.decimals}
-                      duration={1600}
-                    />
-                  </div>
+                    <h3
+                      style={{
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        fontSize: '1.05rem',
+                        fontWeight: 700,
+                        color: '#161616',
+                        margin: '0 0 8px',
+                        lineHeight: 1.3
+                      }}
+                    >
+                      {p.title}
+                    </h3>
 
-                  <div
-                    style={{
-                      fontSize: '0.76rem',
-                      color: '#756E66',
-                      fontWeight: 600,
-                      lineHeight: 1.3
-                    }}
-                  >
-                    {st.label}
+                    <p
+                      style={{
+                        fontSize: '0.84rem',
+                        color: '#655E57',
+                        lineHeight: 1.5,
+                        margin: 0
+                      }}
+                    >
+                      {p.desc}
+                    </p>
                   </div>
                 </motion.div>
               )
             })}
           </div>
 
-          {/* Testimonial Card with Slider Controls */}
+          {/* Architecture Transparency Card */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -194,7 +199,7 @@ export default function StatsAndTestimonials() {
               backgroundColor: '#FFFFFF',
               border: '1px solid #ECE3D7',
               borderRadius: '20px',
-              padding: '22px 24px',
+              padding: '26px 28px',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -202,117 +207,73 @@ export default function StatsAndTestimonials() {
               position: 'relative'
             }}
           >
-            {/* Top Row: Slider Navigation Arrows */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '12px'
-              }}
-            >
-              <button
-                onClick={prevTestimonial}
-                aria-label="Previous testimonial"
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Cpu size={18} color="#E97852" />
+                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#B9633F', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Platform Integrity
+                </span>
+              </div>
+
+              <h3
                 style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  border: '1px solid #ECE3D7',
-                  backgroundColor: '#FAF7F2',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: '1.4rem',
+                  fontWeight: 700,
                   color: '#161616',
-                  transition: 'background-color 0.2s'
+                  margin: '0 0 12px'
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ECE3D7')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FAF7F2')}
               >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                onClick={nextTestimonial}
-                aria-label="Next testimonial"
+                No Fabricated Metrics. Just Clean Code.
+              </h3>
+
+              <p
                 style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  border: '1px solid #ECE3D7',
-                  backgroundColor: '#FAF7F2',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#161616',
-                  transition: 'background-color 0.2s'
+                  fontSize: '0.86rem',
+                  color: '#655E57',
+                  lineHeight: 1.55,
+                  margin: '0 0 20px'
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ECE3D7')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FAF7F2')}
               >
-                <ChevronRight size={16} />
-              </button>
+                At REXION, we believe career platforms should practice the engineering honesty they preach.
+                We do not display simulated reviews or paid endorsements. Our features speak for themselves.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.84rem', color: '#161616' }}>
+                  <CheckCircle2 size={16} color="#16A34A" />
+                  <span><strong>Role-Based Access Control</strong> (Admin, Faculty, Developer, Student)</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.84rem', color: '#161616' }}>
+                  <CheckCircle2 size={16} color="#16A34A" />
+                  <span><strong>Authenticated Server Sessions</strong> with secure cryptographic tokens</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.84rem', color: '#161616' }}>
+                  <CheckCircle2 size={16} color="#16A34A" />
+                  <span><strong>Deterministic Evaluation</strong> without artificial rating inflation</span>
+                </div>
+              </div>
             </div>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentIdx}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.25 }}
-              >
-                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', marginBottom: '14px' }}>
-                  <img
-                    src={activeT.avatar}
-                    alt={activeT.name}
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      flexShrink: 0,
-                      border: '2px solid #FFEDE5'
-                    }}
-                  />
-                  <div>
-                    <p
-                      style={{
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        fontSize: '0.88rem',
-                        lineHeight: 1.5,
-                        color: '#161616',
-                        margin: '0 0 10px',
-                        fontStyle: 'normal'
-                      }}
-                    >
-                      "{activeT.quote}"
-                    </p>
-                    <div
-                      style={{
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        fontWeight: 700,
-                        fontSize: '0.84rem',
-                        color: '#161616'
-                      }}
-                    >
-                      {activeT.name}
-                    </div>
-                    <div style={{ fontSize: '0.74rem', color: '#756E66' }}>
-                      {activeT.role}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Bottom Row: 5 Gold Stars */}
-            <div style={{ display: 'flex', gap: '3px', color: '#E97852', justifyContent: 'flex-end', paddingTop: '4px' }}>
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={14} fill="#E97852" />
-              ))}
+            <div
+              style={{
+                marginTop: 24,
+                padding: '12px 16px',
+                borderRadius: '12px',
+                backgroundColor: '#FAF7F2',
+                border: '1px solid #ECE3D7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Database size={15} color="#E97852" />
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#161616' }}>Production Data Architecture</span>
+              </div>
+              <span style={{ fontSize: '0.72rem', color: '#16A34A', fontWeight: 700 }}>
+                ● 100% Verified
+              </span>
             </div>
           </motion.div>
         </div>
@@ -326,7 +287,7 @@ export default function StatsAndTestimonials() {
         }
         @media (max-width: 768px) {
           .rexion-stats-four-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>

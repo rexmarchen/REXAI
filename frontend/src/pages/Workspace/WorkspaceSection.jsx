@@ -44,6 +44,7 @@ import {
 import heroPanoramicBg from '../../assets/rexion_cream_hero_panoramic.jpg'
 import styles from './WorkspaceSection.module.css'
 import SkillSuite from './components/SkillSuite/SkillSuite'
+import ActivityTrackerDashboard from '../../components/activity/ActivityTrackerDashboard'
 
 const KittyArtSvg = () => (
   <svg viewBox="0 0 120 76" className={styles.kittyArtSvg} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -128,7 +129,6 @@ const NAV_GROUPS = [
   {
     label: 'Career',
     items: [
-      { id: 'career-hub', title: 'Career Hub', icon: '🚀', route: '/career', badge: 'New' },
       { id: 'internships', title: 'Verified Internships', icon: '✓', route: '/internships' },
       { id: 'skill-gap', title: 'Skill Gap Engine', icon: '⚡', route: '/internships' }
     ]
@@ -594,6 +594,26 @@ const WorkspaceSection = () => {
             >
               Landing
             </button>
+            {user?.role === 'admin' && (
+              <button
+                type="button"
+                className={styles.topbarButtonPrimary}
+                style={{
+                  background: 'linear-gradient(135deg, #E07A5F, #C85A3D)',
+                  borderColor: '#E07A5F',
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: '0 4px 12px rgba(224, 122, 95, 0.35)'
+                }}
+                onClick={() => navigate('/admin')}
+              >
+                <span>🛡️</span>
+                <span>Admin Control</span>
+              </button>
+            )}
             <button
               type="button"
               className={styles.topbarButtonPrimary}
@@ -952,111 +972,11 @@ const WorkspaceSection = () => {
 
   const renderTracker = () => (
     <motion.div className={styles.stack} {...pageMotion}>
-      {/* 1. Real-time KPI summary (High-Energy Electric Green with subtle Cyan accents) */}
-      <div className={styles.commandStatsGrid}>
-        <article className={`${styles.statCard} ${styles.statCardGreen}`}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#f8fafc', fontWeight: 700 }}>
-              Jobs Applied
-            </span>
-            <span style={{ fontSize: '10px', padding: '3px 9px', borderRadius: '999px', background: 'rgba(0, 255, 136, 0.14)', color: '#00ff88', border: '1px solid rgba(0, 255, 136, 0.4)', fontWeight: 700, boxShadow: '0 0 10px rgba(0, 255, 136, 0.2)' }}>
-              Live DB
-            </span>
-          </div>
-          <strong style={{ color: '#00ff88', fontSize: '2.6rem', margin: '0.4rem 0 0.2rem', fontWeight: 900, textShadow: '0 0 24px rgba(0, 255, 136, 0.5)' }}>
-            {trackerStats.totalApplications}
-          </strong>
-          <span style={{ color: '#94a3b8', fontSize: '12px' }}>
-            {trackerStats.totalApplications === 0 ? 'No tracked submissions yet' : `${trackerStats.totalApplications} tracked job submissions`}
-          </span>
-          <div style={{ width: '100%', height: '4px', background: 'rgba(0, 255, 136, 0.12)', borderRadius: '2px', marginTop: '10px', overflow: 'hidden' }}>
-            <div style={{ width: trackerStats.totalApplications > 0 ? `${Math.min(100, trackerStats.totalApplications * 10)}%` : '0%', height: '100%', background: 'linear-gradient(90deg, #00ff88 85%, #38bdf8 100%)', borderRadius: '2px', boxShadow: '0 0 10px rgba(0, 255, 136, 0.5)' }} />
-          </div>
-        </article>
-
-        <article className={`${styles.statCard} ${styles.statCardGreen}`}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#f8fafc', fontWeight: 700 }}>
-              Direct Outreach Sent
-            </span>
-            <span style={{ fontSize: '10px', padding: '3px 9px', borderRadius: '999px', background: 'rgba(0, 255, 136, 0.14)', color: '#00ff88', border: '1px solid rgba(0, 255, 136, 0.4)', fontWeight: 700, boxShadow: '0 0 10px rgba(0, 255, 136, 0.2)' }}>
-              Paced
-            </span>
-          </div>
-          <strong style={{ color: '#00ff88', fontSize: '2.6rem', margin: '0.4rem 0 0.2rem', fontWeight: 900, textShadow: '0 0 24px rgba(0, 255, 136, 0.5)' }}>
-            {trackerStats.totalSent}
-          </strong>
-          <span style={{ color: '#94a3b8', fontSize: '12px' }}>
-            {trackerStats.totalSent === 0 ? 'No outreach sent yet' : `${trackerStats.totalSent} cold emails & LinkedIn invites sent`}
-          </span>
-          <div style={{ width: '100%', height: '4px', background: 'rgba(0, 255, 136, 0.12)', borderRadius: '2px', marginTop: '10px', overflow: 'hidden' }}>
-            <div style={{ width: trackerStats.totalSent > 0 ? `${Math.min(100, trackerStats.totalSent * 12.5)}%` : '0%', height: '100%', background: 'linear-gradient(90deg, #00ff88 85%, #38bdf8 100%)', borderRadius: '2px', boxShadow: '0 0 10px rgba(0, 255, 136, 0.5)' }} />
-          </div>
-        </article>
-
-        <article className={`${styles.statCard} ${styles.statCardGreen}`}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#f8fafc', fontWeight: 700 }}>
-              Open Rate
-            </span>
-            <span style={{ fontSize: '10px', padding: '3px 9px', borderRadius: '999px', background: 'rgba(0, 255, 136, 0.14)', color: '#00ff88', border: '1px solid rgba(0, 255, 136, 0.4)', fontWeight: 700, boxShadow: '0 0 10px rgba(0, 255, 136, 0.2)' }}>
-              Read Signal
-            </span>
-          </div>
-          <strong style={{ color: '#00ff88', fontSize: '2.6rem', margin: '0.4rem 0 0.2rem', fontWeight: 900, textShadow: '0 0 24px rgba(0, 255, 136, 0.5)' }}>
-            {trackerStats.openRate}%
-          </strong>
-          <span style={{ color: '#94a3b8', fontSize: '12px', display: 'block' }}>
-            {trackerStats.totalOpened === 0 ? 'No read signals recorded' : `${trackerStats.totalOpened} recruiter opens verified`}
-          </span>
-          <div style={{ width: '100%', height: '4px', background: 'rgba(0, 255, 136, 0.12)', borderRadius: '2px', marginTop: '10px', overflow: 'hidden' }}>
-            <div style={{ width: `${trackerStats.openRate}%`, height: '100%', background: 'linear-gradient(90deg, #00ff88 85%, #38bdf8 100%)', borderRadius: '2px', boxShadow: '0 0 10px rgba(0, 255, 136, 0.5)' }} />
-          </div>
-        </article>
-
-        <article className={`${styles.statCard} ${styles.statCardGreen}`}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#f8fafc', fontWeight: 700 }}>
-              Reply Rate
-            </span>
-            <span style={{ fontSize: '10px', padding: '3px 9px', borderRadius: '999px', background: 'rgba(0, 255, 136, 0.14)', color: '#00ff88', border: '1px solid rgba(0, 255, 136, 0.4)', fontWeight: 700, boxShadow: '0 0 10px rgba(0, 255, 136, 0.2)' }}>
-              Replies
-            </span>
-          </div>
-          <strong style={{ color: '#00ff88', fontSize: '2.6rem', margin: '0.4rem 0 0.2rem', fontWeight: 900, textShadow: '0 0 24px rgba(0, 255, 136, 0.5)' }}>
-            {trackerStats.replyRate}%
-          </strong>
-          <span style={{ color: '#94a3b8', fontSize: '12px' }}>
-            {trackerStats.totalReplied === 0 ? 'No conversations started' : `${trackerStats.totalReplied} replies received`}
-          </span>
-          <div style={{ width: '100%', height: '4px', background: 'rgba(0, 255, 136, 0.12)', borderRadius: '2px', marginTop: '10px', overflow: 'hidden' }}>
-            <div style={{ width: `${trackerStats.replyRate}%`, height: '100%', background: 'linear-gradient(90deg, #00ff88 85%, #38bdf8 100%)', borderRadius: '2px', boxShadow: '0 0 10px rgba(0, 255, 136, 0.5)' }} />
-          </div>
-        </article>
-
-        <article className={`${styles.statCard} ${styles.statCardGreen}`}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#f8fafc', fontWeight: 700 }}>
-              Interview Invites
-            </span>
-            <span style={{ fontSize: '10px', padding: '3px 9px', borderRadius: '999px', background: 'rgba(0, 255, 136, 0.14)', color: '#00ff88', border: '1px solid rgba(0, 255, 136, 0.4)', fontWeight: 700, boxShadow: '0 0 10px rgba(0, 255, 136, 0.2)' }}>
-              Pipeline
-            </span>
-          </div>
-          <strong style={{ color: '#00ff88', fontSize: '2.6rem', margin: '0.4rem 0 0.2rem', fontWeight: 900, textShadow: '0 0 24px rgba(0, 255, 136, 0.5)' }}>
-            {trackerStats.interviewInvites}
-          </strong>
-          <span style={{ color: '#94a3b8', fontSize: '12px' }}>
-            {trackerStats.interviewInvites === 0 ? 'No interview invites yet' : `${trackerStats.interviewInvites} interview & screening signals`}
-          </span>
-          <div style={{ width: '100%', height: '4px', background: 'rgba(0, 255, 136, 0.12)', borderRadius: '2px', marginTop: '10px', overflow: 'hidden' }}>
-            <div style={{ width: trackerStats.interviewInvites > 0 ? `${Math.min(100, trackerStats.interviewInvites * 25)}%` : '0%', height: '100%', background: 'linear-gradient(90deg, #00ff88 85%, #38bdf8 100%)', borderRadius: '2px', boxShadow: '0 0 10px rgba(0, 255, 136, 0.5)' }} />
-          </div>
-        </article>
-      </div>
+      {/* 1. Full Production Activity & App Tracker Suite */}
+      <ActivityTrackerDashboard inWorkspace={true} />
 
       {/* 2. LIVE APPLICATION LEDGER (CONNECTED TO MONGODB ATLAS) */}
-      <section className={styles.panel} style={{ background: '#0a0a0c', border: '1px solid rgba(0, 255, 136, 0.25)', borderRadius: '16px', overflow: 'hidden' }}>
+      <section className={styles.panel} style={{ background: '#0a0a0c', border: '1px solid rgba(0, 255, 136, 0.25)', borderRadius: '16px', overflow: 'hidden', marginTop: '16px' }}>
         <div className={styles.panelHeader} style={{ flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1486,7 +1406,19 @@ const WorkspaceSection = () => {
         </div>
 
         <div className={styles.navGroups}>
-          {NAV_GROUPS.map((group) => (
+          {[
+            ...NAV_GROUPS,
+            ...(user?.role === 'admin'
+              ? [
+                  {
+                    label: 'Administration',
+                    items: [
+                      { id: 'admin-portal', title: 'Admin Control', icon: '🛡️', route: '/admin', badge: 'Admin' }
+                    ]
+                  }
+                ]
+              : [])
+          ].map((group) => (
             <div key={group.label} className={styles.navGroup}>
               {!collapsed && <p className={styles.navGroupLabel}>{group.label}</p>}
               {group.items.map((item) => (
@@ -1638,6 +1570,27 @@ const WorkspaceSection = () => {
                       </div>
 
                       <div className={styles.popoverMenu}>
+                        {user?.role === 'admin' && (
+                          <button
+                            type="button"
+                            className={styles.popoverMenuItem}
+                            style={{
+                              background: 'rgba(224, 122, 95, 0.12)',
+                              border: '1px solid rgba(224, 122, 95, 0.35)',
+                              marginBottom: '6px'
+                            }}
+                            onClick={() => {
+                              navigate('/admin')
+                              setProfileMenuOpen(false)
+                            }}
+                          >
+                            <span className={styles.menuIcon}>🛡️</span>
+                            <div className={styles.menuText}>
+                              <strong style={{ color: '#E07A5F' }}>Admin Control Center</strong>
+                              <small>User management, system & logs</small>
+                            </div>
+                          </button>
+                        )}
                         <button
                           type="button"
                           className={styles.popoverMenuItem}

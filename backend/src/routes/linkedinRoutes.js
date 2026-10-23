@@ -12,17 +12,19 @@ import {
   getLastErrors
 } from '../controllers/linkedinController.js'
 
+import { protect, restrictTo } from '../middleware/authMiddleware.js'
+
 const router = express.Router()
 
-router.get('/connect-link', getConnectLink)
-router.post('/connect', connectLinkedIn)
-router.get('/status', getLinkedInStatus)
-router.post('/toggle-campaign', toggleCampaign)
+router.get('/connect-link', protect, getConnectLink)
+router.post('/connect', protect, connectLinkedIn)
+router.get('/status', protect, getLinkedInStatus)
+router.post('/toggle-campaign', protect, toggleCampaign)
 router.post('/webhook', handleUnipileWebhook)
-router.post('/launch-sequence', launchSequence)
-router.post('/discover-leads', discoverLeadsFromResume)
-router.post('/search-contacts', searchAndQualifyContacts)
-router.get('/verify/:actionId', verifyInvitationAction)
-router.get('/debug/last-errors', getLastErrors)
+router.post('/launch-sequence', protect, launchSequence)
+router.post('/discover-leads', protect, discoverLeadsFromResume)
+router.post('/search-contacts', protect, searchAndQualifyContacts)
+router.get('/verify/:actionId', protect, verifyInvitationAction)
+router.get('/debug/last-errors', protect, restrictTo('admin'), getLastErrors)
 
 export default router

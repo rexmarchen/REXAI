@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+Allow: /career
+Allow: /internships
+Allow: /intern-hunt
+Allow: /resume-predictor
+Allow: /resume-analyser
+Allow: /resume
+Allow: /challenges
+Allow: /code-arena
+Allow: /ai-tutor
+Allow: /skill-graph
+Allow: /rexcode
+Allow: /privacy
+Allow: /terms
+
+# Disallow private user states and internal APIs
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /workspace
+Disallow: /profile
+Disallow: /profile-setup
+Disallow: /api/
+
+Sitemap: https://rexion.ai/sitemap.xml

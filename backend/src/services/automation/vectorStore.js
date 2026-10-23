@@ -9,11 +9,12 @@ const { LocalIndex } = require('vectra')
 const indexCache = new Map()
 
 function safeUserPath(userId) {
-  return path.resolve(AUTOMATION_VECTOR_ROOT, 'users', String(Number(userId)))
+  const sanitized = String(userId || '1').replace(/[^a-zA-Z0-9_-]/g, '_')
+  return path.resolve(AUTOMATION_VECTOR_ROOT, 'users', sanitized)
 }
 
 async function getIndex(userId) {
-  const key = String(Number(userId))
+  const key = String(userId || '1')
   if (indexCache.has(key)) return indexCache.get(key)
 
   const indexPath = safeUserPath(userId)
@@ -60,7 +61,7 @@ export async function addUserChunk(userId, text, metadata = {}) {
   const inserted = await index.insertItem({
     vector,
     metadata: {
-      userId: Number(userId),
+      userId: userId,
       text,
       ...metadata
     }

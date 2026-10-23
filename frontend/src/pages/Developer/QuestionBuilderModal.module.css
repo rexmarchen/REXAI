@@ -1,0 +1,374 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(35, 28, 22, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+}
+
+.modal {
+  background: #FFFFFF;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #EAE4DA;
+}
+
+.headerTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.typeBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #D96B43;
+  background: #FEF3EB;
+  border: 1px solid rgba(217, 107, 67, 0.2);
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.headerTitleWrap h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #231C16;
+  margin: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #8E7E70;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.closeBtn:hover {
+  background: #F4EFEA;
+  color: #231C16;
+}
+
+.errorBanner {
+  background: #FEF2F2;
+  border-bottom: 1px solid #FECACA;
+  color: #991B1B;
+  padding: 10px 24px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #40342B;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggleCodeBtn {
+  background: none;
+  border: none;
+  color: #D96B43;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toggleCodeBtn:hover {
+  text-decoration: underline;
+}
+
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+
+.typeCard {
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: all 0.15s ease;
+}
+
+.typeCard:hover {
+  border-color: #D96B43;
+  background: #FFF;
+}
+
+.typeCardActive {
+  background: #FEF3EB;
+  border-color: #D96B43;
+  box-shadow: 0 0 0 1px #D96B43;
+}
+
+.typeName {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #231C16;
+}
+
+.typeDesc {
+  font-size: 0.68rem;
+  color: #6E5E52;
+  line-height: 1.3;
+}
+
+.textarea, .input {
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  color: #231C16;
+  font-family: inherit;
+  outline: none;
+}
+
+.textarea:focus, .input:focus {
+  border-color: #D96B43;
+  background: #FFFFFF;
+}
+
+.codeTextarea {
+  background: #1E1E1E;
+  color: #4AF626;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.82rem;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #333;
+  outline: none;
+  line-height: 1.45;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.radioInput, .checkboxInput {
+  accent-color: #D96B43;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.optionLetter {
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #6E5E52;
+  width: 16px;
+  text-align: center;
+}
+
+.optionInput {
+  flex: 1;
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #231C16;
+  outline: none;
+}
+
+.optionInputCorrect {
+  border-color: #10B981;
+  background: #F0FDF4;
+}
+
+.removeOptionBtn {
+  background: none;
+  border: none;
+  color: #8E7E70;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.removeOptionBtn:hover {
+  color: #DC2626;
+}
+
+.addOptionBtn {
+  background: none;
+  border: none;
+  color: #D96B43;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tfRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.tfBtn {
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #6E5E52;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tfBtnActive {
+  background: #D1FAE5;
+  border-color: #10B981;
+  color: #065F46;
+}
+
+.hint {
+  font-size: 0.72rem;
+  color: #8E7E70;
+  margin-top: 4px;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 0.8fr 0.8fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6E5E52;
+}
+
+.field select, .field input {
+  background: #F8F4EE;
+  border: 1px solid #E2D9CE;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  color: #231C16;
+  outline: none;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #EAE4DA;
+}
+
+.cancelBtn {
+  background: none;
+  border: 1px solid #E2D9CE;
+  color: #6E5E52;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.saveBtn {
+  background: #D96B43;
+  color: #FFFFFF;
+  border: none;
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.saveBtn:hover {
+  background: #C45A32;
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

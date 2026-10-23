@@ -1,224 +1,452 @@
-@import '../../styles/variables.css';
+/* ==========================================================================
+   REXION AI — Cozy Warm Editorial Login Page
+   Exact match to production reference aesthetic
+   ========================================================================== */
 
 .page {
-  position: relative;
-  min-height: calc(100vh - 140px);
-  display: grid;
-  place-items: center;
-  isolation: isolate;
-  z-index: 10;
-  padding: 120px 20px 80px;
+  min-height: 100vh;
+  background-color: #F4EEE3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  color: #221C18;
 }
 
-.particlesLayer {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(82, 139, 255, 0.12), transparent 42%),
-    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.08), transparent 45%);
-  pointer-events: none;
-}
-
-.card {
-  position: relative;
-  z-index: 12;
+.splitCard {
   width: 100%;
-  max-width: 460px;
-  background:
-    linear-gradient(180deg, rgba(12, 17, 14, 0.96), rgba(7, 9, 12, 0.92)),
-    radial-gradient(circle at top right, rgba(82, 139, 255, 0.12), transparent 34%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 30px;
-  padding: 34px 32px;
-  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.34);
+  max-width: 1040px;
+  min-height: 640px;
+  background: #FAF5ED;
+  border-radius: 24px;
+  border: 1px solid rgba(220, 208, 194, 0.75);
+  box-shadow: 0 24px 64px rgba(60, 45, 30, 0.08), 0 4px 16px rgba(0, 0, 0, 0.02);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
 }
 
-.kicker {
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(179, 208, 255, 0.88);
+/* ==========================================================================
+   LEFT COLUMN (Cozy Desk Visual, Books, Mug, Sunlight & Typography)
+   ========================================================================== */
+.heroColumn {
+  position: relative;
+  background-color: #EFE6DC;
+  background-image: url('../../assets/rexion_cozy_login_hero.jpg');
+  background-size: cover;
+  background-position: center;
+  min-height: 640px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 32px 36px;
+  overflow: hidden;
 }
 
-.title {
-  margin-top: 0.9rem;
-  font-family: var(--font-display);
-  font-size: 2.4rem;
-  line-height: 1;
+/* Transparent interactive navigation bar aligned over the visual header */
+.heroTopHotspots {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.subtitle {
-  color: var(--color-text-muted);
-  margin-top: 0.9rem;
-  margin-bottom: 1.6rem;
-  line-height: 1.72;
+.heroBrandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
 
+.heroBrandLink:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.heroNavHotspots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.heroNavLink {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5C4A3C;
+  text-decoration: none;
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.heroNavLink:hover {
+  background-color: rgba(255, 255, 255, 0.35);
+  color: #221C18;
+}
+
+/* ==========================================================================
+   RIGHT COLUMN (Warm Form & Developer Option)
+   ========================================================================== */
+.formColumn {
+  padding: 42px 46px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #FAF5ED;
+}
+
+.formTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 0.85rem;
+  color: #73675C;
+  margin-bottom: 22px;
+  gap: 6px;
+}
+
+.signUpLink {
+  color: #5F402B;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Segmented Developer Mode Switcher */
+.devSegmentWrap {
+  display: flex;
+  background: #EDE6DC;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 20px;
+}
+
+.devSegmentBtn {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #7C6E62;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.devSegmentBtnActive {
+  background: #FFFFFF;
+  color: #2B1D12;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(50, 35, 20, 0.06);
+}
+
+.devBadge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #5F402B;
+  color: #FFFFFF;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+/* Header */
+.formHeader {
+  margin-bottom: 22px;
+}
+
+.welcomeHeading {
+  font-size: 2.15rem;
+  font-weight: 800;
+  color: #221C18;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.welcomeSubtext {
+  font-size: 0.90rem;
+  color: #73675C;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Feedback messages */
+.alertMessage {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.alertError {
+  background: #FEF2F2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+}
+
+.alertSuccess {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+/* Form inputs */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
 }
 
-.field {
+.inputGroup {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 16px;
 }
 
-.field label {
-  font-size: 0.86rem;
-  color: var(--color-secondary);
+.inputLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3A2E24;
 }
 
-.field input {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 13px 14px;
-  color: #fff;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-}
-
-.field input:focus {
-  border-color: rgba(82, 139, 255, 0.3);
-  box-shadow: 0 0 0 3px rgba(82, 139, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.field input:-webkit-autofill,
-.field input:-webkit-autofill:hover, 
-.field input:-webkit-autofill:focus, 
-.field input:-webkit-autofill:active {
-  -webkit-text-fill-color: #ffffff !important;
-  -webkit-box-shadow: 0 0 0 1000px #0c120e inset !important;
-  box-shadow: 0 0 0 1000px #0c120e inset !important;
-  transition: background-color 5000s ease-in-out 0s;
-  caret-color: #528bff !important;
-}
-
-.passwordWrap {
+.inputWrapper {
   position: relative;
-}
-
-.passwordWrap input {
-  width: 100%;
-  padding-right: 76px;
-}
-
-.toggleButton {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--color-text);
-  border-radius: 10px;
-  padding: 4px 10px;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-.metaRow {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 14px;
+  color: #8A7B6E;
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px 12px 40px;
+  background: #F8F4EC;
+  border: 1px solid #E4DDD2;
+  border-radius: 10px;
+  font-size: 0.90rem;
+  font-family: inherit;
+  color: #221C18;
+  outline: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inputWithToggle {
+  padding-right: 42px;
+}
+
+.input:focus {
+  border-color: #5F402B;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(95, 64, 43, 0.08);
+}
+
+.togglePassBtn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #8A7B6E;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.togglePassBtn:hover {
+  color: #221C18;
+}
+
+.fieldError {
+  font-size: 0.74rem;
+  color: #DC2626;
   margin-top: 2px;
 }
 
-.checkboxLabel {
+.forgotRow {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-text-muted);
+  justify-content: flex-end;
+  margin-top: -6px;
+  margin-bottom: 18px;
+}
+
+.forgotLink {
+  color: #6E5846;
   font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.checkboxLabel input {
-  accent-color: var(--color-primary);
-}
-
-.linkButton {
-  background: none;
+/* Primary Log In Button */
+.submitBtn {
+  width: 100%;
+  padding: 13px 20px;
+  background: #5F402B;
+  color: #FFFFFF;
   border: none;
-  color: var(--color-primary);
-  font-size: 0.82rem;
-  cursor: pointer;
-}
-
-.submitButton {
-  margin-top: 6px;
-  border: 1px solid rgba(82, 139, 255, 0.24);
-  background: linear-gradient(135deg, rgba(82, 139, 255, 0.96), rgba(47, 103, 218, 0.88));
-  color: #040913;
-  border-radius: 999px;
-  padding: 13px 16px;
+  border-radius: 10px;
+  font-size: 0.96rem;
   font-weight: 700;
+  font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 18px 30px rgba(82, 139, 255, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(95, 64, 43, 0.22);
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.2s ease;
 }
 
-.submitButton:disabled {
-  opacity: 0.7;
+.submitBtn:hover:not(:disabled) {
+  background: #4C3322;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(95, 64, 43, 0.30);
+}
+
+.submitBtn:disabled {
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
-.authDivider {
+/* OR divider */
+.divider {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 4px;
-  color: var(--color-text-subtle);
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
+  color: #8A7B6E;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 16px 0;
 }
 
-.authDivider::before,
-.authDivider::after {
+.divider::before,
+.divider::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: #E6DFD4;
 }
 
-.authDivider span {
+/* Social Buttons */
+.socialButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.socialBtn {
+  width: 100%;
+  padding: 11px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E4DDD2;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #2B2117;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.15s ease;
+}
+
+.socialBtn:hover {
+  background: #F8F4EC;
+  border-color: #D8CEBF;
+}
+
+.socialIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.googleFrameWrap {
+  display: flex;
+  justify-content: center;
+}
+
+/* Developer Callout Banner under social buttons */
+.devCalloutBanner {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: rgba(95, 64, 43, 0.05);
+  border: 1px solid rgba(95, 64, 43, 0.15);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.devCalloutText {
+  font-size: 0.78rem;
+  color: #5C4A3C;
+}
+
+.devCalloutText strong {
+  color: #221C18;
+  display: block;
+  font-size: 0.82rem;
+}
+
+.devApplyLink {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #5F402B;
+  text-decoration: none;
   white-space: nowrap;
 }
 
-.error {
-  color: var(--color-danger);
-  font-size: 0.78rem;
+/* Trust footer */
+.trustFooter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: #8A7B6E;
+  margin-top: 22px;
 }
 
-.success {
-  color: var(--color-success);
-  font-size: 0.85rem;
-  margin-top: 2px;
-}
-
-.footerText {
-  margin-top: 18px;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-}
-
-.footerText a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.footerText a:hover {
-  text-decoration: underline;
-}
-
-@media (max-width: 480px) {
-  .card {
-    padding: 26px 20px;
-    border-radius: 24px;
+/* Responsive */
+@media (max-width: 900px) {
+  .splitCard {
+    grid-template-columns: 1fr;
+    max-width: 520px;
+  }
+  .heroColumn {
+    min-height: 380px;
+    padding: 24px 20px;
+  }
+  .formColumn {
+    padding: 34px 24px;
   }
 }

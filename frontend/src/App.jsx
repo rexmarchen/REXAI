@@ -1,8 +1,10 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import routes from './routes'
 import Navbar from './components/common/Navbar'
 import Footer from './components/common/Footer'
+import CookieConsentBanner from './components/common/CookieConsentBanner/CookieConsentBanner'
+import analytics from './utils/analytics'
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -126,8 +128,18 @@ class ErrorBoundary extends React.Component {
 
 function App() {
   const location = useLocation()
+
+  useEffect(() => {
+    analytics.trackPageView(location.pathname)
+  }, [location.pathname])
+
   const isStandalonePage =
     location.pathname === '/' ||
+    location.pathname.startsWith('/login') ||
+    location.pathname.startsWith('/register') ||
+    location.pathname.startsWith('/forgot-password') ||
+    location.pathname.startsWith('/developer') ||
+    location.pathname.startsWith('/faculty') ||
     location.pathname.startsWith('/rex-pro') ||
     location.pathname.startsWith('/dashboard') ||
     location.pathname.startsWith('/workspace') ||
@@ -145,9 +157,13 @@ function App() {
     location.pathname.startsWith('/profile') ||
     location.pathname.startsWith('/profile-setup') ||
     location.pathname.startsWith('/resume') ||
+    location.pathname.startsWith('/resume-analyser') ||
     location.pathname.startsWith('/interview-support') ||
     location.pathname.startsWith('/intern-hunt') ||
     location.pathname.startsWith('/rexcode') ||
+    location.pathname.startsWith('/terms') ||
+    location.pathname.startsWith('/privacy') ||
+    location.pathname.startsWith('/activity') ||
     location.pathname.startsWith('/admin')
 
   return (
@@ -179,6 +195,7 @@ function App() {
         </Suspense>
       </main>
       {!isStandalonePage && <Footer />}
+      <CookieConsentBanner />
     </ErrorBoundary>
   )
 }

@@ -6,7 +6,10 @@ import { DATABASE_URL, NODE_ENV, SESSION_SECRET } from '../config/env.js'
 const PgSession = connectPgSimple(session)
 
 export function linkedinSessionMiddleware() {
-  const secret = SESSION_SECRET || 'rexion-dev-session-secret-key-12345678'
+  if (!SESSION_SECRET || SESSION_SECRET === 'rexion-dev-session-secret-key-12345678') {
+    throw new Error('[FATAL SECURITY ERROR] SESSION_SECRET must be configured with a cryptographically secure key (min 32 chars).')
+  }
+  const secret = SESSION_SECRET
 
   if (DATABASE_URL && (DATABASE_URL.startsWith('postgres://') || DATABASE_URL.startsWith('postgresql://'))) {
     try {

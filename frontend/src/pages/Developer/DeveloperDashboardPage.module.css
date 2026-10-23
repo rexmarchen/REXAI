@@ -1,0 +1,338 @@
+/* Developer Dashboard Page Styles */
+
+.heroCard {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid #ECE4D8;
+  padding: 26px 30px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroContent h1 {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #231C16;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.heroContent p {
+  color: #5C4D40;
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.heroQuickActions {
+  display: flex;
+  gap: 12px;
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #D96B43;
+  color: #FFF;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.primaryBtn:hover {
+  background: #C25630;
+}
+
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FEF3EB;
+  color: #D96B43;
+  border: 1px solid rgba(217, 107, 67, 0.25);
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.secondaryBtn:hover {
+  background: #FCEFEB;
+}
+
+/* ── METRIC GRID ── */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.metricCard {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #ECE4D8;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metricCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(35, 28, 22, 0.05);
+}
+
+.metricIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metricVal {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #231C16;
+  line-height: 1.1;
+}
+
+.metricLbl {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #8E7E70;
+  margin-top: 2px;
+}
+
+/* ── TWO-COLUMN SECTION ── */
+.layoutRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.panel {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid #ECE4D8;
+  padding: 22px 24px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.panelTitle {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #231C16;
+}
+
+.viewAllLink {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #D96B43;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.viewAllLink:hover {
+  text-decoration: underline;
+}
+
+/* ── TABLE / LIST ── */
+.quizItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #FDFCFA;
+  border: 1px solid #ECE4D8;
+  margin-bottom: 10px;
+  transition: all 0.15s ease;
+}
+
+.quizItem:hover {
+  background: #F8F4EE;
+  border-color: #E3D8CA;
+}
+
+.quizInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quizTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quizTitle {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #231C16;
+}
+
+.badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.badgePublished {
+  background: #EAF6EF;
+  color: #2E9362;
+  border: 1px solid rgba(46, 147, 98, 0.2);
+}
+
+.badgeDraft {
+  background: #FEF9E7;
+  color: #B48805;
+  border: 1px solid rgba(180, 136, 5, 0.2);
+}
+
+.badgeArchived {
+  background: #F0EBE3;
+  color: #8E7E70;
+  border: 1px solid rgba(142, 126, 112, 0.2);
+}
+
+.quizMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.76rem;
+  color: #8E7E70;
+}
+
+.quizActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quizActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid #ECE4D8;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #5C4D40;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.quizActionBtn:hover {
+  background: #FEF3EB;
+  color: #D96B43;
+  border-color: rgba(217, 107, 67, 0.3);
+}
+
+/* ── ATTENTION BOX ── */
+.attentionCard {
+  background: #FFFDF9;
+  border: 1px solid #F3E4C8;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.attentionTitle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #A66E1D;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.attentionDesc {
+  font-size: 0.8rem;
+  color: #7A5720;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ── RECENT ACTIVITY ── */
+.activityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ECE4D8;
+}
+
+.activityItem:last-child {
+  border-bottom: none;
+}
+
+.activityDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #D96B43;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.activityText {
+  font-size: 0.82rem;
+  color: #231C16;
+  line-height: 1.4;
+}
+
+.activityTime {
+  font-size: 0.72rem;
+  color: #8E7E70;
+  margin-top: 2px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 36px 18px;
+  color: #8E7E70;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 900px) {
+  .layoutRow {
+    grid-template-columns: 1fr;
+  }
+  .heroCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}

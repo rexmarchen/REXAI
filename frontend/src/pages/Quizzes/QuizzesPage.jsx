@@ -203,6 +203,7 @@ const PROGRESS_NAV = [
   { id:"learning-history", label:"Learning History", icon:Clock, route:"/challenges" }
 ]
 const MORE_NAV = [
+  { id:"developer", label:"Developer Portal", icon:Terminal, route:"/developer" },
   { id:"settings", label:"Settings", icon:Settings, route:"/profile" },
   { id:"help", label:"Help & Support", icon:Headphones, route:"/ai-tutor" }
 ]
@@ -521,6 +522,21 @@ function HubView({ metrics, categories, popularTopics, recentlyAdded, leaderboar
                           </div>
                           <div className={styles.recentTitle}>{item.title}</div>
                           <div className={styles.recentCategory}>{item.category}</div>
+                          {item.authorRole === 'faculty' ? (
+                            <div style={{ fontSize: "0.72rem", color: "#B45309", fontWeight: 700, marginTop: 4, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                              <span>🎓 {item.authorName}</span>
+                              {item.isVerifiedFaculty && (
+                                <span style={{ background: "#DCFCE7", color: "#15803D", padding: "1px 5px", borderRadius: 4, fontSize: "0.64rem", fontWeight: 800 }}>
+                                  ✓ Verified
+                                </span>
+                              )}
+                              {item.institutionName && <span style={{ color: "#8E7E70", fontWeight: 500 }}>• {item.institutionName}</span>}
+                            </div>
+                          ) : item.authorName && (
+                            <div style={{ fontSize: "0.72rem", color: "#D96B43", fontWeight: 700, marginTop: 3 }}>
+                              👤 {item.authorName}
+                            </div>
+                          )}
                         </div>
                         <div className={styles.recentFooter}><span>📋 {item.questionsCount||5} questions</span><span>•</span><span>🕒 {item.durationMinutes||12} min</span></div>
                       </div>
@@ -611,6 +627,21 @@ function DetailView({ topicData, onBack, onStartQuiz, onGenerateFresh, generatin
               <div className={styles.detailPill}><ClipboardList size={14} /><span>{topicData.questionsCount} Questions</span></div>
               <div className={styles.detailPill}><Clock size={14} /><span>{topicData.durationMinutes} min</span></div>
               <div className={styles.detailPill} style={{ color:"#D96B43", background:"#FEF3EB", border:"1px solid rgba(217,107,67,0.15)" }}><Star size={14} /><span>+{topicData.xp} XP</span></div>
+              {topicData.authorRole === 'faculty' ? (
+                <div className={styles.detailPill} style={{ color:"#92400E", background:"#FEF3C7", border:"1px solid rgba(217,119,6,0.3)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span>🎓 {topicData.authorName}</span>
+                  {topicData.isVerifiedFaculty && (
+                    <span style={{ background: "#DCFCE7", color: "#15803D", padding: "2px 6px", borderRadius: 4, fontSize: "0.68rem", fontWeight: 800 }}>
+                      ✓ Verified Faculty
+                    </span>
+                  )}
+                  {topicData.institutionName && <span style={{ color: "#78350F", fontWeight: 500 }}>• {topicData.institutionName}</span>}
+                </div>
+              ) : topicData.authorName && (
+                <div className={styles.detailPill} style={{ color:"#065F46", background:"#ECFDF5", border:"1px solid rgba(16,185,129,0.2)" }}>
+                  <span>👤 By {topicData.authorName}</span>
+                </div>
+              )}
             </div>
 
             <div style={{
@@ -748,11 +779,27 @@ function RunnerView({ topicData, onBack, onComplete, onQuizSubmitted, onRetryFre
     clearInterval(timerRef.current)
     setSubmitting(true)
     try {
-      // Build answers payload for backend
-      const answersPayload = questions.map(q => ({
-        questionId: q.id,
-        selectedIndex: userAnswers[q.id] !== undefined ? userAnswers[q.id] : -1
-      }))
+      // Build answers payload for backend supporting multi-type
+      const answersPayload = questions.map(q => {
+        const qId = q.id || q._id
+        const userChoice = userAnswers[qId]
+        if (q.type === 'multiple_select') {
+          return {
+            questionId: qId,
+            selectedIndices: Array.isArray(userChoice) ? userChoice : []
+          }
+        } else if (q.type === 'short_answer') {
+          return {
+            questionId: qId,
+            answerText: typeof userChoice === 'string' ? userChoice : ''
+          }
+        } else {
+          return {
+            questionId: qId,
+            selectedIndex: typeof userChoice === 'number' ? userChoice : -1
+          }
+        }
+      })
       const slug = topicData.slug || topicData.id
       const elapsedSecs = Math.max(1, totalSecs - timeLeft)
       const res = await quizApi.submitQuiz(slug, answersPayload, elapsedSecs, topicData.todayDate)
@@ -770,14 +817,20 @@ function RunnerView({ topicData, onBack, onComplete, onQuizSubmitted, onRetryFre
       } else {
         // Local scoring fallback
         let correct = 0
-        questions.forEach(q => { if (userAnswers[q.id] === q.correct || userAnswers[q.id] === q.correctIndex) correct++ })
+        questions.forEach(q => {
+          const qId = q.id || q._id
+          if (userAnswers[qId] === q.correct || userAnswers[qId] === q.correctIndex) correct++
+        })
         const pct = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0
         setScore({ correct, total: questions.length, pct, xp: Math.round((pct/100)*(topicData.xp||100)) })
       }
     } catch (_) {
       // Local scoring if backend unavailable
       let correct = 0
-      questions.forEach(q => { if (userAnswers[q.id] === q.correct || userAnswers[q.id] === q.correctIndex) correct++ })
+      questions.forEach(q => {
+        const qId = q.id || q._id
+        if (userAnswers[qId] === q.correct || userAnswers[qId] === q.correctIndex) correct++
+      })
       const pct = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0
       setScore({ correct, total: questions.length, pct, xp: Math.round((pct/100)*(topicData.xp||100)) })
     } finally {
@@ -797,9 +850,18 @@ function RunnerView({ topicData, onBack, onComplete, onQuizSubmitted, onRetryFre
     return () => clearInterval(timerRef.current)
   }, [submitted, userAnswers])
 
-  const handleAnswer = (qId, idx) => {
+  const handleAnswer = (qId, val) => {
     if (submitted) return
-    setUserAnswers(prev => ({ ...prev, [qId]: idx }))
+    setUserAnswers(prev => ({ ...prev, [qId]: val }))
+  }
+
+  const handleToggleMulti = (qId, idx) => {
+    if (submitted) return
+    const prevList = Array.isArray(userAnswers[qId]) ? userAnswers[qId] : []
+    const updated = prevList.includes(idx)
+      ? prevList.filter(i => i !== idx)
+      : [...prevList, idx]
+    setUserAnswers(prev => ({ ...prev, [qId]: updated }))
   }
 
   const copyCode = (code) => {
@@ -871,8 +933,45 @@ function RunnerView({ topicData, onBack, onComplete, onQuizSubmitted, onRetryFre
             <div style={{ textAlign: "left", marginTop: 12, marginBottom: 20, maxHeight: 360, overflowY: "auto", paddingRight: 6 }}>
               {questions.map((item, idx) => {
                 const userChoice = userAnswers[item.id]
-                const correctChoice = item.correctIndex !== undefined ? item.correctIndex : item.correct
-                const isCorrect = userChoice === correctChoice
+                const evaluatedAns = Array.isArray(score?.answers)
+                  ? score.answers.find(a => a.questionId === item.id)
+                  : null
+
+                const isCorrect = evaluatedAns
+                  ? evaluatedAns.isCorrect
+                  : (userChoice === (item.correctIndex !== undefined ? item.correctIndex : item.correct))
+
+                const type = item.type || evaluatedAns?.questionType || 'multiple_choice'
+
+                let userAnsDisplay = 'Skipped'
+                let correctAnsDisplay = ''
+
+                if (type === 'multiple_select') {
+                  const sel = evaluatedAns?.selectedIndices || (Array.isArray(userChoice) ? userChoice : [])
+                  userAnsDisplay = sel.length > 0
+                    ? sel.map(i => item.options?.[i] || `Option ${i + 1}`).join(', ')
+                    : 'Skipped'
+                  const cor = evaluatedAns?.correctIndices || item.correctIndices || []
+                  correctAnsDisplay = cor.map(i => item.options?.[i] || `Option ${i + 1}`).join(', ')
+                } else if (type === 'short_answer' || type === 'code') {
+                  userAnsDisplay = evaluatedAns?.textAnswer || (typeof userChoice === 'string' ? userChoice : 'Skipped')
+                  correctAnsDisplay = evaluatedAns?.correctAnswer || item.correctAnswer || ''
+                } else {
+                  // multiple_choice or true_false
+                  const selIdx = evaluatedAns?.selectedIndex !== undefined ? evaluatedAns.selectedIndex : userChoice
+                  userAnsDisplay = (selIdx !== undefined && selIdx >= 0 && item.options?.[selIdx])
+                    ? item.options[selIdx]
+                    : (selIdx !== undefined && selIdx >= 0 ? `Option ${selIdx + 1}` : 'Skipped')
+                  const corIdx = evaluatedAns?.correctIndex !== undefined
+                    ? evaluatedAns.correctIndex
+                    : (item.correctIndex !== undefined ? item.correctIndex : item.correct)
+                  correctAnsDisplay = (corIdx !== undefined && item.options?.[corIdx])
+                    ? item.options[corIdx]
+                    : (corIdx !== undefined ? `Option ${corIdx + 1}` : '')
+                }
+
+                const explanationText = evaluatedAns?.explanation || item.explanation || item.tip
+
                 return (
                   <div key={item.id || idx} style={{
                     background: "#FDFCFA",
@@ -900,15 +999,15 @@ function RunnerView({ topicData, onBack, onComplete, onQuizSubmitted, onRetryFre
                       </pre>
                     )}
                     <div style={{ fontSize: "0.78rem", color: "#5C4D40", marginTop: 4 }}>
-                      <div>Your answer: <strong>{userChoice !== undefined && userChoice >= 0 ? item.options[userChoice] : "Skipped"}</strong></div>
-                      {!isCorrect && (
+                      <div>Your answer: <strong>{userAnsDisplay}</strong></div>
+                      {!isCorrect && correctAnsDisplay && (
                         <div style={{ color: "#059669", marginTop: 2 }}>
-                          Correct answer: <strong>{item.options[correctChoice]}</strong>
+                          Correct answer: <strong>{correctAnsDisplay}</strong>
                         </div>
                       )}
-                      {(item.tip || item.explanation) && (
+                      {explanationText && (
                         <div style={{ marginTop: 6, fontSize: "0.74rem", background: "#FEF9E7", padding: "6px 10px", borderRadius: 6, color: "#854D0E" }}>
-                          💡 <em>{item.explanation || item.tip}</em>
+                          💡 <em>{explanationText}</em>
                         </div>
                       )}
                     </div>
@@ -1017,21 +1116,96 @@ function RunnerView({ topicData, onBack, onComplete, onQuizSubmitted, onRetryFre
                     </pre>
                   </div>
                 )}
-                <div className={styles.optionsList}>
-                  {q.options.map((opt, idx) => {
-                    const letter = ["A","B","C","D"][idx]
-                    const isSelected = userAnswers[q.id] === idx
-                    return (
-                      <label key={idx} className={`${styles.optionLabel} ${isSelected ? styles.optionSelected : ""}`} onClick={() => handleAnswer(q.id, idx)}>
-                        <div className={`${styles.optionRadio} ${isSelected ? styles.optionRadioSelected : ""}`}>
-                          {isSelected && <div className={styles.optionRadioDot} />}
-                        </div>
-                        <span className={styles.optionLetter}>{letter}</span>
-                        <span className={styles.optionText}>{opt}</span>
-                      </label>
-                    )
-                  })}
-                </div>
+                {/* Options List according to Question Type */}
+                {q.type === 'multiple_select' ? (
+                  <div className={styles.optionsList}>
+                    <div style={{ fontSize: "0.78rem", color: "#8E7E70", fontWeight: 600, marginBottom: 4 }}>
+                      Select ALL that apply:
+                    </div>
+                    {(q.options || []).map((opt, idx) => {
+                      const letter = ["A","B","C","D","E","F","G","H"][idx] || idx+1
+                      const selectedList = Array.isArray(userAnswers[q.id || q._id]) ? userAnswers[q.id || q._id] : []
+                      const isSelected = selectedList.includes(idx)
+                      return (
+                        <label key={idx} className={`${styles.optionLabel} ${isSelected ? styles.optionSelected : ""}`} onClick={() => handleToggleMulti(q.id || q._id, idx)}>
+                          <input type="checkbox" checked={isSelected} readOnly style={{ accentColor: "#D96B43", width: 16, height: 16 }} />
+                          <span className={styles.optionLetter}>{letter}</span>
+                          <span className={styles.optionText}>{opt}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                ) : q.type === 'short_answer' ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "14px 0" }}>
+                    <label style={{ fontSize: "0.82rem", fontWeight: 700, color: "#40342B" }}>Type your answer:</label>
+                    <input
+                      type="text"
+                      placeholder="Enter exact keyword or expression..."
+                      value={userAnswers[q.id || q._id] || ""}
+                      onChange={e => handleAnswer(q.id || q._id, e.target.value)}
+                      style={{
+                        background: "#F8F4EE",
+                        border: "1px solid #E2D9CE",
+                        borderRadius: 8,
+                        padding: "10px 14px",
+                        fontSize: "0.95rem",
+                        color: "#231C16",
+                        outline: "none"
+                      }}
+                    />
+                  </div>
+                ) : q.type === 'true_false' ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "14px 0" }}>
+                    <button
+                      type="button"
+                      style={{
+                        background: userAnswers[q.id || q._id] === 0 ? "#FEF3EB" : "#F8F4EE",
+                        border: `1px solid ${userAnswers[q.id || q._id] === 0 ? "#D96B43" : "#E2D9CE"}`,
+                        color: userAnswers[q.id || q._id] === 0 ? "#D96B43" : "#40342B",
+                        padding: 14,
+                        borderRadius: 10,
+                        fontSize: "0.95rem",
+                        fontWeight: 700,
+                        cursor: "pointer"
+                      }}
+                      onClick={() => handleAnswer(q.id || q._id, 0)}
+                    >
+                      ✓ TRUE
+                    </button>
+                    <button
+                      type="button"
+                      style={{
+                        background: userAnswers[q.id || q._id] === 1 ? "#FEF3EB" : "#F8F4EE",
+                        border: `1px solid ${userAnswers[q.id || q._id] === 1 ? "#D96B43" : "#E2D9CE"}`,
+                        color: userAnswers[q.id || q._id] === 1 ? "#D96B43" : "#40342B",
+                        padding: 14,
+                        borderRadius: 10,
+                        fontSize: "0.95rem",
+                        fontWeight: 700,
+                        cursor: "pointer"
+                      }}
+                      onClick={() => handleAnswer(q.id || q._id, 1)}
+                    >
+                      ✗ FALSE
+                    </button>
+                  </div>
+                ) : (
+                  <div className={styles.optionsList}>
+                    {(q.options || []).map((opt, idx) => {
+                      const letter = ["A","B","C","D","E","F","G","H"][idx] || idx+1
+                      const isSelected = userAnswers[q.id || q._id] === idx
+                      return (
+                        <label key={idx} className={`${styles.optionLabel} ${isSelected ? styles.optionSelected : ""}`} onClick={() => handleAnswer(q.id || q._id, idx)}>
+                          <div className={`${styles.optionRadio} ${isSelected ? styles.optionRadioSelected : ""}`}>
+                            {isSelected && <div className={styles.optionRadioDot} />}
+                          </div>
+                          <span className={styles.optionLetter}>{letter}</span>
+                          <span className={styles.optionText}>{opt}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
               <div className={styles.runnerNav}>
                 <button className={styles.prevBtn} onClick={() => setCurrentIdx(p => Math.max(0,p-1))} disabled={currentIdx===0}>

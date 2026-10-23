@@ -4,6 +4,8 @@ import { db } from "./db.js";
 
 export type PostKind = "IMAGE" | "REEL";
 
+const LATE_POST_GRACE_MINUTES = 120;
+
 /**
  * Next free posting slot (ISO UTC), respecting:
  * - Photo Posts (IMAGE) scheduled at 5:00 PM IST (17:00)
@@ -56,6 +58,28 @@ export function nextSlot(kind?: "IMAGE" | "REEL"): string {
     }
   }
   throw new Error("No free posting slot in the next 30 days");
+}
+
+/** Moves significantly overdue approved posts into future slots instead of publishing a backlog. */
+export function deferOverduePosts(): { id: number; scheduled_at: string }[] {
+  const cutoff = Date.now() - LATE_POST_GRACE_MINUTES * 60_000;
+  const approved = db
+    .prepare("SELECT id, kind, scheduled_at FROM posts WHERE status = 'approved' ORDER BY scheduled_at, id")
+    .all() as { id: number; kind: string; scheduled_at: string | null }[];
+  const overdue = approved.filter(
+    (post) => post.scheduled_at === null || new Date(post.scheduled_at).getTime() <= cutoff,
+  );
+  const deferred: { id: number; scheduled_at: string }[] = [];
+
+  for (const post of overdue) {
+    const scheduledAt = nextSlot(post.kind === "IMAGE" ? "IMAGE" : "REEL");
+    const result = db
+      .prepare("UPDATE posts SET scheduled_at = ? WHERE id = ? AND status = 'approved' AND scheduled_at IS ?")
+      .run(scheduledAt, post.id, post.scheduled_at);
+    if (result.changes === 1) deferred.push({ id: post.id, scheduled_at: scheduledAt });
+  }
+
+  return deferred;
 }
 
 export const formatLocal = (iso: string) =>

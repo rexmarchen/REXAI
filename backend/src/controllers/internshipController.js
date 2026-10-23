@@ -8,6 +8,7 @@ import { loadSummer2027Internships } from '../services/realInternshipData.js'
 import { getLiveInternships as fetchFallbackInternships } from '../services/internshipService.js'
 import { scrapeMultiSource } from '../services/internships/multiSourceScraperService.js'
 import logger from '../utils/logger.js'
+import cacheManager from '../utils/cacheManager.js'
 
 /**
  * GET /api/internships
@@ -145,76 +146,64 @@ export async function getInternships(req, res) {
       sortOptions = { trustScore: -1, postedAt: -1 }
     }
 
-    let total = 0
-    let docs = []
+    const isPublic = !req.user
+    const cacheKey = cacheManager.createKey('internships:list', {
+      page: pageNum,
+      limit: limitNum,
+      search: searchTerm,
+      location,
+      remote: remote || '',
+      domain: domain || '',
+      source: source || '',
+      postedWithin,
+      posted_within_hours: rawHours || '',
+      sort,
+      company,
+      exp,
+      duration: duration || '',
+      hideRisky: hideRisky || '',
+      user: isPublic ? 'public' : (req.user._id || req.user.id || 'auth')
+    })
 
-    try {
-      ;[total, docs] = await Promise.all([
-        Internship.countDocuments(queryFilter),
-        Internship.find(queryFilter)
-          .sort(sortOptions)
-          .skip(skip)
-          .limit(limitNum)
-          .lean()
-      ])
-    } catch (dbError) {
-      logger.warn(`[InternshipController] DB query failed, using Summer 2027 fallback: ${dbError.message}`)
-      total = 0
-      docs = []
-    }
+    const result = await cacheManager.getOrCompute(cacheKey, async () => {
+      let total = 0
+      let docs = []
 
-    let formattedData = []
-    let fallbackUsed = false
+      try {
+        ;[total, docs] = await Promise.all([
+          Internship.countDocuments(queryFilter),
+          Internship.find(queryFilter)
+            .select('_id externalId title companyName companyStage companyLogo domain location country city isRemote isHybrid employmentType experienceLevel salaryText salaryMin salaryMax salaryCurrency duration description skills postedAt freshnessStatus applyUrl source sourceUrl trustScore trustFlags metadata')
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limitNum)
+            .lean()
+        ])
+      } catch (dbError) {
+        logger.warn(`[InternshipController] DB query failed, using Summer 2027 fallback: ${dbError.message}`)
+        total = 0
+        docs = []
+      }
 
-    if (!docs || docs.length === 0) {
-      const fallbackData = await loadSummer2027Internships({
-        limit: limitNum,
-        search: searchTerm,
-        location,
-        remote,
-        domain
-      })
+      let formattedData = []
+      let fallbackUsed = false
 
-      if (Array.isArray(fallbackData) && fallbackData.length > 0) {
-        fallbackUsed = true
-        formattedData = fallbackData.map((item) => ({
-          id: item.id,
-          title: item.title,
-          company: item.company,
-          companyStage: item.company_stage,
-          domain: item.domain,
-          location: item.location,
-          isRemote: item.is_remote,
-          salary: item.salary,
-          duration: item.duration,
-          description: item.description,
-          skills: item.skills,
-          posted_hours_ago: item.posted_hours_ago,
-          relativeTime: `${item.posted_hours_ago}h ago`,
-          applyUrl: item.apply_link,
-          linkedin_url: item.linkedin_url,
-          source: item.source,
-          sourceLabel: item.sourceLabel,
-          matchScore: item.match_score,
-          verifiedDirect: true
-        }))
-        total = fallbackData.length
-      } else {
-        const liveFallback = await fetchFallbackInternships({
-          query: searchTerm,
-          domain,
+      if (!docs || docs.length === 0) {
+        const fallbackData = await loadSummer2027Internships({
+          limit: limitNum,
+          search: searchTerm,
           location,
           remote,
-          postedWithinHours: rawHours || 48,
-          limit: limitNum
+          domain
         })
-        if (liveFallback && Array.isArray(liveFallback.jobs) && liveFallback.jobs.length > 0) {
+
+        if (Array.isArray(fallbackData) && fallbackData.length > 0) {
           fallbackUsed = true
-          formattedData = liveFallback.jobs.map((item) => ({
+          formattedData = fallbackData.map((item) => ({
             id: item.id,
             title: item.title,
             company: item.company,
-            companyStage: item.company_stage || 'Tech Employer',
+            companyStage: item.company_stage,
             domain: item.domain,
             location: item.location,
             isRemote: item.is_remote,
@@ -226,77 +215,123 @@ export async function getInternships(req, res) {
             relativeTime: `${item.posted_hours_ago}h ago`,
             applyUrl: item.apply_link,
             linkedin_url: item.linkedin_url,
-            source: 'company_career',
-            sourceLabel: 'Direct Career Portal',
-            matchScore: item.match_score || 92,
+            source: item.source,
+            sourceLabel: item.sourceLabel,
+            matchScore: item.match_score,
             verifiedDirect: true
           }))
-          total = liveFallback.total || liveFallback.jobs.length
+          total = fallbackData.length
+        } else {
+          const liveFallback = await fetchFallbackInternships({
+            query: searchTerm,
+            domain,
+            location,
+            remote,
+            postedWithinHours: rawHours || 48,
+            limit: limitNum
+          })
+          if (liveFallback && Array.isArray(liveFallback.jobs) && liveFallback.jobs.length > 0) {
+            fallbackUsed = true
+            formattedData = liveFallback.jobs.map((item) => ({
+              id: item.id,
+              title: item.title,
+              company: item.company,
+              companyStage: item.company_stage || 'Tech Employer',
+              domain: item.domain,
+              location: item.location,
+              isRemote: item.is_remote,
+              salary: item.salary,
+              duration: item.duration,
+              description: item.description,
+              skills: item.skills,
+              posted_hours_ago: item.posted_hours_ago,
+              relativeTime: `${item.posted_hours_ago}h ago`,
+              applyUrl: item.apply_link,
+              linkedin_url: item.linkedin_url,
+              source: 'company_career',
+              sourceLabel: 'Direct Career Portal',
+              matchScore: item.match_score || 92,
+              verifiedDirect: true
+            }))
+            total = liveFallback.total || liveFallback.jobs.length
+          }
         }
-      }
-    } else {
-      // Fetch candidate profile for explainable matching if user is authenticated
-      let candidateProfile = null
-      if (req.user) {
-        candidateProfile = await CandidateProfile.findOne({ userId: req.user._id || req.user.id }).lean()
+      } else {
+        // Fetch candidate profile for explainable matching if user is authenticated
+        let candidateProfile = null
+        if (req.user) {
+          candidateProfile = await CandidateProfile.findOne({ userId: req.user._id || req.user.id }).lean()
+        }
+
+        // Format output with relative time and match score
+        formattedData = docs.map((doc) => {
+          const match = calculateInternshipMatch(doc, candidateProfile)
+          const directLinkedInUrl = doc.metadata?.linkedin_url || (doc.sourceUrl && doc.sourceUrl.includes('linkedin.com') ? doc.sourceUrl : null)
+          const linkedInUrl = directLinkedInUrl || buildCleanLinkedInSearchUrl(doc.companyName, doc.title)
+          const hoursAgo = Math.max(1, Math.round((Date.now() - new Date(doc.postedAt).getTime()) / (1000 * 60 * 60)))
+
+          return {
+            id: doc._id,
+            externalId: doc.externalId,
+            title: doc.title,
+            company: doc.companyName,
+            companyStage: doc.companyStage,
+            companyLogo: doc.companyLogo,
+            domain: doc.domain,
+            location: doc.location,
+            country: doc.country,
+            city: doc.city,
+            isRemote: doc.isRemote,
+            isHybrid: doc.isHybrid,
+            employmentType: doc.employmentType,
+            experienceLevel: doc.experienceLevel,
+            salary: doc.salaryText,
+            salaryMin: doc.salaryMin,
+            salaryMax: doc.salaryMax,
+            salaryCurrency: doc.salaryCurrency,
+            duration: doc.duration,
+            description: doc.description,
+            skills: doc.skills,
+            postedAt: doc.postedAt,
+            posted_hours_ago: hoursAgo,
+            relativeTime: formatRelativeTime(doc.postedAt),
+            freshnessStatus: doc.freshnessStatus,
+            applyUrl: doc.applyUrl,
+            linkedin_url: linkedInUrl,
+            source: doc.source,
+            sourceLabel: doc.source === 'linkedin' || doc.source === 'linkedin_authorized' ? 'LinkedIn' : doc.source === 'indeed' ? 'Indeed' : doc.source === 'naukri' ? 'Naukri' : doc.source === 'company_career' ? `${doc.companyName} Career Portal` : doc.source === 'summer2027' ? 'Summer Dataset' : 'Verified Direct',
+            matchScore: match.matchScore,
+            matchReasons: match.reasons,
+            missingSkills: match.missingSkills,
+            trustScore: doc.trustScore || 92,
+            trustFlags: doc.trustFlags || [],
+            verifiedDirect: true
+          }
+        })
       }
 
-      // Format output with relative time and match score
-      formattedData = docs.map((doc) => {
-        const match = calculateInternshipMatch(doc, candidateProfile)
-        const directLinkedInUrl = doc.metadata?.linkedin_url || (doc.sourceUrl && doc.sourceUrl.includes('linkedin.com') ? doc.sourceUrl : null)
-        const linkedInUrl = directLinkedInUrl || buildCleanLinkedInSearchUrl(doc.companyName, doc.title)
-        const hoursAgo = Math.max(1, Math.round((Date.now() - new Date(doc.postedAt).getTime()) / (1000 * 60 * 60)))
+      return {
+        formattedData,
+        total,
+        fallbackUsed,
+        docsCount: docs.length
+      }
+    }, { ttlMs: 30000, tags: ['internships'] })
 
-        return {
-          id: doc._id,
-          externalId: doc.externalId,
-          title: doc.title,
-          company: doc.companyName,
-          companyStage: doc.companyStage,
-          companyLogo: doc.companyLogo,
-          domain: doc.domain,
-          location: doc.location,
-          country: doc.country,
-          city: doc.city,
-          isRemote: doc.isRemote,
-          isHybrid: doc.isHybrid,
-          employmentType: doc.employmentType,
-          experienceLevel: doc.experienceLevel,
-          salary: doc.salaryText,
-          salaryMin: doc.salaryMin,
-          salaryMax: doc.salaryMax,
-          salaryCurrency: doc.salaryCurrency,
-          duration: doc.duration,
-          description: doc.description,
-          skills: doc.skills,
-          postedAt: doc.postedAt,
-          posted_hours_ago: hoursAgo,
-          relativeTime: formatRelativeTime(doc.postedAt),
-          freshnessStatus: doc.freshnessStatus,
-          applyUrl: doc.applyUrl,
-          linkedin_url: linkedInUrl,
-          source: doc.source,
-          sourceLabel: doc.source === 'linkedin' || doc.source === 'linkedin_authorized' ? 'LinkedIn' : doc.source === 'indeed' ? 'Indeed' : doc.source === 'naukri' ? 'Naukri' : doc.source === 'company_career' ? `${doc.companyName} Career Portal` : doc.source === 'summer2027' ? 'Summer Dataset' : 'Verified Direct',
-          matchScore: match.matchScore,
-          matchReasons: match.reasons,
-          missingSkills: match.missingSkills,
-          trustScore: doc.trustScore || 92,
-          trustFlags: doc.trustFlags || [],
-          verifiedDirect: true
-        }
-      })
-    }
+    res.setHeader(
+      'Cache-Control',
+      req.user ? 'private, no-cache' : 'public, max-age=30, stale-while-revalidate=60'
+    )
 
     return res.status(200).json({
       success: true,
-      data: formattedData,
+      data: result.formattedData,
       pagination: {
         page: pageNum,
         limit: limitNum,
-        total,
-        totalPages: Math.ceil(total / limitNum) || 1,
-        hasNextPage: fallbackUsed ? (pageNum * limitNum < total) : (skip + docs.length < total)
+        total: result.total,
+        totalPages: Math.ceil(result.total / limitNum) || 1,
+        hasNextPage: result.fallbackUsed ? (pageNum * limitNum < result.total) : (skip + result.docsCount < result.total)
       }
     })
   } catch (err) {
@@ -351,7 +386,7 @@ export async function trackApplyClick(req, res) {
     const internship = await Internship.findByIdAndUpdate(
       id,
       { $inc: { applyClickCount: 1 } },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     if (!internship) {
@@ -380,6 +415,7 @@ export async function triggerAdminRefresh(req, res) {
   try {
     logger.info(`[Admin] Ingestion refresh requested by user #${req.user?._id || 'admin'}`)
     const metrics = await runInternshipIngestion()
+    cacheManager.invalidateTag('internships')
     return res.status(200).json({
       success: true,
       message: 'Internship ingestion pipeline completed successfully',
@@ -467,6 +503,8 @@ export async function triggerLiveSync(req, res) {
       }),
       Internship.countDocuments({ isActive: true, isInternship: true })
     ])
+
+    cacheManager.invalidateTag('internships')
 
     return res.status(200).json({
       success: true,

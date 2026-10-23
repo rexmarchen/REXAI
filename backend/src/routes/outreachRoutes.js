@@ -17,14 +17,14 @@ import {
 
 const router = express.Router()
 
-// Contact Search & Outreach Routes
-router.get('/search', optionalProtect, searchContacts)
-router.post('/draft', optionalProtect, generateDrafts)
-router.post('/send', optionalProtect, sendCampaign)
-router.get('/stats', optionalProtect, getStats)
-router.get('/mailboxes', optionalProtect, getMailboxes)
-router.get('/mailboxes/google/connect', optionalProtect, startGoogleMailboxConnection)
-router.get('/mailboxes/microsoft/connect', optionalProtect, startMicrosoftMailboxConnection)
+// Contact Search & Outreach Routes (Protected)
+router.get('/search', protect, searchContacts)
+router.post('/draft', protect, generateDrafts)
+router.post('/send', protect, sendCampaign)
+router.get('/stats', protect, getStats)
+router.get('/mailboxes', protect, getMailboxes)
+router.get('/mailboxes/google/connect', protect, startGoogleMailboxConnection)
+router.get('/mailboxes/microsoft/connect', protect, startMicrosoftMailboxConnection)
 router.get('/mailboxes/google/callback', googleMailboxCallback)
 router.get('/mailboxes/microsoft/callback', microsoftMailboxCallback)
 
